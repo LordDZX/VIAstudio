@@ -55,3 +55,11 @@ Prettier 僅用於開發時排版，網頁執行不需要它。`npm test` 會依
 ## 給下一個對話的交接
 
 請先讀本 README，再針對新需求查看相關函式。既有功能包括俯視島嶼、第一人稱展廳、租店權限原型、店面分類、徵才、相框、音樂、LOGO、兩座公園與自行車。保留使用者現有資料；不需重做已完成介面。正式登入、後端權限、共用媒體及大規模多人架構仍未實作。
+
+## Supabase 原型接線（2026-11）
+
+在 Supabase SQL Editor 執行 `supabase-setup.sql`。接著開啟 `index.html`，搜尋 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY`（在主 `<script>` 開頭附近），填入 Project URL 與 anon/publishable key；勿填 service_role key。網頁透過 CDN 載入 Supabase JS v2。尚未設定時會維持原本本機模式。
+
+已接入店面 JSON/租約到期時間、玩家座標 Realtime、租期內作品／職缺到期欄位、Storage 圖片公開 URL，以及資料庫私訊載入與即時訂閱。地圖只繪製 600 像素內玩家；目前共用 Presence topic 仍會將 presence 狀態送到所有連線，若要承受大量在線玩家，需改成伺服器端 3×3 cell topic 訂閱或專用遊戲伺服器。此版本尚未做 Supabase Auth；SQL prototype policies 對 anon 開放，任何人都可讀寫店面和私訊，不能作為公開正式服務。上線前必須加入登入、owner/participant 權限 RLS 與可信任的租約驗證。
+
+雲端載入時會以 Supabase 店面資料覆蓋同 ID 的本機內容。店面圖片上傳至公開 Storage bucket；媒體以外的音樂、LOGO、廣告等既有 IndexedDB 素材仍未自動遷移至 Storage。

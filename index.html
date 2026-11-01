@@ -2209,6 +2209,7 @@
       </div>
     </section>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
       (() => {
         const W = 1100,
@@ -2632,6 +2633,13 @@
         let playerName = localStorage.getItem(NAME_KEY) || "巷口旅人",
           playerId = randomId(),
           playerAvatar = loadAvatar();
+        // Supabase 專案設定：填入 Project URL 與 anon/publishable key（不要放 service_role key）。
+        const SUPABASE_URL = "https://cfokmnfzpcqgenueivex.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_7KvE4UGM_byYhI7yUIjitQ_-7H8E7dT";
+        const supabase = SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase
+          ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+          : null;
+        let cloudChannel = null, cloudSaveTimer = 0, cloudChatChannel = null, activeDm = null;
         let shops = loadShops(),
           orders = loadOrders(),
           activeShopId = null,
@@ -2763,6 +2771,42 @@
               shops,
               orders,
             });
+          if (supabase) {
+            clearTimeout(cloudSaveTimer);
+            cloudSaveTimer = setTimeout(async () => {
+              const rows = shops.map((s) => ({ id: s.id, payload: s, expire_at: s.lease?.expires ? new Date(s.lease.expires).toISOString() : null }));
+              const { error } = await supabase.from("market_shops").upsert(rows);
+              if (error) console.error("Supabase 店面儲存失敗", error);
+            }, 350);
+          }
+        }
+        async function initSupabase() {
+          if (!supabase) return;
+          const now = new Date().toISOString();
+          const { data, error } = await supabase.from("market_shops").select("payload,expire_at").or(`expire_at.is.null,expire_at.gt.${now}`);
+          if (error) { console.error("Supabase 載入店面失敗", error); toast("雲端連線失敗，暫時使用本機資料。"); return; }
+          if (data?.length) {
+            const cloud = data.map((r) => r.payload).filter((s) => s && typeof s.id === "string");
+            const merged = new Map(shops.map((s) => [s.id, s]));
+            cloud.forEach((s) => merged.set(s.id, { ...s, products: s.products || [], room: s.room || defaultRoom() }));
+            shops = [...merged.values()]; syncShopPositions(); clearDemolishedState();
+            renderShopList(); renderSelectedBox(); if (activeShopId) renderShowroom();
+          } else save();
+          cloudChannel = supabase.channel("island-presence", { config: { presence: { key: playerId }, broadcast: { self: false } } });
+          cloudChannel.on("presence", { event: "sync" }, () => {
+            remotePlayers.clear();
+            Object.values(cloudChannel.presenceState()).flat().forEach((p) => { if (p.id !== playerId && Math.hypot(p.x-player.x,p.y-player.y) <= 600) remotePlayers.set(p.id, { ...p, at: Date.now() }); }); renderWalkers();
+          }).on("broadcast", { event: "position" }, ({ payload }) => {
+            if (!payload || payload.id === playerId) return;
+            if (Math.hypot(payload.x-player.x,payload.y-player.y) <= 600) remotePlayers.set(payload.id, { ...payload, at: Date.now() }); else remotePlayers.delete(payload.id);
+            renderWalkers();
+          }).on("broadcast", { event: "shops" }, async () => {
+            const { data: fresh } = await supabase.from("market_shops").select("payload,expire_at").or(`expire_at.is.null,expire_at.gt.${new Date().toISOString()}`);
+            if (fresh) { const map = new Map(shops.map((s) => [s.id,s])); fresh.forEach((r) => map.set(r.payload.id,r.payload)); shops=[...map.values()]; syncShopPositions(); renderShopList(); renderSelectedBox(); if(activeShopId)renderShowroom(); }
+          }).subscribe(async (status) => { if (status === "SUBSCRIBED") { await cloudChannel.track({id:playerId,name:playerName,x:player.x,y:player.y,at:Date.now()}); toast("已連接 Supabase 多人服務。"); } });
+          const beat = () => { if (!cloudChannel) return; const p={id:playerId,name:playerName,x:player.x,y:player.y,at:Date.now()}; cloudChannel.track(p); cloudChannel.send({type:"broadcast",event:"position",payload:p}); };
+          setInterval(beat, 180); window.addEventListener("pagehide", () => cloudChannel?.untrack());
+          supabase.channel("market-shops-changes").on("postgres_changes", {event:"*",schema:"public",table:"market_shops"}, () => cloudChannel?.send({type:"broadcast",event:"shops",payload:{}})).subscribe();
         }
         const getShop = (id) => shops.find((s) => s.id === id);
         function toast(msg) {
@@ -3022,7 +3066,23 @@
           };
           addChatMessage(msg);
           if (channel) channel.postMessage({ type: "chat", message: msg });
+          if (supabase && activeDm) {
+            supabase.from("private_messages").insert({ conversation_id: activeDm, sender_id: accountId, sender_name: playerName, body: text }).then(({error}) => { if (error) { console.error(error); toast("私訊送出失敗，請確認 Supabase SQL 與權限設定。"); } });
+          }
           input.value = "";
+        }
+        async function openOwnerDm(shop) {
+          if (!supabase) { toast("請先填入 index.html 的 Supabase URL 與 anon key。"); return; }
+          if (!shop?.lease?.ownerId || shop.lease.ownerId === accountId) { toast("這間店目前沒有可聯絡的店主。"); return; }
+          activeDm = [accountId, shop.lease.ownerId].sort().join(":");
+          chatOpen = true; $("#chatPanel").classList.remove("hidden");
+          $("#chatPanel").querySelector("header").firstChild.textContent = `私訊：${shop.owner || "店主"} `;
+          const {data,error} = await supabase.from("private_messages").select("id,sender_id,sender_name,body,created_at").eq("conversation_id",activeDm).order("created_at").limit(100);
+          if (error) { toast("無法載入私訊，請檢查資料表權限。"); console.error(error); return; }
+          chatItems = (data||[]).map(m=>({fromId:m.sender_id===accountId?playerId:m.sender_id,name:m.sender_name,text:m.body,time:Date.parse(m.created_at)})); renderChat();
+          cloudChatChannel?.unsubscribe();
+          cloudChatChannel = supabase.channel("dm:"+activeDm).on("postgres_changes",{event:"INSERT",schema:"public",table:"private_messages",filter:`conversation_id=eq.${activeDm}`},({new:m})=>{ if(m.sender_id!==accountId) addChatMessage({fromId:m.sender_id,name:m.sender_name,text:m.body,time:Date.parse(m.created_at)}); }).subscribe();
+          $("#chatInput").focus();
         }
         function renderWalkers() {
           const real = [...remotePlayers.values()].filter(
@@ -3490,7 +3550,7 @@
               draw: () => drawPerson(n.x, n.y, n.color, n.emoji, n.name, false),
             })),
             ...[...remotePlayers.values()]
-              .filter((p) => !p.shop && Date.now() - p.at < 9000)
+              .filter((p) => !p.shop && Date.now() - p.at < 9000 && Math.hypot(p.x-player.x,p.y-player.y) <= 600)
               .map((p) => ({
                 depth: p.y,
                 draw: () =>
@@ -3726,6 +3786,7 @@
         }
         async function mediaUrlFor(p) {
           if (!p) return "";
+          if (p.publicURL || p.mediaURL) return p.publicURL || p.mediaURL;
           if (p.mediaKey) {
             if (mediaUrls.has(p.mediaKey)) return mediaUrls.get(p.mediaKey);
             try {
@@ -3738,6 +3799,12 @@
             } catch (e) {}
           }
           return p.mediaURL || p.image || "";
+        }
+        async function uploadCloudMedia(file, path) {
+          if (!supabase) return "";
+          const {error}=await supabase.storage.from("market-media").upload(path,file,{upsert:true,contentType:file.type});
+          if(error) throw error;
+          return supabase.storage.from("market-media").getPublicUrl(path).data.publicUrl;
         }
         function mediaElementFor(p) {
           p = frameSource(p);
@@ -3867,7 +3934,7 @@
           const playerURL = externalPlayer(p.externalURL || "");
           showModal(
             p.title,
-            `<div class="listing-detail premium-detail"><div class="product-gallery"><div class="gallery-kicker">ISLAND MARKET · 精選作品</div>${playerURL ? `<iframe id="externalVideo" src="${esc(playerURL)}" title="${esc(p.title)}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><p id="externalVideoStatus">請按播放器的播放鍵。若平台限制嵌入，可到原網站觀看。</p><a href="${esc(p.externalURL)}" target="_blank" rel="noopener">到原網站觀看 ↗</a>` : ""}${!playerURL && p.externalURL ? (directVideo(p.externalURL) ? `<video src="${esc(p.externalURL)}" controls playsinline></video>` : `<a href="${esc(p.externalURL)}" target="_blank" rel="noopener">🌐 開啟外部作品網站</a>`) : ""}${urls.map((url, i) => (!url ? "" : media[i].mediaType === "video" ? `<video src="${esc(url)}" controls playsinline preload="metadata"></video>` : `<img src="${esc(url)}" alt="${esc(p.title)} · ${i + 1}" loading="lazy">`)).join("") || (!playerURL ? "<p>此示範作品尚未上傳媒體。</p>" : "")}</div><aside><small class="product-badge">${p.category === "job" ? "徵才" : p.category === "sale" ? "產品販售" : "作品展示"}</small><h2>${esc(p.title)}</h2><p>${esc(p.desc || "")}</p>${p.category === "job" ? jobDetails(p.job) : ""}${p.price !== "" && p.price != null ? `<h3>NT$ ${esc(p.price)}</h3>` : ""}${p.location ? `<p>地點：${esc(p.location)}</p>` : ""}<b class="contact-heading">聯絡店主</b>${(p.contacts || [shop.contact || "尚未提供"]).map((v) => `<p>${safeLink(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</p>`).join("")}<button class="primary-btn" id="detailInquiry">詢問店主</button></aside></div>`,
+            `<div class="listing-detail premium-detail"><div class="product-gallery"><div class="gallery-kicker">ISLAND MARKET · 精選作品</div>${playerURL ? `<iframe id="externalVideo" src="${esc(playerURL)}" title="${esc(p.title)}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><p id="externalVideoStatus">請按播放器的播放鍵。若平台限制嵌入，可到原網站觀看。</p><a href="${esc(p.externalURL)}" target="_blank" rel="noopener">到原網站觀看 ↗</a>` : ""}${!playerURL && p.externalURL ? (directVideo(p.externalURL) ? `<video src="${esc(p.externalURL)}" controls playsinline></video>` : `<a href="${esc(p.externalURL)}" target="_blank" rel="noopener">🌐 開啟外部作品網站</a>`) : ""}${urls.map((url, i) => (!url ? "" : media[i].mediaType === "video" ? `<video src="${esc(url)}" controls playsinline preload="metadata"></video>` : `<img src="${esc(url)}" alt="${esc(p.title)} · ${i + 1}" loading="lazy">`)).join("") || (!playerURL ? "<p>此示範作品尚未上傳媒體。</p>" : "")}</div><aside><small class="product-badge">${p.category === "job" ? "徵才" : p.category === "sale" ? "產品販售" : "作品展示"}</small><h2>${esc(p.title)}</h2><p>${esc(p.desc || "")}</p>${p.category === "job" ? jobDetails(p.job) : ""}${p.price !== "" && p.price != null ? `<h3>NT$ ${esc(p.price)}</h3>` : ""}${p.location ? `<p>地點：${esc(p.location)}</p>` : ""}<b class="contact-heading">聯絡店主</b>${(p.contacts || [shop.contact || "尚未提供"]).map((v) => `<p>${safeLink(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</p>`).join("")}<button class="primary-btn" id="detailInquiry">詢問店主</button><button class="outline-btn" data-owner-dm="${esc(shop.id)}">私訊店主</button></aside></div>`,
           );
           $("#detailInquiry").onclick = () => openInquiry(shop, p);
           if (playerURL) setupExternalPlayer(p.externalURL);
@@ -4349,6 +4416,7 @@
           }
         });
         $("#chatForm").addEventListener("submit", sendChat);
+        document.addEventListener("click", (e) => { const b=e.target.closest("[data-owner-dm]"); if (b) { const s=getShop(b.dataset.ownerDm); openOwnerDm(s); } });
         $("#showHelp").addEventListener("click", help);
         $("#navHelp").addEventListener("click", help);
         $("#navShops").addEventListener("click", () =>
@@ -5502,6 +5570,7 @@
               for (const m of media) {
                 if (m.file) {
                   m.mediaKey = shop.id + "-" + randomId();
+                  m.publicURL = await uploadCloudMedia(m.file, `${accountId}/${m.mediaKey}`);
                   await saveMediaBlob(m.mediaKey, m.file);
                   created.push(m.mediaKey);
                 }
@@ -5516,6 +5585,7 @@
                 mediaKey: media[0]?.mediaKey || "",
                 mediaType: media[0]?.mediaType || "image",
                 emoji: category === "sale" ? "🛍️" : "🎨",
+                expire_at: shop.lease?.expires ? new Date(shop.lease.expires).toISOString() : null,
               };
               if (index == null) shop.products.push(p);
               else shop.products[index] = p;
@@ -8856,6 +8926,7 @@
                 const copy = { ...p };
                 if (copy.file) {
                   copy.mediaKey = shop.id + "-job-" + randomId();
+                  copy.publicURL = await uploadCloudMedia(copy.file, `${accountId}/${copy.mediaKey}`);
                   await saveMediaBlob(copy.mediaKey, copy.file);
                   created.push(copy.mediaKey);
                 }
@@ -8879,6 +8950,7 @@
                 location: data.location,
                 contacts: [shop.contact || "請聯絡店主"],
                 emoji: "💼",
+                expire_at: shop.lease?.expires ? new Date(shop.lease.expires).toISOString() : null,
               };
               if (index == null) shop.products.push(listing);
               else shop.products[index] = listing;
@@ -8927,6 +8999,7 @@
         renderSelectedBox();
         renderChat();
         requestAnimationFrame(frame);
+        initSupabase();
         setInterval(() => {
           expireLeases();
           renderWalkers();
