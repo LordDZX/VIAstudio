@@ -1,0 +1,16 @@
+const fs=require('fs'),vm=require('vm');
+let harness=fs.readFileSync('smoke-test.cjs','utf8');
+harness=harness.replace('project,shopSpots,blockedByBuilding','canEditShop,save,accountId,placementValidity,syncShopPositions,startPlacement,commitPlacement,cancelPlacement,get placement(){return placement},counterBoxes,drawInteractionPrompt,texturePanel,panelTexture,project,shopSpots,blockedByBuilding');
+harness=harness.replace("localStorage:{getItem(){return null},setItem(){}},", "localStorage:{data:new Map(),getItem(k){return this.data.get(k)||null},setItem(k,v){this.data.set(k,String(v))}},");
+harness=harness.replace('const sandbox=',"document.body=new El();El.prototype.prepend=function(el){if(el.id)nodes.set('#'+el.id,el)};El.prototype.appendChild=El.prototype.prepend;Object.defineProperty(El.prototype,'elements',{get(){return this.fields||(this.fields=new Proxy({},{get:(t,k)=>t[k]||(t[k]={value:''})}))}});const sandbox=");
+harness+=`
+const shop=t.shops[0];assert(!t.canEditShop(shop),'Visitor cannot modify showcase');shop.lease.ownerId=t.accountId;t.save();assert(t.canEditShop(shop));assert(!t.canEditShop(t.shops[1]));assert(!t.canEditShop({...shop}),'Stale/noncanonical shop rejected');
+t.renderEditor(shop);assert(nodes.get('#settingsBody').innerHTML.includes('店主工作台'));assert(!t.placementValidity(shop.id,200,510).ok,'Road');assert(!t.placementValidity(shop.id,40,200).ok,'Boundary');assert(!t.placementValidity(shop.id,t.shopSpots[1].x,t.shopSpots[1].y).ok,'Other shop');
+let candidate;for(let y=180;y<3000&&!candidate;y+=20)for(let x=120;x<4800&&!candidate;x+=20)if(t.placementValidity(shop.id,x,y).ok)candidate={x,y};assert(candidate,'Placeable land exists');t.startPlacement(shop.id);assert(t.placement);Object.assign(t.placement,{x:200,y:510});assert.strictEqual(t.commitPlacement(),false);Object.assign(t.placement,candidate);assert.strictEqual(t.commitPlacement(),true);assert.strictEqual(shop.position.x,candidate.x);assert.strictEqual(t.shopSpots[0].doorX,candidate.x+110);assert(t.blockedByBuilding(candidate.x+100,candidate.y+80));t.syncShopPositions();assert.strictEqual(t.shopSpots[0].x,candidate.x);
+t.startPlacement(shop.id);const previousPosition=JSON.stringify(shop.position);shop.lease.ownerId='different-owner';t.save();assert(!t.commitPlacement(),'Ownership change blocks pending placement');assert.strictEqual(JSON.stringify(shop.position),previousPosition);assert(!t.canEditShop(shop));
+assert.strictEqual(t.counterBoxes().length,4);assert(html.replaceAll(' ', '').replaceAll('\\n', '').replaceAll('\\r', '').includes('c.translate(1000,0);c.scale(-1,1)'),'Exit text flip');assert(!html.includes("roomLabel(765,1018"),'No billboard sign');assert(html.includes('按 E 觀看作品／影片'));assert(html.includes('按 E 騎單車'));
+const texture=t.panelTexture('店主在線','#347958');for(const yaw of [0,1.57,3.14,4.71]){t.roomPlayer.yaw=yaw;t.texturePanel([[818,1045,74],[722,1045,74],[722,1000,5],[818,1000,5]],texture)}
+console.log('V5 PASS: owner-only edits and revoked permissions; road/boundary/overlap placement rejection; valid placement and persisted collision/door positions; three-part counter; planar sign rendering at four headings; interaction prompts.');
+`;
+vm.runInThisContext('(function(require){'+harness+'\n})')(require);
+

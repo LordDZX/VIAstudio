@@ -1,0 +1,12 @@
+{
+  "devDependencies": {
+    "prettier": "3.6.2"
+  },
+  "private": true,
+  "scripts": {
+    "start": "node preview-server.cjs",
+    "format": "prettier --write index.html preview-server.cjs",
+    "format:check": "prettier --check index.html preview-server.cjs",
+    "test": "node run-tests.cjs"
+  }
+}
