@@ -2596,8 +2596,9 @@
             name: "海鹽",
             emoji: "🧋",
             color: "#d8ae72",
-            x: 90,
-            y: 449,
+            // The former spawn (180, 898 after scaling) was inside the shop at row two.
+            x: 280,
+            y: 560,
             tx: 1000,
             ty: 293,
             speed: 18,
@@ -3548,6 +3549,84 @@
               y < a.y + a.h + r,
           );
         }
+        const NPC_NAV = { minX: -2420, minY: 160, step: 70, cols: 145, rows: 45 };
+        function npcCellPoint(index) {
+          const col = index % NPC_NAV.cols,
+            row = Math.floor(index / NPC_NAV.cols);
+          return {
+            x: NPC_NAV.minX + col * NPC_NAV.step + NPC_NAV.step / 2,
+            y: NPC_NAV.minY + row * NPC_NAV.step + NPC_NAV.step / 2,
+          };
+        }
+        function nearestNpcCell(x, y) {
+          const col = Math.max(0, Math.min(NPC_NAV.cols - 1, Math.round((x - NPC_NAV.minX - NPC_NAV.step / 2) / NPC_NAV.step))),
+            row = Math.max(0, Math.min(NPC_NAV.rows - 1, Math.round((y - NPC_NAV.minY - NPC_NAV.step / 2) / NPC_NAV.step)));
+          let best = -1,
+            bestDistance = Infinity;
+          for (let radius = 0; radius <= 6 && best < 0; radius++) {
+            for (let cy = Math.max(0, row - radius); cy <= Math.min(NPC_NAV.rows - 1, row + radius); cy++)
+              for (let cx = Math.max(0, col - radius); cx <= Math.min(NPC_NAV.cols - 1, col + radius); cx++) {
+                if (Math.max(Math.abs(cx - col), Math.abs(cy - row)) !== radius) continue;
+                const index = cy * NPC_NAV.cols + cx,
+                  point = npcCellPoint(index),
+                  distance = (point.x - x) ** 2 + (point.y - y) ** 2;
+                if (distance < bestDistance && !blockedByBuilding(point.x, point.y)) {
+                  best = index;
+                  bestDistance = distance;
+                }
+              }
+          }
+          return best;
+        }
+        function findNpcRoute(startX, startY, targetX, targetY) {
+          const start = nearestNpcCell(startX, startY),
+            goal = nearestNpcCell(targetX, targetY),
+            total = NPC_NAV.cols * NPC_NAV.rows;
+          if (start < 0 || goal < 0 || start === goal) return [];
+          const previous = new Int32Array(total).fill(-2),
+            queue = new Int32Array(total);
+          let head = 0,
+            tail = 0;
+          queue[tail++] = start;
+          previous[start] = -1;
+          while (head < tail && previous[goal] === -2) {
+            const current = queue[head++],
+              col = current % NPC_NAV.cols,
+              row = Math.floor(current / NPC_NAV.cols),
+              neighbors = [col > 0 ? current - 1 : -1, col + 1 < NPC_NAV.cols ? current + 1 : -1, row > 0 ? current - NPC_NAV.cols : -1, row + 1 < NPC_NAV.rows ? current + NPC_NAV.cols : -1];
+            for (const next of neighbors) {
+              if (next < 0 || previous[next] !== -2) continue;
+              const point = npcCellPoint(next);
+              if (blockedByBuilding(point.x, point.y)) continue;
+              previous[next] = current;
+              queue[tail++] = next;
+              if (next === goal) break;
+            }
+          }
+          if (previous[goal] === -2) return [];
+          const route = [];
+          for (let index = goal; index !== start; index = previous[index]) route.push(npcCellPoint(index));
+          return route.reverse();
+        }
+        function chooseNpcRoute(npc) {
+          const startCell = nearestNpcCell(npc.x, npc.y);
+          if (startCell < 0) return false;
+          const startPoint = npcCellPoint(startCell);
+          npc.x = startPoint.x;
+          npc.y = startPoint.y;
+          for (let attempt = 0; attempt < 8; attempt++) {
+            const targetX = -2350 + Math.random() * 10000,
+              targetY = 190 + Math.random() * 3100,
+              route = findNpcRoute(npc.x, npc.y, targetX, targetY);
+            if (route.length) {
+              npc.route = route;
+              npc.stuckFor = 0;
+              return true;
+            }
+          }
+          npc.route = [];
+          return false;
+        }
         function moveStreet(dx, dy) {
           let moved = false;
           const n = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 8));
@@ -4077,26 +4156,45 @@
           player.y = Math.max(160, Math.min(3310, player.y));
           camera.x += (player.x - camera.x) * Math.min(1, dt * 5);
           camera.y += (player.y - camera.y) * Math.min(1, dt * 5);
-          const randomNpcTarget = () => ({
-            x: -2350 + Math.random() * 10000,
-            y: 190 + Math.random() * 3100,
-          });
           npcs.forEach((n) => {
-            const dx = n.tx - n.x,
-              dy = n.ty - n.y,
-              d = Math.hypot(dx, dy);
-            if (d < 16) {
-              const q = randomNpcTarget();
-              n.tx = q.x; n.ty = q.y;
-            } else {
-              const vx = (dx / d) * n.speed * dt,
-                vy = (dy / d) * n.speed * dt;
-              if (!blockedByBuilding(n.x + vx, n.y + vy)) {
-                n.x += vx;
-                n.y += vy;
+            // Recover NPCs that spawned inside a building or were blocked by a moved shop.
+            if (blockedByBuilding(n.x, n.y)) {
+              const safeCell = nearestNpcCell(n.x, n.y);
+              if (safeCell >= 0) {
+                const safePoint = npcCellPoint(safeCell);
+                n.x = safePoint.x;
+                n.y = safePoint.y;
+                n.route = [];
+              }
+            }
+            if (!Array.isArray(n.route) || n.route.length === 0) {
+              if (!chooseNpcRoute(n)) return;
+            }
+            let budget = n.speed * Math.min(dt, 0.1);
+            while (budget > 0 && n.route.length) {
+              const waypoint = n.route[0],
+                dx = waypoint.x - n.x,
+                dy = waypoint.y - n.y,
+                distance = Math.hypot(dx, dy);
+              if (distance <= budget + 0.5) {
+                n.x = waypoint.x;
+                n.y = waypoint.y;
+                budget -= distance;
+                n.route.shift();
+                n.stuckFor = 0;
               } else {
-                const q = randomNpcTarget();
-                n.tx = q.x; n.ty = q.y;
+                const step = budget / distance,
+                  nextX = n.x + dx * step,
+                  nextY = n.y + dy * step;
+                if (blockedByBuilding(nextX, nextY)) {
+                  n.stuckFor = (n.stuckFor || 0) + dt;
+                  n.route = [];
+                  if (n.stuckFor > 0.5) chooseNpcRoute(n);
+                  break;
+                }
+                n.x = nextX;
+                n.y = nextY;
+                budget = 0;
               }
             }
           });
