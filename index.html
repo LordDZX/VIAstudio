@@ -461,12 +461,27 @@
         background: #a9bbb0;
         cursor: default;
       }
-      #selectedTrafficLink,
-      #shopTrafficLink {
+      #selectedTrafficLinks,
+      #shopTrafficLinks {
+        display: grid;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      #selectedTrafficLinks .traffic-link,
+      #shopTrafficLinks .traffic-link {
         display: block;
         width: 100%;
-        margin-top: 8px;
         text-align: center;
+      }
+      .traffic-url-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0;
+      }
+      .traffic-url-row input {
+        flex: 1;
+        min-width: 0;
       }
       .announcement-copy p { margin: 0 0 16px; line-height: 1.8; }
       .announcement-copy p:last-child { margin-bottom: 0; }
@@ -1897,6 +1912,36 @@
         white-space: pre-wrap;
         overflow-wrap: anywhere;
       }
+      .job-listing-detail {
+        display: grid;
+        gap: 18px;
+        padding: 24px;
+        background: #faf8f1;
+        border-radius: 18px;
+      }
+      .job-listing-detail h2 {
+        margin: 10px 0;
+        font-size: clamp(24px, 4vw, 34px);
+      }
+      .job-listing-detail .job-description {
+        white-space: pre-wrap;
+        line-height: 1.8;
+      }
+      .job-detail-photos {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .job-detail-photos img {
+        width: 150px;
+        height: 110px;
+        object-fit: cover;
+        border-radius: 10px;
+      }
+      .modal:has(.job-listing-detail) {
+        width: min(900px, 95vw);
+        max-width: 900px;
+      }
       .listing-error {
         color: #b13e39;
       }
@@ -2240,7 +2285,7 @@
               <b id="selectedName">選一家店開始逛</b
               ><small id="selectedBlurb">走近店門就能進入室內展廳。</small
               ><button id="enterShopBtn" disabled>先選一間店</button>
-              <a id="selectedTrafficLink" class="outline-btn hidden" target="_blank" rel="noopener noreferrer" hidden>↗ 前往店家網站</a>
+              <div id="selectedTrafficLinks" class="hidden" hidden></div>
             </div>
             <div class="side-divider"></div>
             <div class="walkers-head">街上遇見 <span id="walkerCount">4 位散步客</span></div>
@@ -2309,7 +2354,7 @@
             <b>聯絡店主</b>
             <p id="shopContact">店主還沒有填寫聯絡資訊。</p>
             <button id="contactOwnerBtn">✉　詢問商品或合作</button>
-            <a id="shopTrafficLink" class="outline-btn hidden" target="_blank" rel="noopener noreferrer" hidden>↗ 前往店家網站</a>
+            <div id="shopTrafficLinks" class="hidden" hidden></div>
           </div>
           <div id="ownerOrdersLink" class="hidden" style="margin-top: 10px">
             <button class="outline-btn" id="viewDmInboxBtn" style="width: 100%;margin-bottom:8px">查看店主私訊</button>
@@ -2753,7 +2798,10 @@
           return !!(s && s.lease && s.lease.expires > Date.now());
         }
         function isMyShop(s) {
-          return hasBoundAccount() && leaseActive(s) && s.lease.ownerId === accountId;
+          return hasBoundAccount() && leaseActive(s) && shopOwnerAccountId(s) === accountId;
+        }
+        function shopOwnerAccountId(shop) {
+          return shop?.cloudOwnerId || shop?.lease?.ownerId || null;
         }
         function hasBoundAccount() { return !!authUser && !authUser.is_anonymous && !!accountId; }
         function availableShop(s) {
@@ -3080,7 +3128,25 @@
           if (data.some((row) => row.payload?.gameDataResetVersion === 2) &&
               clearLocalGameDataForReset()) return;
           const map = new Map(shops.map((s) => [s.id, s]));
-          data.forEach((row) => { const s=row.payload; if (s?.id) map.set(s.id,{...s,cloudOwnerId:row.owner_id || s.cloudOwnerId,products:s.products||[],room:s.room||defaultRoom()}); });
+          data.forEach((row) => {
+            const s = row.payload;
+            if (!s?.id) return;
+            const ownerId = row.owner_id ?? s.cloudOwnerId ?? s.lease?.ownerId ?? null;
+            const cloudExpiry = row.expire_at ? Date.parse(row.expire_at) : NaN;
+            map.set(s.id, {
+              ...s,
+              cloudOwnerId: ownerId,
+              lease: s.lease
+                ? {
+                    ...s.lease,
+                    ...(ownerId ? { ownerId } : {}),
+                    ...(Number.isFinite(cloudExpiry) ? { expires: cloudExpiry } : {}),
+                  }
+                : s.lease,
+              products: s.products || [],
+              room: s.room || defaultRoom(),
+            });
+          });
           shops=[...map.values()]; const positionsChanged=syncShopPositions(); clearDemolishedState(); renderShopList(); renderSelectedBox(); if(activeShopId)renderShowroom(); if(positionsChanged)save();
           if (activeDmShopId) {
             const dmShop = getShop(activeDmShopId);
@@ -3201,9 +3267,24 @@
             const changed = row?.payload?.id ? row : null;
             if (changed) {
               const updated = changed.payload;
+              const ownerId = changed.owner_id ?? updated.cloudOwnerId ?? updated.lease?.ownerId ?? null;
+              const cloudExpiry = changed.expire_at ? Date.parse(changed.expire_at) : NaN;
+              const normalized = {
+                ...updated,
+                cloudOwnerId: ownerId,
+                lease: updated.lease
+                  ? {
+                      ...updated.lease,
+                      ...(ownerId ? { ownerId } : {}),
+                      ...(Number.isFinite(cloudExpiry) ? { expires: cloudExpiry } : {}),
+                    }
+                  : updated.lease,
+                products: updated.products || [],
+                room: updated.room || defaultRoom(),
+              };
               const i = shops.findIndex((s) => s.id === updated.id);
-              if (i >= 0) shops[i] = { ...shops[i], ...updated, cloudOwnerId: changed.owner_id || updated.cloudOwnerId, products: updated.products || [], room: updated.room || defaultRoom() };
-              else shops.push({ ...updated, cloudOwnerId: changed.owner_id || updated.cloudOwnerId, products: updated.products || [], room: updated.room || defaultRoom() });
+              if (i >= 0) shops[i] = { ...shops[i], ...normalized };
+              else shops.push(normalized);
               syncShopPositions(); clearDemolishedState(); renderShopList(); renderSelectedBox(); if (activeShopId) renderShowroom();
             } else if (eventType === "DELETE" && old?.id) refreshCloudShops();
           }).subscribe();
@@ -3282,19 +3363,14 @@
           if ($("#goShopBtn")) $("#goShopBtn").classList.add("hidden");
           const s = getShop(selectedShopId);
           if (!s) {
-            $("#selectedTrafficLink").hidden = true;
-            $("#selectedTrafficLink").classList.add("hidden");
+            renderTrafficLinks($("#selectedTrafficLinks"), null);
             $("#selectedName").textContent = "選一家店開始逛";
             $("#selectedBlurb").textContent = "店面亮起來後，可租借或進入展廳。";
             $("#enterShopBtn").textContent = "先選一間店";
             $("#enterShopBtn").disabled = true;
             return;
           }
-          const trafficLink = $("#selectedTrafficLink");
-          const validTrafficLink = safeLink(s.trafficUrl || "");
-          trafficLink.hidden = !validTrafficLink;
-          trafficLink.classList.toggle("hidden", !validTrafficLink);
-          if (validTrafficLink) trafficLink.href = s.trafficUrl;
+          renderTrafficLinks($("#selectedTrafficLinks"), s);
           const near = distanceToDoor(s) < 75;
           $("#selectedName").textContent = `${s.emoji}　${s.name}`;
           $("#selectedBlurb").textContent = near
@@ -3802,6 +3878,84 @@
           c.stroke();
           c.restore();
         }
+        function drawWallPattern(c, width, height, type, x = 0, y = 0) {
+          c.save();
+          c.translate(x, y);
+          c.lineWidth = 2;
+          if (type === "slats") {
+            const boardWidth = 52;
+            for (let bx = 0; bx < width; bx += boardWidth) {
+              c.fillStyle = Math.floor(bx / boardWidth) % 2 ? "#ffffff12" : "#5949360b";
+              c.fillRect(bx, 0, boardWidth, height);
+              c.strokeStyle = "#766b5b55";
+              c.beginPath();
+              c.moveTo(bx, 0);
+              c.lineTo(bx, height);
+              c.stroke();
+              c.strokeStyle = "#ffffff44";
+              c.beginPath();
+              c.moveTo(bx + 3, 0);
+              c.lineTo(bx + 3, height);
+              c.stroke();
+            }
+          } else if (type === "brick") {
+            const rowHeight = 42,
+              brickWidth = 86;
+            c.strokeStyle = "#6f66544d";
+            for (let by = 0, row = 0; by < height; by += rowHeight, row++) {
+              c.beginPath();
+              c.moveTo(0, by);
+              c.lineTo(width, by);
+              c.stroke();
+              const offset = row % 2 ? brickWidth / 2 : 0;
+              for (let bx = offset; bx < width; bx += brickWidth) {
+                c.beginPath();
+                c.moveTo(bx, by);
+                c.lineTo(bx, Math.min(height, by + rowHeight));
+                c.stroke();
+              }
+            }
+          } else if (type === "grid") {
+            c.strokeStyle = "#68766b38";
+            for (let gx = 0; gx <= width; gx += 48) {
+              c.beginPath();
+              c.moveTo(gx, 0);
+              c.lineTo(gx, height);
+              c.stroke();
+            }
+            for (let gy = 0; gy <= height; gy += 36) {
+              c.beginPath();
+              c.moveTo(0, gy);
+              c.lineTo(width, gy);
+              c.stroke();
+            }
+          } else if (type === "rail") {
+            for (const ry of [Math.round(height * 0.32), Math.round(height * 0.68)]) {
+              c.strokeStyle = "#6f5c4380";
+              c.lineWidth = 8;
+              c.beginPath();
+              c.moveTo(0, ry + 3);
+              c.lineTo(width, ry + 3);
+              c.stroke();
+              c.strokeStyle = "#fff4d2";
+              c.lineWidth = 4;
+              c.beginPath();
+              c.moveTo(0, ry);
+              c.lineTo(width, ry);
+              c.stroke();
+              c.fillStyle = "#68786c";
+              for (let hx = 48; hx < width; hx += 112) {
+                c.fillRect(hx - 2, ry - 8, 4, 12);
+                c.fillRect(hx - 7, ry + 2, 14, 4);
+              }
+            }
+          } else if (type === "plain") {
+            c.strokeStyle = "#ffffff38";
+            c.lineWidth = 3;
+            c.strokeRect(10, 10, Math.max(0, width - 20), Math.max(0, height - 20));
+          }
+          c.restore();
+        }
         function drawInterior() {
           const renderStart = Date.now();
           const shop = getShop(activeShopId);
@@ -3818,14 +3972,7 @@
               const c = t.getContext("2d");
               c.fillStyle = room.wallColor;
               c.fillRect(0, 0, width, 240);
-              c.strokeStyle = "#88796844";
-              c.lineWidth = 2;
-              for (let u = 0; u < width; u += room.wallType === "slats" ? 24 : 120) {
-                c.beginPath();
-                c.moveTo(u, 0);
-                c.lineTo(u, 240);
-                c.stroke();
-              }
+              drawWallPattern(c, width, 240, room.wallType);
               c.fillStyle = "#52635b";
               c.fillRect(0, 226, width, 14);
               c.fillStyle = "#f7e7b7";
@@ -3840,15 +3987,6 @@
                 c.scale(-1, 1);
                 c.fillText("EXIT 出口", 440, 95);
                 c.restore();
-              }
-              if (["brick", "grid", "rail"].includes(room.wallType)) {
-                c.strokeStyle = "#6f78694d";
-                for (let v = 30; v < 230; v += room.wallType === "rail" ? 160 : 35) {
-                  c.beginPath();
-                  c.moveTo(0, v);
-                  c.lineTo(width, v);
-                  c.stroke();
-                }
               }
               const frames = [];
               (shop.products || []).forEach((p, i) => {
@@ -4250,6 +4388,26 @@
             return false;
           }
         }
+        function trafficUrlsFor(shop) {
+          const values = Array.isArray(shop?.trafficUrls)
+            ? shop.trafficUrls
+            : [shop?.trafficUrl];
+          return [...new Set(values.map((url) => String(url || "").trim()).filter(safeLink))].slice(0, 10);
+        }
+        function renderTrafficLinks(target, shop) {
+          const urls = trafficUrlsFor(shop);
+          target.innerHTML = urls
+            .map(
+              (url, index) =>
+                `<a class="outline-btn traffic-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ ${urls.length > 1 ? `引流連結 ${index + 1}` : "前往店家網站"}</a>`,
+            )
+            .join("");
+          target.hidden = !urls.length;
+          target.classList.toggle("hidden", !urls.length);
+        }
+        function trafficUrlRowHTML(value = "") {
+          return `<div class="traffic-url-row"><input name="trafficUrls" type="url" maxlength="500" autocomplete="off" value="${esc(value)}" placeholder="https://example.com"><button type="button" data-remove-traffic-url>刪除</button></div>`;
+        }
         function openMediaDB() {
           if (mediaDbPromise) return mediaDbPromise;
           mediaDbPromise = new Promise((resolve, reject) => {
@@ -4514,10 +4672,17 @@
           const playerURL = externalPlayer(p.externalURL || ""),
             hasUploadedImage = media.some((m) => m.mediaType === "image" && (m.mediaKey || m.mediaURL || m.image || m.publicURL)),
             fallbackPoster = !hasUploadedImage && p.externalURL ? externalVideoPoster(p.externalURL) : "",
-            videoSource = /tiktok/.test(p.externalURL || "") ? "TikTok" : /youtu/.test(p.externalURL || "") ? "YouTube" : "外部影片";
+            videoSource = /tiktok/.test(p.externalURL || "") ? "TikTok" : /youtu/.test(p.externalURL || "") ? "YouTube" : "外部影片",
+            isJob = p.category === "job",
+            jobPhotos = urls
+              .map((url, i) => url && media[i]?.mediaType === "image"
+                ? `<img src="${esc(url)}" alt="${esc(p.title)} 工作環境照片 ${i + 1}" loading="lazy">`
+                : "")
+              .join("");
+          const jobDetail = `<article class="job-listing-detail"><header><small class="product-badge">徵才職缺</small><h2>${esc(p.title)}</h2><p class="job-description">${esc(p.job?.content || p.desc || "")}</p></header>${jobDetails(p.job)}${jobPhotos ? `<section><h3>工作環境照片</h3><div class="job-detail-photos">${jobPhotos}</div></section>` : ""}<section><b class="contact-heading">聯絡店主</b>${(p.contacts || [shop.contact || "尚未提供"]).map((v) => `<p>${safeLink(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</p>`).join("")}<button class="primary-btn" id="detailInquiry">詢問店主</button><button class="outline-btn" data-owner-dm="${esc(shop.id)}">私訊店主</button></section></article>`;
           showModal(
             p.title,
-            `<div class="listing-detail premium-detail"><div class="product-gallery"><div class="gallery-kicker">ISLAND MARKET · 精選作品</div>${fallbackPoster ? `<a class="external-video-poster" href="${esc(p.externalURL)}" target="_blank" rel="noopener noreferrer"><img src="${esc(fallbackPoster)}" alt="${esc(videoSource)} 影片預覽" onerror="this.onerror=null;this.src='${esc(new URL("assets/video-link-landscape.svg", location.href).href)}'"><span>${esc(videoSource)} · 點擊開啟原影片</span></a>` : ""}${playerURL ? `<iframe id="externalVideo" src="${esc(playerURL)}" title="${esc(p.title)}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><p id="externalVideoStatus">請按播放器的播放鍵。若平台限制嵌入，可到原網站觀看。</p><a href="${esc(p.externalURL)}" target="_blank" rel="noopener">到原網站觀看 ↗</a>` : ""}${!playerURL && p.externalURL ? (directVideo(p.externalURL) ? `<video src="${esc(p.externalURL)}" controls playsinline></video>` : `<a href="${esc(p.externalURL)}" target="_blank" rel="noopener">🌐 開啟外部作品網站</a>`) : ""}${urls.map((url, i) => (!url ? "" : media[i].mediaType === "video" ? `<video src="${esc(url)}" controls playsinline preload="metadata"></video>` : `<img src="${esc(url)}" alt="${esc(p.title)} · ${i + 1}" loading="lazy">`)).join("") || (!playerURL ? "<p>此示範作品尚未上傳媒體。</p>" : "")}</div><aside><small class="product-badge">${p.category === "job" ? "徵才" : p.category === "sale" ? "產品販售" : "作品展示"}</small><h2>${esc(p.title)}</h2><p>${esc(p.desc || "")}</p>${p.category === "job" ? jobDetails(p.job) : ""}${p.price !== "" && p.price != null ? `<h3>NT$ ${esc(p.price)}</h3>` : ""}${p.location ? `<p>地點：${esc(p.location)}</p>` : ""}<b class="contact-heading">聯絡店主</b>${(p.contacts || [shop.contact || "尚未提供"]).map((v) => `<p>${safeLink(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</p>`).join("")}<button class="primary-btn" id="detailInquiry">詢問店主</button><button class="outline-btn" data-owner-dm="${esc(shop.id)}">私訊店主</button></aside></div>`,
+            isJob ? jobDetail : `<div class="listing-detail premium-detail"><div class="product-gallery"><div class="gallery-kicker">ISLAND MARKET · 精選作品</div>${fallbackPoster ? `<a class="external-video-poster" href="${esc(p.externalURL)}" target="_blank" rel="noopener noreferrer"><img src="${esc(fallbackPoster)}" alt="${esc(videoSource)} 影片預覽" onerror="this.onerror=null;this.src='${esc(new URL("assets/video-link-landscape.svg", location.href).href)}'"><span>${esc(videoSource)} · 點擊開啟原影片</span></a>` : ""}${playerURL ? `<iframe id="externalVideo" src="${esc(playerURL)}" title="${esc(p.title)}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><p id="externalVideoStatus">請按播放器的播放鍵。若平台限制嵌入，可到原網站觀看。</p><a href="${esc(p.externalURL)}" target="_blank" rel="noopener">到原網站觀看 ↗</a>` : ""}${!playerURL && p.externalURL ? (directVideo(p.externalURL) ? `<video src="${esc(p.externalURL)}" controls playsinline></video>` : `<a href="${esc(p.externalURL)}" target="_blank" rel="noopener">🌐 開啟外部作品網站</a>`) : ""}${urls.map((url, i) => (!url ? "" : media[i].mediaType === "video" ? `<video src="${esc(url)}" controls playsinline preload="metadata"></video>` : `<img src="${esc(url)}" alt="${esc(p.title)} · ${i + 1}" loading="lazy">`)).join("") || (!playerURL ? "<p>此示範作品尚未上傳媒體。</p>" : "")}</div><aside><small class="product-badge">${p.category === "sale" ? "產品販售" : "作品展示"}</small><h2>${esc(p.title)}</h2><p>${esc(p.desc || "")}</p>${p.price !== "" && p.price != null ? `<h3>NT$ ${esc(p.price)}</h3>` : ""}${p.location ? `<p>地點：${esc(p.location)}</p>` : ""}<b class="contact-heading">聯絡店主</b>${(p.contacts || [shop.contact || "尚未提供"]).map((v) => `<p>${safeLink(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</p>`).join("")}<button class="primary-btn" id="detailInquiry">詢問店主</button><button class="outline-btn" data-owner-dm="${esc(shop.id)}">私訊店主</button></aside></div>`,
           );
           $("#detailInquiry").onclick = () => openInquiry(shop, p);
           if (playerURL) setupExternalPlayer(p.externalURL);
@@ -4614,11 +4779,7 @@
               : "獨立創作者 · 線上展廳";
           $("#shopAbout").textContent = s.about || "店主還沒有填寫介紹。";
           $("#shopContact").textContent = s.contact || "店主還沒有填寫聯絡資訊。";
-          const trafficLink = $("#shopTrafficLink"),
-            validTrafficLink = safeLink(s.trafficUrl || "");
-          trafficLink.hidden = !validTrafficLink;
-          trafficLink.classList.toggle("hidden", !validTrafficLink);
-          if (validTrafficLink) trafficLink.href = s.trafficUrl;
+          renderTrafficLinks($("#shopTrafficLinks"), s);
           $("#ownerModeBtn").classList.toggle("hidden", roomPreviewOnly || !isMyShop(s));
           $("#ownerModeBtn").textContent = ownerMode ? "✓　完成設定" : "✦　店舖設定";
           $("#ownerModeBtn").classList.toggle("editing", ownerMode);
@@ -4646,6 +4807,7 @@
           showModal("店舖設定", '<div id="settingsBody"></div>');
           const e = $("#settingsBody"),
             room = s.room || defaultRoom(),
+            trafficUrls = trafficUrlsFor(s),
             sel = (key, labelText, choices, current) =>
               `<div class="field"><label>${labelText}</label><select name="${key}" data-room="${key}">${choices
                 .map((v) => {
@@ -4654,7 +4816,7 @@
                   return `<option value="${esc(val)}" ${current === val ? "selected" : ""}>${esc(label)}</option>`;
                 })
                 .join("")}</select></div>`;
-          e.innerHTML = `<div class="editor-head"><b>✦ 店主工作台｜自訂展廳</b><small>租期到期時，這間店的資料和媒體會清除</small></div><form id="ownerForm">${shopTypeField(shopType(s))}<div class="edit-grid"><div class="field"><label>店鋪名稱</label><input name="name" maxlength="24" value="${esc(s.name)}" required></div><div class="field"><label>店主暱稱</label><input name="owner" maxlength="18" value="${esc(s.owner)}"></div><div class="field wide"><label>一句店鋪介紹</label><input name="tagline" maxlength="60" value="${esc(s.tagline)}"></div><div class="field wide"><label>店鋪故事 / 產品介紹</label><textarea name="about" maxlength="500">${esc(s.about)}</textarea></div><div class="field wide"><label>店家網址引流（選填）</label><button type="button" class="outline-btn" id="showTrafficUrl">${s.trafficUrl ? "修改引流網址" : "＋ 設定引流網址"}</button><div id="trafficUrlFields" class="${s.trafficUrl ? "" : "hidden"}"><label>引流網址<input name="trafficUrl" type="text" maxlength="500" autocomplete="off" value="${esc(s.trafficUrl || "")}" placeholder="https://example.com"></label><small>可填入公司網址、店面網址、Facebook 粉絲專頁，或個人部落格等頁面。</small></div></div><div class="field wide"><label>聯絡方式（最多 10 個）</label><div id="shopContacts">${(s.contactItems || [{ type: "其他", value: s.contact || "" }]).map(contactItemHTML).join("")}</div><button type="button" id="addShopContact">＋ 新增聯絡方式</button></div><div class="field"><label>店外觀主色</label><input name="exterior" type="color" value="${esc(s.color)}"></div><div class="field"><label>到期時間</label><input value="${new Date(s.lease.expires).toLocaleString("zh-TW")}" disabled></div></div><div class="section-caption">室內裝潢</div><div class="edit-grid">${sel("wallColor", "牆壁顏色", WALL_COLORS, room.wallColor)}${sel("wallType", "牆壁類型", WALL_TYPES, room.wallType)}${sel("floorColor", "地板顏色", FLOOR_COLORS, room.floorColor)}${sel("floorType", "地板造型", FLOOR_TYPES, room.floorType)}<div class="field wide"><label>A 字立牌顏色</label><input name="signColor" type="color" value="${esc(room.signColor || "#347958")}"></div><div class="field wide"><label><input name="adsEnabled" type="checkbox" ${room.adsEnabled ? "checked" : ""}> 添加兩側大型廣告立牌</label><small>儲存後可從「裝飾與擺設」上傳圖片及調整位置。</small></div></div><div class="section-caption">商品與牆面相框</div><p class="about-text">上傳圖片可能會壓縮，但會盡量保持品質。影片僅接受外部網址，不提供檔案上傳。</p><div class="editor-products">${s.products.map((p, i) => `<div class="edit-product-summary">${esc(p.title)} <button type="button" data-edit-listing="${i}">編輯登記</button> <button type="button" class="remove-product" data-remove="${i}">移除</button></div>`).join("")}</div><div class="editor-actions"><button type="button" class="add-btn" id="addProduct">＋ 新增相框</button><button type="submit" class="save-btn">儲存店舖與裝潢</button></div></form>`;
+          e.innerHTML = `<div class="editor-head"><b>✦ 店主工作台｜自訂展廳</b><small>租期到期時，這間店的資料和媒體會清除</small></div><form id="ownerForm">${shopTypeField(shopType(s))}<div class="edit-grid"><div class="field"><label>店鋪名稱</label><input name="name" maxlength="24" value="${esc(s.name)}" required></div><div class="field"><label>店主暱稱</label><input name="owner" maxlength="18" value="${esc(s.owner)}"></div><div class="field wide"><label>一句店鋪介紹</label><input name="tagline" maxlength="60" value="${esc(s.tagline)}"></div><div class="field wide"><label>店鋪故事 / 產品介紹</label><textarea name="about" maxlength="500">${esc(s.about)}</textarea></div><div class="field wide"><label>店家網址引流（選填，最多 10 個）</label><button type="button" class="outline-btn" id="showTrafficUrl">${trafficUrls.length ? "修改引流網址" : "＋ 設定引流網址"}</button><div id="trafficUrlFields" class="${trafficUrls.length ? "" : "hidden"}"><div id="trafficUrlList">${trafficUrls.map(trafficUrlRowHTML).join("")}</div><button type="button" class="outline-btn" id="addTrafficUrl">＋ 新增引流網址</button><small>可填入公司網址、店面網址、Facebook 粉絲專頁，或個人部落格等頁面。每個網址需以 http:// 或 https:// 開頭。</small></div></div><div class="field wide"><label>聯絡方式（最多 10 個）</label><div id="shopContacts">${(s.contactItems || [{ type: "其他", value: s.contact || "" }]).map(contactItemHTML).join("")}</div><button type="button" id="addShopContact">＋ 新增聯絡方式</button></div><div class="field"><label>店外觀主色</label><input name="exterior" type="color" value="${esc(s.color)}"></div><div class="field"><label>到期時間</label><input value="${new Date(s.lease.expires).toLocaleString("zh-TW")}" disabled></div></div><div class="section-caption">室內裝潢</div><div class="edit-grid">${sel("wallColor", "牆壁顏色", WALL_COLORS, room.wallColor)}${sel("wallType", "牆壁類型", WALL_TYPES, room.wallType)}${sel("floorColor", "地板顏色", FLOOR_COLORS, room.floorColor)}${sel("floorType", "地板造型", FLOOR_TYPES, room.floorType)}<div class="field wide"><label>A 字立牌顏色</label><input name="signColor" type="color" value="${esc(room.signColor || "#347958")}"></div><div class="field wide"><label><input name="adsEnabled" type="checkbox" ${room.adsEnabled ? "checked" : ""}> 添加兩側大型廣告立牌</label><small>儲存後可從「裝飾與擺設」上傳圖片及調整位置。</small></div></div><div class="section-caption">商品與牆面相框</div><p class="about-text">上傳圖片可能會壓縮，但會盡量保持品質。影片僅接受外部網址，不提供檔案上傳。</p><div class="editor-products">${s.products.map((p, i) => `<div class="edit-product-summary">${esc(p.title)} <button type="button" data-edit-listing="${i}">編輯登記</button> <button type="button" class="remove-product" data-remove="${i}">移除</button></div>`).join("")}</div><div class="editor-actions"><button type="button" class="add-btn" id="addProduct">＋ 新增相框</button><button type="submit" class="save-btn">儲存店舖與裝潢</button></div></form>`;
           const moveButton = document.createElement("button");
           moveButton.type = "button";
           moveButton.className = "outline-btn";
@@ -4664,8 +4826,23 @@
           addShopPreview(e, s);
           $("#showTrafficUrl").onclick = () => {
             const fields = $("#trafficUrlFields");
-            fields.classList.toggle("hidden");
-            if (!fields.classList.contains("hidden")) fields.querySelector("input").focus();
+            fields.classList.remove("hidden");
+            fields.hidden = false;
+            const list = $("#trafficUrlList");
+            if (!list.children.length) list.insertAdjacentHTML("beforeend", trafficUrlRowHTML());
+            list.querySelector("input").focus();
+          };
+          $("#addTrafficUrl").onclick = () => {
+            const list = $("#trafficUrlList");
+            if (list.children.length >= 10) {
+              toast("每間店最多設定 10 個引流網址。");
+              return;
+            }
+            list.insertAdjacentHTML("beforeend", trafficUrlRowHTML());
+            list.lastElementChild.querySelector("input").focus();
+          };
+          $("#trafficUrlList").onclick = (ev) => {
+            if (ev.target.matches("[data-remove-traffic-url]")) ev.target.closest(".traffic-url-row").remove();
           };
           $("#addShopContact").onclick = () => {
             if ($("#shopContacts").children.length < 10)
@@ -4730,15 +4907,27 @@
           );
           $("#ownerForm").addEventListener("submit", async (ev) => {
             ev.preventDefault();
-            if (!canEditShop(s)) {
-              toast("店主權限已失效，無法儲存。");
+            let currentShop;
+            try {
+              currentShop = await refreshShopForEdit(s.id);
+            } catch (error) {
+              toast(error.message || "無法確認店主權限，請稍後重試。");
               return;
             }
+            if (!canEditShop(currentShop)) {
+              toast("店主權限已失效，請重新整理後確認登入狀態與租期。");
+              return;
+            }
+            // Cloud refreshes replace shop objects; keep the form attached to the current shop instance.
+            s = currentShop;
             const fd = new FormData(ev.currentTarget),
               oldKeys = s.products.map((p) => p.mediaKey).filter(Boolean);
-            const trafficUrl = String(fd.get("trafficUrl") || "").trim();
-            if (trafficUrl && !safeLink(trafficUrl)) {
-              toast("請填入以 http:// 或 https:// 開頭的有效網址。");
+            const trafficUrls = fd
+              .getAll("trafficUrls")
+              .map((url) => String(url || "").trim())
+              .filter(Boolean);
+            if (trafficUrls.length > 10 || trafficUrls.some((url) => !safeLink(url))) {
+              toast("請確認每個引流網址都以 http:// 或 https:// 開頭，且每間店最多 10 個。");
               return;
             }
             s.shopType = normalizeShopType(fd.get("shopType"));
@@ -4749,7 +4938,8 @@
             s.owner = String(fd.get("owner")).trim() || playerName;
             s.tagline = String(fd.get("tagline")).trim();
             s.about = String(fd.get("about")).trim();
-            s.trafficUrl = trafficUrl;
+            s.trafficUrls = [...new Set(trafficUrls)];
+            s.trafficUrl = s.trafficUrls[0] || "";
             s.contactItems = [...$("#shopContacts").querySelectorAll(".contact-row")]
               .map((row) => ({
                 type: row.querySelector("select").value,
@@ -6260,8 +6450,10 @@
             const button = form.querySelector("[type=submit]");
             button.disabled = true;
             const created = [];
+            let targetShop = null;
             try {
-              if (!canEditShop(shop)) throw Error("店主權限已失效。");
+              targetShop = await refreshShopForEdit(shop.id);
+              if (!canEditShop(targetShop)) throw Error("目前帳號沒有這間店的編輯權限。");
               const fd = new FormData(form),
                 data = {
                   category,
@@ -6282,10 +6474,10 @@
                 (m) => ({ ...m }),
               );
               validateListing(data, media);
-              validateShopCloudImageQuota(shop, media, index ?? -1);
+              validateShopCloudImageQuota(targetShop, media, index ?? -1);
               for (const m of media) {
                 if (m.file) {
-                  m.mediaKey = shop.id + "-" + randomId();
+                  m.mediaKey = targetShop.id + "-" + randomId();
                   m.publicURL = await uploadCloudMedia(m.file, `${accountId}/${m.mediaKey}`);
                   await saveMediaBlob(m.mediaKey, m.file);
                   created.push(m.mediaKey);
@@ -6293,7 +6485,8 @@
                 delete m.file;
                 delete m.tempURL;
               }
-              if (!canEditShop(shop)) throw Error("店主權限已失效。");
+              targetShop = await refreshShopForEdit(shop.id);
+              if (!canEditShop(targetShop)) throw Error("目前帳號沒有這間店的編輯權限。");
               const p = {
                 ...(existing || {}),
                 ...data,
@@ -6301,13 +6494,13 @@
                 mediaKey: media[0]?.mediaKey || "",
                 mediaType: media[0]?.mediaType || "image",
                 emoji: category === "sale" ? "🛍️" : "🎨",
-                expire_at: shop.lease?.expires ? new Date(shop.lease.expires).toISOString() : null,
+                expire_at: targetShop.lease?.expires ? new Date(targetShop.lease.expires).toISOString() : null,
               };
               const replacedCloudKeys = [...collectCloudMediaKeys(existing || {})];
-              if (index == null) shop.products.push(p);
-              else shop.products[index] = p;
+              if (index == null) targetShop.products.push(p);
+              else targetShop.products[index] = p;
               save();
-              scheduleUnusedShopMediaCleanup(shop.id, replacedCloudKeys, accountId);
+              scheduleUnusedShopMediaCleanup(targetShop.id, replacedCloudKeys, accountId);
               drawInterior.key = null;
               closeModal();
               renderShowroom();
@@ -6861,38 +7054,41 @@
                     type = get(wall ? "wallType" : "floorType");
                   c.fillStyle = get(wall ? "wallColor" : "floorColor");
                   c.fillRect(12, 12, 296, 176);
-                  c.strokeStyle = "#5a66574d";
-                  c.lineWidth = 2;
-                  const step = type === "slats" ? 14 : 40;
-                  if (type !== "plain")
-                    for (let x = 12; x < 308; x += step) {
-                      c.beginPath();
-                      c.moveTo(x, 12);
-                      c.lineTo(type === "herringbone" ? x + 70 : x, 188);
-                      c.stroke();
+                  if (wall) {
+                    drawWallPattern(c, 296, 176, type, 12, 12);
+                  } else {
+                    c.strokeStyle = "#5a66574d";
+                    c.lineWidth = 2;
+                    if (type !== "rug")
+                      for (let x = 12; x < 308; x += 40) {
+                        c.beginPath();
+                        c.moveTo(x, 12);
+                        c.lineTo(type === "herringbone" ? x + 70 : x, 188);
+                        c.stroke();
+                      }
+                    if (type !== "rug")
+                      for (let y = 12; y < 188; y += type === "wood" ? 54 : 38) {
+                        c.beginPath();
+                        c.moveTo(12, y);
+                        c.lineTo(308, y);
+                        c.stroke();
+                      }
+                    if (type === "checker")
+                      for (let y = 0; y < 5; y++)
+                        for (let x = 0; x < 8; x++)
+                          if ((x + y) % 2) {
+                            c.fillStyle = "#fff6";
+                            c.fillRect(12 + x * 38, 12 + y * 35, 38, 35);
+                          }
+                    if (type === "terrazzo")
+                      for (let i = 0; i < 80; i++) {
+                        c.fillStyle = i % 2 ? "#fff8" : "#84796988";
+                        c.fillRect(15 + ((i * 43) % 280), 15 + ((i * 61) % 166), 4, 3);
+                      }
+                    if (type === "rug") {
+                      c.fillStyle = "#b48273";
+                      c.fillRect(45, 45, 230, 110);
                     }
-                  if (!["plain", "slats"].includes(type))
-                    for (let y = 12; y < 188; y += type === "wood" ? 20 : 38) {
-                      c.beginPath();
-                      c.moveTo(12, y);
-                      c.lineTo(308, y);
-                      c.stroke();
-                    }
-                  if (type === "checker")
-                    for (let y = 0; y < 5; y++)
-                      for (let x = 0; x < 8; x++)
-                        if ((x + y) % 2) {
-                          c.fillStyle = "#fff6";
-                          c.fillRect(12 + x * 38, 12 + y * 35, 38, 35);
-                        }
-                  if (type === "terrazzo")
-                    for (let i = 0; i < 80; i++) {
-                      c.fillStyle = i % 2 ? "#fff8" : "#84796988";
-                      c.fillRect(15 + ((i * 43) % 280), 15 + ((i * 61) % 166), 4, 3);
-                    }
-                  if (type === "rug") {
-                    c.fillStyle = "#b48273";
-                    c.fillRect(45, 45, 230, 110);
                   }
                 }
               }
@@ -7286,17 +7482,12 @@
             audio.id = "musicControls";
             audio.className = "music-control";
             audio.innerHTML =
-              '<button id="musicPlayBtn" type="button">播放店內音樂</button><label>音量 <input id="musicVolume" aria-label="店內音量" type="range" min="0" max="100" value="40"></label><span id="musicTrackName"></span><button id="musicUploadBtn" type="button">設定／更換單曲</button><input id="musicUpload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/webm" hidden><button id="musicRemoveBtn" type="button">移除音樂</button><small class="music-rights-note">只上傳有權公開播放的音檔；不支援抽取 YouTube 音訊或 Spotify 背景播放。</small>';
+              '<label>音量 <input id="musicVolume" aria-label="店內音量" type="range" min="0" max="100" value="40"></label><span id="musicTrackName"></span><button id="musicUploadBtn" type="button">設定／更換單曲</button><input id="musicUpload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/webm" hidden><button id="musicRemoveBtn" type="button">移除音樂</button><small class="music-rights-note">有人進入店內時自動播放；離開店面後停止。</small>';
             $("#roomTools").insertAdjacentElement("afterend", audio);
             $("#musicVolume").value = localStorage.getItem("market-music-volume") || "40";
             $("#musicVolume").oninput = (e) => {
               if (musicPlayer) applyMusicGain();
               localStorage.setItem("market-music-volume", e.target.value);
-            };
-            $("#musicPlayBtn").onclick = () => {
-              const shop = getShop(activeShopId);
-              if (!canEditShop(shop)) return;
-              setMusicTransport(shop, { paused: !shop.music?.paused });
             };
             $("#musicUploadBtn").onclick = () => $("#musicUpload").click();
             $("#musicUpload").onchange = uploadShopMusic;
@@ -7307,7 +7498,6 @@
             };
           }
           const owner = canEditShop(shop) && !roomPreviewOnly;
-          $("#musicPlayBtn").classList.toggle("hidden", !owner);
           $("#musicUploadBtn").classList.toggle("hidden", !owner);
           $("#musicRemoveBtn").classList.toggle("hidden", !owner);
           loadShopMusic(shop);
@@ -7338,6 +7528,15 @@
           }
           musicKey = "";
         }
+        function shouldAutoPlayShopMusic(shop) {
+          return !!(
+            shop &&
+            activeShopId === shop.id &&
+            !roomPreviewOnly &&
+            !musicVideoPaused &&
+            !$("#showroomView").classList.contains("hidden")
+          );
+        }
         const durationReads = new Set();
         function hydrateMusicDurations(shop) {
           if (!canEditShop(shop) || typeof Audio === "undefined") return;
@@ -7363,7 +7562,7 @@
           const first = Math.min(tracks.length - 1, Math.max(0, music.startIndex || 0)),
             elapsed = Math.max(
               0,
-              ((music.paused ? music.pausedAt : now) - (music.startedAt || now)) / 1000,
+              (((music.paused && !shouldAutoPlayShopMusic(shop)) ? music.pausedAt : now) - (music.startedAt || now)) / 1000,
             );
           if (music.mode === "single")
             return {
@@ -7388,26 +7587,6 @@
             offset -= duration;
           }
           return { index: first, offset: 0 };
-        }
-        function setMusicTransport(shop, changes) {
-          if (!canEditShop(shop)) return false;
-          const music = shop.music || {},
-            now = Date.now(),
-            position = musicPosition(shop, now);
-          shop.music = { ...music, ...changes };
-          if (changes.index != null || changes.mode) {
-            shop.music.startIndex = changes.index ?? position.index;
-            shop.music.startedAt = now;
-            shop.music.pausedAt = now;
-            delete shop.music.index;
-          } else if (changes.paused === true) {
-            shop.music.pausedAt = now;
-          } else if (changes.paused === false && music.paused) {
-            shop.music.startedAt = (music.startedAt || now) + now - (music.pausedAt || now);
-          }
-          save();
-          loadShopMusic(shop, true);
-          return true;
         }
         async function inspectAudioDuration(file) {
           const url = URL.createObjectURL(file);
@@ -7460,11 +7639,9 @@
                 ? "舊音樂只在此裝置；請重新上傳讓訪客聽見"
                 : "店主需重新上傳音樂，訪客才能播放"
               : track.name || "店內單曲循環";
-          if ($("#musicPlayBtn"))
-            $("#musicPlayBtn").textContent = shop.music.paused ? "播放店內音樂" : "暫停店內音樂";
           if (key === musicKey && !force) {
             if (musicPlayer) {
-              if (shop.music.paused || musicVideoPaused) musicPlayer.pause();
+              if (!shouldAutoPlayShopMusic(shop)) musicPlayer.pause();
               else if (musicPlayer.paused) musicPlayer.play().catch(() => {});
               if (
                 Number.isFinite(musicPlayer.duration) &&
@@ -7489,7 +7666,7 @@
           if (typeof Audio === "undefined") return;
           musicPlayer = musicPlayer || new Audio();
           const audio = musicPlayer;
-          audio.preload = shop.music.paused ? "none" : "auto";
+          audio.preload = shouldAutoPlayShopMusic(shop) ? "auto" : "none";
           const sync = () => {
             if (ticket !== musicTicket || musicKey !== key) return;
             const pos = musicPosition(getShop(shop.id) || shop);
@@ -7500,7 +7677,7 @@
             try {
               audio.currentTime = pos.offset;
             } catch {}
-            if (!shop.music.paused && !musicVideoPaused)
+            if (shouldAutoPlayShopMusic(shop))
               audio.play().catch(() => {
                 if ($("#musicTrackName"))
                   $("#musicTrackName").textContent =
@@ -7530,7 +7707,6 @@
           const shop = getShop(activeShopId);
           if (
             shop &&
-            !shop.music?.paused &&
             !musicVideoPaused &&
             musicPlayer?.paused &&
             !$("#showroomView").classList.contains("hidden")
@@ -7546,7 +7722,7 @@
             if (!supabase || !accountId) throw Error("請先登入並連線 Supabase，才能讓其他訪客聽到店內音樂。");
             if (!file.type.startsWith("audio/")) throw Error("只接受音樂檔案。");
             if (file.size > 10 * 1024 * 1024) throw Error("單曲最多 10 MB，請先轉成較精簡的 MP3 或 AAC。");
-            if (!window.confirm("請確認你創作了這首音樂，或已取得將它上傳並在公開店面播放的授權。音檔會存入 Supabase，供其他訪客串流播放。沒有授權的 Spotify／YouTube 音樂不能轉成背景音源。")) return;
+            if (!window.confirm("上傳後，這首音樂會在店內提供訪客播放。請確認你有權公開播放這個音檔。")) return;
             const duration = await inspectAudioDuration(file);
             const key = shop.id + "-music-" + randomId();
             const publicURL = await uploadCloudMedia(file, `${accountId}/${key}`);
@@ -8382,22 +8558,46 @@
         let placement = null;
         function canEditShop(shop) {
           const current = getShop(shop?.id);
-          if (!current || current !== shop || !isMyShop(current)) return false;
-          try {
-            const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
-            if (Array.isArray(saved)) {
-              const latest = saved.find((s) => s.id === shop.id);
-              if (
-                !latest ||
-                latest.lease?.ownerId !== accountId ||
-                latest.lease.expires <= Date.now()
-              )
-                return false;
-            }
-          } catch {
-            return false;
+          return !!current && isMyShop(current);
+        }
+        async function refreshShopForEdit(shopId) {
+          if (!hasBoundAccount()) throw Error("登入狀態已失效，請重新登入後再儲存。");
+          if (!supabase) {
+            const localShop = getShop(shopId);
+            if (!canEditShop(localShop)) throw Error("店主權限已失效，請重新整理確認租期。");
+            return localShop;
           }
-          return true;
+          const { data, error } = await supabase
+            .from("market_shops")
+            .select("payload,expire_at,owner_id")
+            .eq("id", shopId)
+            .maybeSingle();
+          if (error) throw Error("暫時無法確認店主權限，請檢查網路後重試：" + error.message);
+          if (!data?.payload) throw Error("找不到這間店的雲端資料，請重新整理後再試。");
+          const payload = data.payload;
+          const ownerId = data.owner_id === null
+            ? null
+            : data.owner_id || payload.cloudOwnerId || payload.lease?.ownerId || null;
+          const cloudExpiry = data.expire_at ? Date.parse(data.expire_at) : Number(payload.lease?.expires);
+          const current = {
+            ...payload,
+            cloudOwnerId: ownerId,
+            lease: payload.lease
+              ? {
+                  ...payload.lease,
+                  ...(ownerId ? { ownerId } : {}),
+                  ...(Number.isFinite(cloudExpiry) ? { expires: cloudExpiry } : {}),
+                }
+              : payload.lease,
+            products: payload.products || [],
+            room: payload.room || defaultRoom(),
+          };
+          const shopIndex = shops.findIndex((shop) => shop.id === shopId);
+          if (shopIndex < 0) shops.push(current);
+          else shops[shopIndex] = current;
+          if (!ownerId || ownerId !== accountId || !leaseActive(current))
+            throw Error("店面租期已到期，或目前登入帳號不是店主；請重新整理查看店面狀態。");
+          return current;
         }
         function overlaps(a, b) {
           return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -9683,8 +9883,10 @@
             const button = form.querySelector("[type=submit]");
             button.disabled = true;
             const created = [];
+            let targetShop = null;
             try {
-              if (!canEditShop(shop)) throw Error("只有店主可以修改徵才內容。");
+              targetShop = await refreshShopForEdit(shop.id);
+              if (!canEditShop(targetShop)) throw Error("目前帳號沒有這間店的編輯權限。");
               const fd = new FormData(form),
                 data = {};
               for (const key of [
@@ -9714,12 +9916,12 @@
                 .map((el) => el.value.trim())
                 .filter(Boolean);
               validateJob(data, photos);
-              validateShopCloudImageQuota(shop, photos, index ?? -1);
+              validateShopCloudImageQuota(targetShop, photos, index ?? -1);
               const media = [];
               for (const p of photos) {
                 const copy = { ...p };
                 if (copy.file) {
-                  copy.mediaKey = shop.id + "-job-" + randomId();
+                  copy.mediaKey = targetShop.id + "-job-" + randomId();
                   copy.publicURL = await uploadCloudMedia(copy.file, `${accountId}/${copy.mediaKey}`);
                   await saveMediaBlob(copy.mediaKey, copy.file);
                   created.push(copy.mediaKey);
@@ -9728,8 +9930,9 @@
                 delete copy.tempURL;
                 media.push(copy);
               }
-              if (!canEditShop(shop) || $("#jobForm") !== form)
-                throw Error("編輯已關閉或權限失效。");
+              if ($("#jobForm") !== form) throw Error("編輯已關閉。");
+              targetShop = await refreshShopForEdit(shop.id);
+              if (!canEditShop(targetShop)) throw Error("目前帳號沒有這間店的編輯權限。");
               const listing = {
                 ...(old || {}),
                 title: data.title,
@@ -9742,18 +9945,18 @@
                 externalURL: "",
                 price: "",
                 location: data.location,
-                contacts: [shop.contact || "請聯絡店主"],
+                contacts: [targetShop.contact || "請聯絡店主"],
                 emoji: "💼",
-                expire_at: shop.lease?.expires ? new Date(shop.lease.expires).toISOString() : null,
+                expire_at: targetShop.lease?.expires ? new Date(targetShop.lease.expires).toISOString() : null,
               };
-              if (index == null) shop.products.push(listing);
-              else shop.products[index] = listing;
+              if (index == null) targetShop.products.push(listing);
+              else targetShop.products[index] = listing;
               for (const p of old?.media || [])
                 if (p.mediaKey && !media.some((m) => m.mediaKey === p.mediaKey))
                   deleteMediaBlob(p.mediaKey);
               const replacedCloudKeys = [...collectCloudMediaKeys(old || {})];
               save();
-              scheduleUnusedShopMediaCleanup(shop.id, replacedCloudKeys, accountId);
+              scheduleUnusedShopMediaCleanup(targetShop.id, replacedCloudKeys, accountId);
               drawInterior.key = null;
               closeModal();
               renderShowroom();

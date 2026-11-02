@@ -19,14 +19,14 @@ Prettier 僅用於開發時排版，網頁執行不需要它。
 
 ## 程式碼導覽
 
-`index.html` 保留單檔，避免改變既有啟動及離線開啟方式；HTML、CSS、JavaScript 已統一縮排。主畫面含平台公告與未接廣告服務的版位預留；店主可在店舖設定填寫選用的 `trafficUrl`，店面詳情會顯示外連按鈕。搜尋以下函式可快速找到功能：
+`index.html` 保留單檔，避免改變既有啟動及離線開啟方式；HTML、CSS、JavaScript 已統一縮排。主畫面含平台公告與未接廣告服務的版位預留；店主可在店舖設定新增或刪除最多 10 個引流網址，店面詳情會分別顯示外連按鈕。舊版單一 `trafficUrl` 會相容載入。搜尋以下函式可快速找到功能：
 
 | 區塊 | 函式 |
 | --- | --- |
 | 室外地圖、人物與店面 | drawTown、drawStore、moveStreet |
 | 搜尋與店面列表 | renderShopList、shopType |
 | 室內畫面、移動與相框 | drawInterior、updateInterior、openProductDetails |
-| 租借、退租及店鋪設定 | openRental、endLease、renderEditor。店主可選填導流網址，輸入後會在店鋪詳情顯示外連按鈕 |
+| 租借、退租及店鋪設定 | openRental、endLease、renderEditor。店主可新增或刪除最多 10 個引流網址，店鋪詳情會分別顯示外連按鈕 |
 | 商品／作品登記 | openRegister、validateListing |
 | 徵才登記 | openJobRegister、validateJob。休假制度與可上班日提供常用選項及「其他」自填；條件逐筆新增、刪除並自動編號；薪資可填範圍或單一金額；上班時間可直接輸入或選擇後按鈕確認；工作照片選填 |
 | LOGO 與看板 | initBoardDesign、paintBoard |
