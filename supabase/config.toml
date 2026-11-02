@@ -1,0 +1,2 @@
+[functions.expire-shops]
+verify_jwt = false

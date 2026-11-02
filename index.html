@@ -106,6 +106,10 @@
         color: #386957;
         font-weight: 800;
       }
+      .nav button.announcement-nav {
+        color: #386957;
+        font-weight: 800;
+      }
       .topright {
         display: flex;
         align-items: center;
@@ -237,6 +241,23 @@
         position: relative;
         background: #dceee2;
       }
+      .map-compass {
+        position: absolute;
+        top: 14px;
+        left: 16px;
+        z-index: 2;
+        padding: 7px 12px;
+        border-radius: 12px;
+        background: #ffffffd9;
+        color: #446852;
+        font: 700 10px/1.4 sans-serif;
+        pointer-events: none;
+      }
+      .auth-actions { display:flex; align-items:center; gap:6px; order:-1; }
+      .showroom-auth { margin-left:auto; }
+      .auth-status { max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#466d58; font-size:10px; font-weight:700; }
+      .auth-button { flex:0 0 auto; border:1px solid #dce5dc; border-radius:10px; padding:8px 11px; background:#fff; color:#466d58; font-weight:700; cursor:pointer; white-space:nowrap; }
+      .auth-button.logout { color:#8a564d; }
       .map-wrap canvas {
         display: block;
         width: 100%;
@@ -440,6 +461,30 @@
         background: #a9bbb0;
         cursor: default;
       }
+      #selectedTrafficLink,
+      #shopTrafficLink {
+        display: block;
+        width: 100%;
+        margin-top: 8px;
+        text-align: center;
+      }
+      .announcement-copy p { margin: 0 0 16px; line-height: 1.8; }
+      .announcement-copy p:last-child { margin-bottom: 0; }
+      .ad-slot {
+        width: min(100%, 250px);
+        aspect-ratio: 1;
+        margin: 16px auto 0;
+        display: grid;
+        place-content: center;
+        gap: 8px;
+        border: 1px dashed #b9c9bd;
+        border-radius: 16px;
+        background: linear-gradient(145deg, #f8faf6, #eef3ed);
+        color: #819188;
+        text-align: center;
+      }
+      .ad-slot strong { color: #60776a; font-size: 13px; }
+      .ad-slot span { font-size: 11px; }
       .map-footer {
         display: flex;
         justify-content: space-between;
@@ -454,7 +499,7 @@
       }
       .toast {
         position: fixed;
-        z-index: 20;
+        z-index: 40;
         bottom: 25px;
         left: 50%;
         transform: translateX(-50%);
@@ -976,7 +1021,9 @@
           padding: 0 12px 24px;
         }
         .topbar {
-          height: 66px;
+          height: auto;
+          min-height: 66px;
+          gap: 6px;
         }
         .nav {
           display: none;
@@ -986,6 +1033,8 @@
         }
         .topright {
           gap: 6px;
+          min-width: 0;
+          flex: 0 0 auto;
         }
         .online-pill {
           font-size: 0;
@@ -995,12 +1044,25 @@
           margin: 0;
         }
         .name-field {
-          width: 95px;
+          display: none;
+        }
+        .topright #avatarBtn,
+        .auth-status {
+          display: none;
+        }
+        .auth-actions {
+          flex: 0 0 auto;
+        }
+        .auth-button {
+          padding: 8px 9px;
+          font-size: 12px;
         }
         .heading {
           align-items: flex-start;
+          flex-wrap: wrap;
           padding: 20px 0 13px;
         }
+        .heading-actions { flex-wrap: wrap; }
         .heading h1 {
           font-size: 20px;
         }
@@ -1101,6 +1163,9 @@
           margin-left: auto;
         }
       }
+      @media (max-width: 390px) {
+        .topright .online-pill { display: none; }
+      }
       @media (max-width: 420px) {
         .shop-list {
           grid-template-columns: 1fr 1fr;
@@ -1137,6 +1202,10 @@
           grid-column: 1;
         }
       }
+      @media (max-width: 760px) {
+        .showroom-top { flex-wrap: wrap; }
+        .showroom-auth { order: 0; margin-left: auto; }
+      }
       .first-person-layout {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 310px;
@@ -1152,6 +1221,27 @@
         box-shadow: var(--shadow);
         min-width: 0;
       }
+      .free-look-btn {
+        position: absolute;
+        z-index: 7;
+        top: 50%;
+        right: 12px;
+        max-width: min(190px, calc(100% - 24px));
+        padding: 10px 12px;
+        transform: translateY(-50%);
+        box-shadow: 0 3px 12px #0003;
+      }
+      .touch-controls { display:none; position:absolute; z-index:6; bottom:56px; left:14px; grid-template-columns:repeat(3,48px); grid-template-rows:repeat(2,48px); gap:5px; touch-action:none; }
+      .touch-controls button { border:1px solid #ffffffaa; border-radius:14px; background:#173c32cc; color:white; font-size:20px; font-weight:800; box-shadow:0 3px 10px #0003; touch-action:none; }
+      .touch-controls [data-key="w"] { grid-column:2; grid-row:1; }
+      .touch-controls [data-key="a"] { grid-column:1; grid-row:2; }
+      .touch-controls [data-key="s"] { grid-column:2; grid-row:2; }
+      .touch-controls [data-key="d"] { grid-column:3; grid-row:2; }
+      .touch-action { position:absolute; z-index:6; bottom:72px; right:18px; width:60px; height:60px; border:1px solid #fff; border-radius:50%; background:#c6754d; color:white; font-weight:800; touch-action:none; }
+      .touch-view { position:absolute; z-index:6; right:18px; bottom:142px; display:flex; gap:6px; }
+      .touch-view button { width:44px; height:40px; border:1px solid #fff; border-radius:12px; background:#173c32cc; color:#fff; font-size:18px; touch-action:none; }
+      @media (pointer:coarse), (max-width:760px) { .touch-controls { display:grid; } .touch-action { display:block; } .touch-view { display:flex; } }
+      @media (min-width:761px) and (pointer:fine) { .touch-action,.touch-view { display:none; } }
       .first-person-card canvas {
         display: block;
         width: 100%;
@@ -1314,7 +1404,7 @@
       }
       .provider-options {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
         gap: 7px;
         margin: 10px 0;
       }
@@ -1487,6 +1577,10 @@
         }
       }
       @media (max-width: 650px) {
+        .auth-status { display:none; }
+        .auth-actions { gap:4px; }
+        .auth-button { font-size:10px; padding:7px 8px; white-space:nowrap; }
+        .topright { flex-wrap:wrap; justify-content:flex-end; }
         .topright .soft-btn {
           font-size: 0;
           padding: 9px;
@@ -1604,6 +1698,11 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+      .music-control .music-rights-note {
+        flex-basis: 100%;
+        color: #66786d;
+        font-size: 11px;
       }
       .interior-hud {
         pointer-events: none;
@@ -1957,6 +2056,25 @@
         border-radius: 10px;
         box-shadow: 0 8px 24px #243c3315;
       }
+      .external-video-poster {
+        display: grid;
+        gap: 8px;
+        color: #315f50;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .external-video-poster img {
+        width: 100%;
+        max-height: 360px;
+        object-fit: contain;
+        background: #eef3ed;
+      }
+      .awkward-smile {
+        width: 22px;
+        height: 22px;
+        vertical-align: middle;
+      }
       .premium-detail aside {
         padding: 18px 8px;
       }
@@ -2053,7 +2171,7 @@
           </div>
           <nav class="nav">
             <button class="active">島嶼散步</button><button id="navShops">店鋪列表</button
-            ><button id="navHelp">怎麼玩</button>
+            ><button id="navHelp">怎麼玩</button><button id="navAnnouncement" class="announcement-nav">公告</button>
           </nav>
           <div class="topright">
             <span class="online-pill" id="connectionPill"
@@ -2065,6 +2183,7 @@
               aria-label="你的暱稱"
               placeholder="輸入暱稱"
             /><button class="soft-btn" id="avatarBtn" type="button">🧑‍🎨 角色造型</button>
+          <div class="auth-actions"><span id="authStatus" class="auth-status">訪客模式</span><button class="auth-button" id="accountButton" type="button">登入</button><button class="auth-button logout hidden" id="logoutButton" type="button">登出</button></div>
           </div>
         </header>
         <section class="heading">
@@ -2075,6 +2194,7 @@
           </div>
           <div class="heading-actions">
             <button class="soft-btn" id="showHelp">⌘　操作說明</button
+            ><button class="outline-btn" id="announcementBtn">平台公告</button
             ><button class="outline-btn" id="previewRoomBtn">預覽第一人稱室內　◉</button
             ><button class="primary-btn" id="openSelectedTop">前往選中的店　↗</button>
           </div>
@@ -2086,6 +2206,10 @@
               ><span>海島商圈 · 公園與海岸　·　接近正面入口按 E</span>
             </div>
             <div class="map-wrap">
+              <div class="map-compass">無人島 · V12</div>
+              <div class="touch-controls" aria-label="觸控移動">
+                <button type="button" data-key="w" aria-label="向前">↑</button><button type="button" data-key="a" aria-label="向左">←</button><button type="button" data-key="s" aria-label="向後">↓</button><button type="button" data-key="d" aria-label="向右">→</button>
+              </div><button class="touch-action" type="button" data-touch-action="street" aria-label="互動">E<br>互動</button>
               <canvas
                 id="town"
                 width="1100"
@@ -2116,6 +2240,7 @@
               <b id="selectedName">選一家店開始逛</b
               ><small id="selectedBlurb">走近店門就能進入室內展廳。</small
               ><button id="enterShopBtn" disabled>先選一間店</button>
+              <a id="selectedTrafficLink" class="outline-btn hidden" target="_blank" rel="noopener noreferrer" hidden>↗ 前往店家網站</a>
             </div>
             <div class="side-divider"></div>
             <div class="walkers-head">街上遇見 <span id="walkerCount">4 位散步客</span></div>
@@ -2123,6 +2248,10 @@
             <div class="connection-note">
               <b>多人連線原型</b><br />同一網址多開分頁可看見角色並文字聊天。20
               萬人規模需另接伺服器、即時訊息與媒體儲存，目前此頁不代表正式容量。
+            </div>
+            <div class="ad-slot" aria-label="廣告預留版位">
+              <strong>廣告預留版位</strong>
+              <span>保留給未來的合作夥伴</span>
             </div>
           </aside>
         </main>
@@ -2136,6 +2265,7 @@
           <small>FIRST-PERSON SHOWROOM</small>
           <h1 id="showroomName">店內展廳</h1>
         </div>
+        <div class="auth-actions showroom-auth"><span id="roomAuthStatus" class="auth-status">訪客模式</span><button class="auth-button" id="roomAccountButton" type="button">登入</button><button class="auth-button logout hidden" id="roomLogoutButton" type="button">登出</button></div>
         <button id="ownerModeBtn" class="owner-btn">✦　店舖設定</button>
       </div>
       <section class="first-person-layout">
@@ -2146,6 +2276,9 @@
             height="700"
             aria-label="第一人稱室內展廳，可用鍵盤走動、滑鼠拖曳轉向並點選牆上作品"
           ></canvas>
+          <div class="touch-controls" aria-label="室內觸控移動">
+            <button type="button" data-key="w" aria-label="向前">↑</button><button type="button" data-key="a" aria-label="向左移動">←</button><button type="button" data-key="s" aria-label="向後">↓</button><button type="button" data-key="d" aria-label="向右移動">→</button>
+          </div><div class="touch-view"><button type="button" data-turn="-1" aria-label="向左轉視角">↶</button><button type="button" data-turn="1" aria-label="向右轉視角">↷</button></div><button class="touch-action" type="button" data-touch-action="room" aria-label="查看作品">E<br>查看</button>
           <div class="interior-hud">
             <span
               ><i>W</i><i>A</i><i>S</i><i>D</i> 走動　　拖曳 / ← → 看向　　按 E 或點相框觀看</span
@@ -2176,8 +2309,10 @@
             <b>聯絡店主</b>
             <p id="shopContact">店主還沒有填寫聯絡資訊。</p>
             <button id="contactOwnerBtn">✉　詢問商品或合作</button>
+            <a id="shopTrafficLink" class="outline-btn hidden" target="_blank" rel="noopener noreferrer" hidden>↗ 前往店家網站</a>
           </div>
           <div id="ownerOrdersLink" class="hidden" style="margin-top: 10px">
+            <button class="outline-btn" id="viewDmInboxBtn" style="width: 100%;margin-bottom:8px">查看店主私訊</button>
             <button class="outline-btn" id="viewOrdersBtn" style="width: 100%">
               查看收到的詢問
             </button>
@@ -2259,7 +2394,7 @@
             color: "#9ebd8d",
             tagline: "一點綠意，讓房間慢下來。",
             owner: "阿青",
-            contact: "LINE：@greenwindow\nInstagram：@plant_lab",
+            contact: "Instagram：@plant_lab",
             about:
               "為城市房間挑選好照顧的小植物，也分享植栽照護與陽台佈置。歡迎帶著你的空間照片來聊聊！",
             products: [
@@ -2617,19 +2752,19 @@
           return !!(s && s.lease && s.lease.expires > Date.now());
         }
         function isMyShop(s) {
-          return leaseActive(s) && s.lease.ownerId === accountId;
+          return hasBoundAccount() && leaseActive(s) && s.lease.ownerId === accountId;
         }
+        function hasBoundAccount() { return !!authUser && !authUser.is_anonymous && !!accountId; }
         function availableShop(s) {
           return !!s && !s.destroyed && !leaseActive(s);
         }
         const randomId = () =>
           globalThis.crypto?.randomUUID?.() ||
           "id" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-        let accountId = localStorage.getItem(ACCOUNT_KEY);
-        if (!accountId) {
-          accountId = randomId();
-          localStorage.setItem(ACCOUNT_KEY, accountId);
-        }
+        let authUser = null,
+          authStatusError = "",
+          accountId = null,
+          accountChangeTimer = 0;
         let playerName = localStorage.getItem(NAME_KEY) || "巷口旅人",
           playerId = randomId(),
           playerAvatar = loadAvatar();
@@ -2637,9 +2772,18 @@
         const SUPABASE_URL = "https://cfokmnfzpcqgenueivex.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_7KvE4UGM_byYhI7yUIjitQ_-7H8E7dT";
         const supabase = SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase
-          ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+          ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+              auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+              },
+            })
           : null;
-        let cloudChannel = null, cloudSaveTimer = 0, cloudChatChannel = null, activeDm = null;
+        let cloudChannel = null, cloudChannels = new Map(), cloudCellKey = "", cloudSaveTimer = 0, cloudChatChannel = null, activeDm = null,
+          activeDmRecipient = null, activeDmShopId = null,
+          cloudRealtimeStatus = "INITIALIZING", cloudPresenceTimer = 0, cloudLastBroadcast = 0,
+          cloudLastX = null, cloudLastY = null;
         let shops = loadShops(),
           orders = loadOrders(),
           activeShopId = null,
@@ -2648,6 +2792,11 @@
           toastTimer,
           selectedProductIndex = -1;
         let player = { x: 606, y: 586, targetX: null, targetY: null, face: 1 };
+        let streetPointerId = null;
+        // Guest players need no sign-in. Offset each tab's spawn so visitors do not hide inside one another.
+        const spawnSeed = parseInt(playerId.replace(/[^0-9a-f]/gi, "").slice(-6) || "0", 16);
+        player.x += ((spawnSeed % 7) - 3) * 18;
+        player.y += ((Math.floor(spawnSeed / 7) % 7) - 3) * 14;
         let roomPlayer = { x: 500, y: 1080, yaw: 0 },
           roomFrames = [],
           roomLookPointer = null,
@@ -2718,17 +2867,7 @@
               trim: "#fff4df",
               style: EXTERIOR_STYLES[Math.floor(Math.random() * EXTERIOR_STYLES.length)][1],
             };
-            if (![0, 3].includes(i)) {
-              Object.assign(s, emptyShop(s, i));
-            } else {
-              s.lease = {
-                ownerId: "showcase-" + s.id,
-                ownerName: s.owner,
-                provider: "示範店主",
-                duration: 30,
-                expires: Date.now() + 30 * 86400000,
-              };
-            }
+            Object.assign(s, emptyShop(s, i));
           });
           return list;
         }
@@ -2738,29 +2877,47 @@
             if (Array.isArray(saved) && saved.length) {
               return saved
                 .filter((s) => s && typeof s.id === "string")
-                .map((s) => ({
+                .map((s, i) => {
+                  if (String(s.lease?.ownerId || "").startsWith("showcase-") || s.lease?.provider === "示範店主")
+                    return emptyShop(s, i);
+                  return ({
                   ...s,
                   products: s.products || [],
                   room: s.room || defaultRoom(),
                   exterior: s.exterior || { style: "awning" },
                   lease: s.lease || null,
-                }));
+                  });
+                });
             }
           } catch {}
           return freshShops();
         }
         function loadOrders() {
           try {
-            const o = JSON.parse(localStorage.getItem(STORE_KEY + "-orders"));
+            const o = JSON.parse(localStorage.getItem(STORE_KEY + "-orders-" + (accountId || "guest")));
             return Array.isArray(o) ? o : [];
           } catch (e) {
             return [];
           }
         }
+        function clearLocalOrdersForShop(shopId) {
+          orders = orders.filter((order) => order.shopId !== shopId && order.shop !== shopId);
+          const prefix = STORE_KEY + "-orders-";
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key?.startsWith(prefix)) continue;
+            try {
+              const savedOrders = JSON.parse(localStorage.getItem(key) || "[]");
+              if (!Array.isArray(savedOrders)) continue;
+              const filtered = savedOrders.filter((order) => order.shopId !== shopId && order.shop !== shopId);
+              if (filtered.length !== savedOrders.length) localStorage.setItem(key, JSON.stringify(filtered));
+            } catch {}
+          }
+        }
         function save() {
           try {
             localStorage.setItem(STORE_KEY, JSON.stringify(shops));
-            localStorage.setItem(STORE_KEY + "-orders", JSON.stringify(orders));
+            localStorage.setItem(STORE_KEY + "-orders-" + (accountId || "guest"), JSON.stringify(orders));
           } catch (e) {
             toast("瀏覽器儲存空間不足。媒體檔另存於本機瀏覽器 IndexedDB。");
           }
@@ -2769,44 +2926,287 @@
               type: "shops",
               from: playerId,
               shops,
-              orders,
             });
           if (supabase) {
             clearTimeout(cloudSaveTimer);
             cloudSaveTimer = setTimeout(async () => {
-              const rows = shops.map((s) => ({ id: s.id, payload: s, expire_at: s.lease?.expires ? new Date(s.lease.expires).toISOString() : null }));
-              const { error } = await supabase.from("market_shops").upsert(rows);
-              if (error) console.error("Supabase 店面儲存失敗", error);
+              if (!accountId) return;
+              const rows = shops.filter((s) => s.cloudOwnerId === accountId).map((s) => {
+                const spot = shopSpots[shops.indexOf(s)];
+                if (!s.position && spot) s.position = { x: spot.x, y: spot.y };
+                return {
+                  id: s.id, owner_id: s.lease && leaseActive(s) ? accountId : null, payload: s,
+                  expire_at: s.lease?.expires ? new Date(s.lease.expires).toISOString() : null,
+                };
+              });
+              if (!rows.length) return;
+              const { error } = await supabase.from("market_shops").upsert(rows, { onConflict: "id" });
+              if (error) {
+                console.error("Supabase 店面儲存失敗", error);
+                if (error.code === "23514" && /MARKET_SHOP_OVERLAP/.test(error.message || "")) {
+                  toast("這個位置剛被其他玩家選走，正在更新地圖位置。請重新確認店面位置。");
+                  await refreshCloudShops();
+                } else toast(`店面雲端儲存失敗：${error.message}`);
+              }
             }, 350);
           }
         }
+        const GAME_DATA_RESET_KEY = "market-reset-all-game-data-v2";
+        function clearLocalGameDataForReset() {
+          if (localStorage.getItem(GAME_DATA_RESET_KEY)) return false;
+          shops = freshShops();
+          orders = [];
+          playerName = "巷口旅人";
+          playerAvatar = { ...AVATAR_DEFAULT };
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (
+              key === NAME_KEY || key === AVATAR_KEY || key?.startsWith(STORE_KEY + "-orders-") ||
+              key === "market-bike-racks-v6" || key === "island-loose-bikes-v9" ||
+              key === "market-music-volume"
+            ) localStorage.removeItem(key);
+          }
+          localStorage.setItem(GAME_DATA_RESET_KEY, "1");
+          save();
+          openMediaDB().then((db) => new Promise((resolve) => {
+            const tx = db.transaction("assets", "readwrite");
+            tx.objectStore("assets").clear();
+            tx.oncomplete = resolve;
+            tx.onerror = resolve;
+            tx.onabort = resolve;
+          })).catch(() => {}).finally(() => location.replace(location.pathname));
+          return true;
+        }
+        function renderAccountState() {
+          const permanent = hasBoundAccount();
+          $("#accountButton").textContent = permanent ? "已登入" : "登入";
+          $("#accountButton").title = permanent ? "已登入帳號" : "登入或建立帳號以租店和管理店面";
+          $("#authStatus").textContent = permanent
+            ? `已登入 · ${authUser.email || authUser.user_metadata?.full_name || authUser.app_metadata?.provider || "已綁定帳號"}`
+            : authStatusError ? `登入未完成 · ${authStatusError}` : authUser ? "訪客模式 · 尚未登入" : "訪客模式 · 連線中";
+          $("#logoutButton").classList.toggle("hidden", !permanent);
+          $("#roomAccountButton").textContent = permanent ? "已登入" : "登入";
+          $("#roomAccountButton").title = permanent ? "已登入帳號" : "登入或建立帳號以管理店面";
+          $("#roomAuthStatus").textContent = permanent
+            ? `已登入 · ${authUser.email || authUser.user_metadata?.full_name || "已驗證帳號"}`
+            : authStatusError ? "登入未完成 · " + authStatusError : authUser ? "訪客模式 · 尚未登入" : "訪客模式 · 連線中";
+          $("#roomLogoutButton").classList.toggle("hidden", !permanent);
+          $("#buildShopBtn")?.classList.toggle("hidden", !permanent);
+          renderShopList(); renderSelectedBox();
+        }
+        function handleAuthUser(user, event = "INITIAL_SESSION") {
+          const oldId = accountId, wasBound = hasBoundAccount();
+          if (event === "INITIAL_SESSION" && !user && wasBound) return;
+          if (oldId !== (user?.id || null) && parkRide) stopParkRide();
+          authUser = user || null;
+          accountId = authUser?.id || null;
+          if (hasBoundAccount()) authStatusError = "";
+          if (oldId !== accountId) {
+            chatItems = []; activeDm = null; activeDmRecipient = null; activeDmShopId = null; orders = loadOrders(); cloudChatChannel?.unsubscribe(); cloudChatChannel = null;
+            remotePlayers.clear();
+            if (activeShopId && !isMyShop(getShop(activeShopId))) {
+              ownerMode = false; $("#ownerEditor")?.classList.add("hidden");
+              if (!$("#showroomView").classList.contains("hidden")) renderShowroom();
+            }
+          }
+          renderAccountState(); renderWalkers(); renderChat();
+          if (!wasBound && hasBoundAccount() && ["SIGNED_IN", "USER_UPDATED"].includes(event))
+            toast("登入完成，現在可租店與管理自己的店面。");
+        }
+        function openAccountModal() {
+          const bound = hasBoundAccount();
+          showModal(bound ? "帳號已登入" : "登入或建立帳號",
+            `<p class="about-text">${bound ? `目前登入：${esc(authUser.email || authUser.user_metadata?.full_name || "已驗證帳號")}。` : "登入後即可租店及管理自己的店面。第一次使用 Google、Facebook 或電子郵件會建立帳號；之後使用相同方式登入。訪客資料不會自動併入帳號。"}</p>${bound ? `<div class="modal-actions"><button type="button" class="outline-btn cancel-modal">關閉</button></div>` : `<div class="provider-options"><button type="button" class="outline-btn" data-auth-provider="google">使用 Google 登入／註冊</button><button type="button" class="outline-btn" data-auth-provider="facebook">使用 Facebook 登入／註冊</button></div><p id="authError" class="listing-error" role="status" aria-live="polite"></p><form id="emailAuthForm" class="listing-form"><label>電子郵件登入（選用）<input name="email" type="email" autocomplete="email" required placeholder="輸入電子郵件以接收登入連結"></label><button class="primary-btn" type="submit">寄送登入連結</button></form><p class="about-text">登入狀態會保存在這個瀏覽器。關閉頁面後再開啟通常仍會保持登入；登出、清除網站資料或改用其他裝置時，才需要重新登入。</p>`}`);
+          $("#modalContent").querySelector(".close-modal").onclick = closeModal;
+          if (!bound && authStatusError) $("#authError").textContent = authStatusError;
+          const cancelButton = $("#modalContent").querySelector(".cancel-modal");
+          if (cancelButton) cancelButton.onclick = closeModal;
+          $("#modalContent").querySelectorAll("[data-auth-provider]").forEach((b) => b.onclick = async () => {
+            const provider = b.dataset.authProvider;
+            if (!supabase) { $("#authError").textContent = "Supabase 尚未連線，請確認網路與初始化狀態。"; return; }
+            authStatusError = "";
+            b.disabled = true;
+            $("#authError").textContent = `正在前往 ${provider === "google" ? "Google" : "Facebook"} 驗證…`;
+            try {
+              const result = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: authRedirectURL() } });
+              if (result?.error) throw result.error;
+              if (!result?.data?.url) $("#authError").textContent = "驗證要求已送出，請依服務商畫面完成確認。";
+            } catch (err) { authStatusError = `登入失敗：${err.message}`; $("#authError").textContent = authStatusError; b.disabled = false; renderAccountState(); }
+          });
+          $("#emailAuthForm")?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = String(new FormData(e.currentTarget).get("email") || "").trim();
+            try {
+              if (!supabase) throw Error("Supabase 尚未連線，請稍後重試。");
+              authStatusError = "";
+              const result = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: authRedirectURL(), shouldCreateUser: true } });
+              if (result.error) throw result.error;
+              $("#authError").textContent = "登入連結已寄出，請開啟信件完成驗證；返回遊戲後會顯示「已登入」。";
+            } catch (err) { authStatusError = `電子郵件登入失敗：${err.message}`; $("#authError").textContent = authStatusError; renderAccountState(); }
+          });
+        }
+        function authCallbackIssue() {
+          const query = new URLSearchParams(location.search);
+          const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
+          const description = query.get("error_description") || hash.get("error_description");
+          const code = query.get("error_code") || query.get("error") || hash.get("error_code") || hash.get("error");
+          const message = code === "identity_already_exists"
+            ? "這個 Google／Facebook 身分已有帳號，請再次使用相同的登入方式；訪客資料不會自動合併。"
+            : description || code || "";
+          return {
+            attempted: query.has("code") || query.has("token_hash") || query.has("type") || hash.has("access_token") || hash.has("error") || hash.has("error_code"),
+            message,
+          };
+        }
+        function authRedirectURL() {
+          return `${location.origin}${location.pathname}`;
+        }
+        async function logoutAccount() {
+          if (!supabase || !authUser) return;
+          const { error } = await supabase.auth.signOut();
+          if (error) { toast(`登出失敗：${error.message}`); return; }
+          handleAuthUser(null, "SIGNED_OUT");
+          const { data, error: guestError } = await supabase.auth.signInAnonymously();
+          if (guestError) console.error("訪客工作階段重建失敗", guestError);
+          else handleAuthUser(data.user, "SIGNED_IN");
+          toast("已登出；目前為訪客，不能管理原帳號的店面。");
+        }
+        async function refreshCloudShops() {
+          if (!supabase) return;
+          const { data, error } = await supabase.from("market_shops").select("payload,expire_at,owner_id").or(`expire_at.is.null,expire_at.gt.${new Date().toISOString()}`);
+          if (error) { console.error("Supabase 店面載入失敗", error); return; }
+          if (!data) return;
+          if (data.some((row) => row.payload?.gameDataResetVersion === 2) &&
+              clearLocalGameDataForReset()) return;
+          const map = new Map(shops.map((s) => [s.id, s]));
+          data.forEach((row) => { const s=row.payload; if (s?.id) map.set(s.id,{...s,cloudOwnerId:row.owner_id || s.cloudOwnerId,products:s.products||[],room:s.room||defaultRoom()}); });
+          shops=[...map.values()]; const positionsChanged=syncShopPositions(); clearDemolishedState(); renderShopList(); renderSelectedBox(); if(activeShopId)renderShowroom(); if(positionsChanged)save();
+          if (activeDmShopId) {
+            const dmShop = getShop(activeDmShopId);
+            if (!leaseActive(dmShop) || (dmShop.lease.ownerId !== accountId && dmShop.lease.ownerId !== activeDmRecipient))
+              clearShopDm(activeDmShopId);
+          }
+        }
+        function renderRemotePlayers() {
+          const now = Date.now();
+          for (const [id, p] of remotePlayers) if (now - (p.at || 0) > 12000) remotePlayers.delete(id);
+          const nearby = [...remotePlayers.values()]
+            .filter((p) => p.id !== playerId && Number.isFinite(p.x) && Number.isFinite(p.y) && Math.hypot(p.x-player.x,p.y-player.y) <= 600)
+            .sort((a,b) => Math.hypot(a.x-player.x,a.y-player.y)-Math.hypot(b.x-player.x,b.y-player.y));
+          const visible = new Map(nearby.slice(0, 20).map((p) => [p.id, p]));
+          remotePlayers = visible;
+          renderWalkers();
+        }
+        async function updateAoiChannels() {
+          if (!supabase) return;
+          const cx = Math.floor(player.x / 600), cy = Math.floor(player.y / 600);
+          const wanted = new Set();
+          for (let y = cy - 1; y <= cy + 1; y++) for (let x = cx - 1; x <= cx + 1; x++) wanted.add(`${x},${y}`);
+          const nextCell = `${cx},${cy}`;
+          if (cloudCellKey && cloudCellKey !== nextCell) cloudChannels.get(cloudCellKey)?.untrack();
+          for (const [cell, ch] of cloudChannels) {
+            if (wanted.has(cell)) continue;
+            cloudChannels.delete(cell);
+            supabase.removeChannel(ch);
+          }
+          for (const cell of wanted) {
+            if (cloudChannels.has(cell)) continue;
+            const [x,y] = cell.split(",").map(Number);
+            const ch = supabase.channel(`island-aoi-${x}-${y}`, { config: { presence: { key: playerId }, broadcast: { self: false } } });
+            ch.on("presence", { event: "sync" }, () => {
+              Object.values(ch.presenceState()).flat().forEach((p) => {
+                if (p.id !== playerId && (!remotePlayers.has(p.id) || (remotePlayers.get(p.id).at || 0) < (p.at || 0)))
+                  remotePlayers.set(p.id, { ...p });
+              });
+              renderRemotePlayers();
+            }).on("presence", { event: "join" }, ({ newPresences }) => {
+              newPresences.forEach((p) => { if (p.id !== playerId) remotePlayers.set(p.id, { ...p }); });
+              renderRemotePlayers();
+            }).on("presence", { event: "leave" }, ({ key }) => {
+              if (![...cloudChannels.values()].some((other) => Object.values(other.presenceState()).flat().some((p) => p.id === key))) remotePlayers.delete(key);
+              renderRemotePlayers();
+            }).on("broadcast", { event: "position" }, ({ payload }) => {
+              if (!payload || payload.id === playerId) return;
+              if (Math.hypot(payload.x-player.x,payload.y-player.y) <= 600) remotePlayers.set(payload.id, { ...payload, at: Date.now() });
+              else remotePlayers.delete(payload.id);
+              renderRemotePlayers();
+            }).subscribe(async (status) => {
+              if (cell === cloudCellKey) cloudRealtimeStatus = status;
+              if (status === "SUBSCRIBED" && cell === cloudCellKey) {
+                await ch.track({ id: playerId, name: playerName, x: player.x, y: player.y, at: Date.now() });
+                renderWalkers();
+              }
+              if (["CHANNEL_ERROR", "TIMED_OUT"].includes(status)) {
+                console.warn("AOI 頻道連線失敗", cell, status);
+                if (cell === cloudCellKey) toast("多人連線中斷，請重新整理或稍後再試。");
+              }
+            });
+            cloudChannels.set(cell, ch);
+          }
+          cloudCellKey = nextCell;
+          cloudChannel = cloudChannels.get(nextCell) || null;
+          if (cloudChannel?.state === "joined") {
+            cloudRealtimeStatus = "SUBSCRIBED";
+            await cloudChannel.track({ id: playerId, name: playerName, x: player.x, y: player.y, at: Date.now() });
+          } else cloudRealtimeStatus = "CONNECTING";
+          renderRemotePlayers();
+        }
         async function initSupabase() {
           if (!supabase) return;
-          const now = new Date().toISOString();
-          const { data, error } = await supabase.from("market_shops").select("payload,expire_at").or(`expire_at.is.null,expire_at.gt.${now}`);
-          if (error) { console.error("Supabase 載入店面失敗", error); toast("雲端連線失敗，暫時使用本機資料。"); return; }
-          if (data?.length) {
-            const cloud = data.map((r) => r.payload).filter((s) => s && typeof s.id === "string");
-            const merged = new Map(shops.map((s) => [s.id, s]));
-            cloud.forEach((s) => merged.set(s.id, { ...s, products: s.products || [], room: s.room || defaultRoom() }));
-            shops = [...merged.values()]; syncShopPositions(); clearDemolishedState();
-            renderShopList(); renderSelectedBox(); if (activeShopId) renderShowroom();
-          } else save();
-          cloudChannel = supabase.channel("island-presence", { config: { presence: { key: playerId }, broadcast: { self: false } } });
-          cloudChannel.on("presence", { event: "sync" }, () => {
-            remotePlayers.clear();
-            Object.values(cloudChannel.presenceState()).flat().forEach((p) => { if (p.id !== playerId && Math.hypot(p.x-player.x,p.y-player.y) <= 600) remotePlayers.set(p.id, { ...p, at: Date.now() }); }); renderWalkers();
-          }).on("broadcast", { event: "position" }, ({ payload }) => {
-            if (!payload || payload.id === playerId) return;
-            if (Math.hypot(payload.x-player.x,payload.y-player.y) <= 600) remotePlayers.set(payload.id, { ...payload, at: Date.now() }); else remotePlayers.delete(payload.id);
-            renderWalkers();
-          }).on("broadcast", { event: "shops" }, async () => {
-            const { data: fresh } = await supabase.from("market_shops").select("payload,expire_at").or(`expire_at.is.null,expire_at.gt.${new Date().toISOString()}`);
-            if (fresh) { const map = new Map(shops.map((s) => [s.id,s])); fresh.forEach((r) => map.set(r.payload.id,r.payload)); shops=[...map.values()]; syncShopPositions(); renderShopList(); renderSelectedBox(); if(activeShopId)renderShowroom(); }
-          }).subscribe(async (status) => { if (status === "SUBSCRIBED") { await cloudChannel.track({id:playerId,name:playerName,x:player.x,y:player.y,at:Date.now()}); toast("已連接 Supabase 多人服務。"); } });
-          const beat = () => { if (!cloudChannel) return; const p={id:playerId,name:playerName,x:player.x,y:player.y,at:Date.now()}; cloudChannel.track(p); cloudChannel.send({type:"broadcast",event:"position",payload:p}); };
-          setInterval(beat, 180); window.addEventListener("pagehide", () => cloudChannel?.untrack());
-          supabase.channel("market-shops-changes").on("postgres_changes", {event:"*",schema:"public",table:"market_shops"}, () => cloudChannel?.send({type:"broadcast",event:"shops",payload:{}})).subscribe();
+          const callback = authCallbackIssue();
+          supabase.auth.onAuthStateChange((event, session) => {
+            clearTimeout(accountChangeTimer);
+            accountChangeTimer = setTimeout(() => {
+              // INITIAL_SESSION may emit null while getSession() is still resolving.
+              // The explicit getSession result below is authoritative during startup.
+              if (event === "INITIAL_SESSION" && !session?.user) return;
+              handleAuthUser(session?.user || null, event);
+              if (session?.user) { refreshCloudShops(); refreshParkSessions(); }
+            }, 0);
+          });
+          let { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) {
+            console.error("Supabase 工作階段讀取失敗", sessionError);
+            authStatusError = `無法還原登入狀態：${sessionError.message}`;
+          }
+          if (!sessionData?.session) {
+            if (callback.message) {
+              authStatusError = `登入未完成：${callback.message}`;
+              history.replaceState(history.state, "", location.pathname);
+            } else if (callback.attempted) {
+              authStatusError = "驗證已返回遊戲，但沒有建立登入工作階段。請重試；若持續發生，請檢查 OAuth 供應商回呼網址。";
+            }
+            const { data, error: authError } = await supabase.auth.signInAnonymously();
+            if (authError) {
+              console.error("訪客工作階段建立失敗；請在 Supabase 開啟 Anonymous Sign-ins", authError);
+              authStatusError = "訪客連線失敗：" + authError.message;
+            }
+            sessionData = { session: data?.session || null };
+          }
+          handleAuthUser(sessionData?.session?.user || null);
+          if (sessionData?.session?.user) {
+            await refreshParkSessions();
+            if (hasBoundAccount()) toast("已登入帳號：店舖權限已載入。");
+          }
+          await refreshCloudShops();
+          cloudRealtimeStatus = "SUBSCRIBED";
+          await updateAoiChannels();
+          toast("多人連線中；位置只傳送給周圍 600 像素內的玩家。");
+          window.addEventListener("pagehide", () => {
+            clearInterval(cloudPresenceTimer); cloudChannels.forEach((ch) => { ch.untrack(); supabase.removeChannel(ch); }); cloudChannels.clear(); clearInterval(parkRenewTimer);
+            if (parkRide && authUser) supabase.rpc("release_park_facility", { p_facility_id: parkRide.facility.id, p_session_id: parkRide.sessionKey });
+          });
+          supabase.channel("market-shops-changes").on("postgres_changes", {event:"*",schema:"public",table:"market_shops"}, ({ eventType, new: row, old }) => {
+            const changed = row?.payload?.id ? row : null;
+            if (changed) {
+              const updated = changed.payload;
+              const i = shops.findIndex((s) => s.id === updated.id);
+              if (i >= 0) shops[i] = { ...shops[i], ...updated, cloudOwnerId: changed.owner_id || updated.cloudOwnerId, products: updated.products || [], room: updated.room || defaultRoom() };
+              else shops.push({ ...updated, cloudOwnerId: changed.owner_id || updated.cloudOwnerId, products: updated.products || [], room: updated.room || defaultRoom() });
+              syncShopPositions(); clearDemolishedState(); renderShopList(); renderSelectedBox(); if (activeShopId) renderShowroom();
+            } else if (eventType === "DELETE" && old?.id) refreshCloudShops();
+          }).subscribe();
+          supabase.channel("park-occupancy").on("postgres_changes", {event:"*",schema:"public",table:"park_sessions"}, refreshParkSessions).subscribe();
         }
         const getShop = (id) => shops.find((s) => s.id === id);
         function toast(msg) {
@@ -2881,12 +3281,19 @@
           if ($("#goShopBtn")) $("#goShopBtn").classList.add("hidden");
           const s = getShop(selectedShopId);
           if (!s) {
+            $("#selectedTrafficLink").hidden = true;
+            $("#selectedTrafficLink").classList.add("hidden");
             $("#selectedName").textContent = "選一家店開始逛";
             $("#selectedBlurb").textContent = "店面亮起來後，可租借或進入展廳。";
             $("#enterShopBtn").textContent = "先選一間店";
             $("#enterShopBtn").disabled = true;
             return;
           }
+          const trafficLink = $("#selectedTrafficLink");
+          const validTrafficLink = safeLink(s.trafficUrl || "");
+          trafficLink.hidden = !validTrafficLink;
+          trafficLink.classList.toggle("hidden", !validTrafficLink);
+          if (validTrafficLink) trafficLink.href = s.trafficUrl;
           const near = distanceToDoor(s) < 75;
           $("#selectedName").textContent = `${s.emoji}　${s.name}`;
           $("#selectedBlurb").textContent = near
@@ -2918,6 +3325,11 @@
           else openShop(s.id);
         }
         function openRental(s) {
+          if (!hasBoundAccount()) {
+            toast("請先登入或綁定帳號；店面所有權會綁定到你的 Supabase 帳號。");
+            openAccountModal();
+            return;
+          }
           if (leaseCount() >= 2) {
             showModal(
               "已達租店上限",
@@ -2926,18 +3338,7 @@
             return;
           }
           $("#modalContent").innerHTML =
-            `<div class="modal-head"><h2>租下「${esc(s.name)}」</h2><button class="close-modal" type="button">×</button></div><p class="about-text">選擇租期和帳號綁定方式。這裡是本機示範，不會真的登入 Google、Facebook 或 LINE。</p><form id="rentalForm">${shopTypeField("sale")}<div class="field"><label>店主名稱</label><input name="owner" maxlength="18" value="${esc(playerName)}" required></div><div class="field"><label>租借時間</label><div class="rental-options">${[3, 7, 15, 30].map((n, i) => `<label><input type="radio" name="days" value="${n}" ${i === 1 ? "checked" : ""}> ${n} 天</label>`).join("")}</div></div><div class="field"><label>示範帳號綁定方式（正式 OAuth 尚未連接）</label><div class="provider-options">${[
-              ["Google", "🌐"],
-              ["Facebook", ""],
-              ["LINE", "💬"],
-            ]
-              .map(
-                ([n, icon], i) =>
-                  `<label><input type="radio" name="provider" value="${n}" ${i === 0 ? "checked" : ""}> ${icon} ${n}</label>`,
-              )
-              .join(
-                "",
-              )}</div></div><p class="expired-note">租期到期會清除該店的商品、媒體與裝潢資料。正式版本需由伺服器執行到期清理並驗證帳號。</p><div class="modal-actions"><button type="button" class="outline-btn cancel-modal">取消</button><button type="submit" class="primary-btn">確認租用</button></div></form>`;
+            `<div class="modal-head"><h2>租下「${esc(s.name)}」</h2><button class="close-modal" type="button">×</button></div><p class="about-text">店面會綁定到目前已驗證的帳號：${esc(authUser.email || authUser.user_metadata?.full_name || "已登入帳號")}。</p><form id="rentalForm">${shopTypeField("sale")}<div class="field"><label>店主名稱</label><input name="owner" maxlength="18" value="${esc(playerName)}" required></div><div class="field"><label>租借時間</label><div class="rental-options">${[3, 7, 15, 30].map((n, i) => `<label><input type="radio" name="days" value="${n}" ${i === 1 ? "checked" : ""}> ${n} 天</label>`).join("")}</div></div><div class="field"><label>身分驗證</label><p class="about-text">已由 Supabase Auth 完成帳號驗證。</p></div><div class="modal-actions"><button type="button" class="outline-btn cancel-modal">取消</button><button type="submit" class="primary-btn">確認租用</button></div></form>`;
           $("#modalBackdrop").classList.remove("hidden");
           $("#modalContent").querySelector(".close-modal").onclick = closeModal;
           $("#modalContent").querySelector(".cancel-modal").onclick = closeModal;
@@ -2945,7 +3346,7 @@
             e.preventDefault();
             const fd = new FormData(e.currentTarget),
               days = Number(fd.get("days")),
-              provider = String(fd.get("provider"));
+              provider = authUser.app_metadata?.provider || "account";
             if (!availableShop(getShop(s.id))) {
               closeModal();
               toast("這間店已被租用。");
@@ -2958,6 +3359,7 @@
             }
             s.shopType = normalizeShopType(fd.get("shopType"));
             s.owner = String(fd.get("owner")).trim() || playerName;
+            s.cloudOwnerId = accountId;
             s.lease = {
               ownerId: accountId,
               ownerName: s.owner,
@@ -2970,7 +3372,7 @@
             closeModal();
             renderShopList();
             renderSelectedBox();
-            toast(`租下成功！租期 ${days} 天，已用${provider}示範綁定。`);
+            toast(`租下成功！租期 ${days} 天，店面已綁定至你的已驗證帳號。`);
             openShop(s.id);
             ownerMode = true;
             renderShowroom();
@@ -3053,6 +3455,17 @@
           if (chatOpen) chatUnread = 0;
           $("#chatBadge").textContent = String(chatUnread);
         }
+        function clearShopDm(shopId) {
+          if (activeDmShopId !== shopId) return;
+          cloudChatChannel?.unsubscribe();
+          cloudChatChannel = null;
+          activeDm = activeDmRecipient = activeDmShopId = null;
+          chatItems = [];
+          chatUnread = 0;
+          chatOpen = false;
+          $("#chatPanel")?.classList.add("hidden");
+          renderChat();
+        }
         function sendChat(e) {
           e.preventDefault();
           const input = $("#chatInput"),
@@ -3065,24 +3478,35 @@
             time: Date.now(),
           };
           addChatMessage(msg);
-          if (channel) channel.postMessage({ type: "chat", message: msg });
-          if (supabase && activeDm) {
-            supabase.from("private_messages").insert({ conversation_id: activeDm, sender_id: accountId, sender_name: playerName, body: text }).then(({error}) => { if (error) { console.error(error); toast("私訊送出失敗，請確認 Supabase SQL 與權限設定。"); } });
+          if (supabase && activeDm && authUser) {
+            supabase.from("account_messages").insert({ conversation_id: activeDm, shop_id: activeDmShopId, sender_id: accountId, recipient_id: activeDmRecipient, sender_name: playerName, body: text }).then(({error}) => { if (error) { console.error(error); toast("私訊送出失敗，請確認登入與資料表設定。"); } });
           }
           input.value = "";
         }
-        async function openOwnerDm(shop) {
-          if (!supabase) { toast("請先填入 index.html 的 Supabase URL 與 anon key。"); return; }
-          if (!shop?.lease?.ownerId || shop.lease.ownerId === accountId) { toast("這間店目前沒有可聯絡的店主。"); return; }
-          activeDm = [accountId, shop.lease.ownerId].sort().join(":");
+        async function openOwnerDm(shop, peerId = null) {
+          if (!supabase) { toast("Supabase 尚未連線。"); return; }
+          if (!authUser || !shop?.lease?.ownerId) { toast("請先登入並確認店面有店主。"); return; }
+          activeDmRecipient = peerId || shop.lease.ownerId;
+          if (activeDmRecipient === accountId) { toast("不能對自己傳送私訊。"); return; }
+          activeDmShopId = shop.id;
+          activeDm = [shop.id, accountId, activeDmRecipient].sort().join(":");
           chatOpen = true; $("#chatPanel").classList.remove("hidden");
           $("#chatPanel").querySelector("header").firstChild.textContent = `私訊：${shop.owner || "店主"} `;
-          const {data,error} = await supabase.from("private_messages").select("id,sender_id,sender_name,body,created_at").eq("conversation_id",activeDm).order("created_at").limit(100);
+          const {data,error} = await supabase.from("account_messages").select("id,sender_id,sender_name,body,created_at").eq("conversation_id",activeDm).order("created_at").limit(100);
           if (error) { toast("無法載入私訊，請檢查資料表權限。"); console.error(error); return; }
           chatItems = (data||[]).map(m=>({fromId:m.sender_id===accountId?playerId:m.sender_id,name:m.sender_name,text:m.body,time:Date.parse(m.created_at)})); renderChat();
           cloudChatChannel?.unsubscribe();
-          cloudChatChannel = supabase.channel("dm:"+activeDm).on("postgres_changes",{event:"INSERT",schema:"public",table:"private_messages",filter:`conversation_id=eq.${activeDm}`},({new:m})=>{ if(m.sender_id!==accountId) addChatMessage({fromId:m.sender_id,name:m.sender_name,text:m.body,time:Date.parse(m.created_at)}); }).subscribe();
+          cloudChatChannel = supabase.channel("dm:"+activeDm).on("postgres_changes",{event:"INSERT",schema:"public",table:"account_messages",filter:`conversation_id=eq.${activeDm}`},({new:m})=>{ if(m.sender_id!==accountId) addChatMessage({fromId:m.sender_id,name:m.sender_name,text:m.body,time:Date.parse(m.created_at)}); }).subscribe();
           $("#chatInput").focus();
+        }
+        async function openDmInbox() {
+          if (!hasBoundAccount()) { toast("店主私訊需要登入綁定帳號。"); return; }
+          const { data, error } = await supabase.from("account_messages").select("shop_id,sender_id,sender_name,body,created_at,recipient_id").eq("recipient_id", accountId).order("created_at", {ascending:false}).limit(200);
+          if (error) { console.error(error); toast("無法載入店主私訊。"); return; }
+          const latest = new Map();
+          (data||[]).forEach((m) => { const key=`${m.shop_id}:${m.sender_id}`; if (!latest.has(key)) latest.set(key,m); });
+          showModal("店主私訊", `<p class="about-text">只有這個已登入帳號能讀取送到你店面的私訊。</p>${latest.size ? [...latest.values()].map((m)=>`<button class="dm-inbox-row outline-btn" data-dm-sender="${esc(m.sender_id)}" data-dm-shop="${esc(m.shop_id)}" style="display:block;width:100%;margin:7px 0;text-align:left"><b>${esc(getShop(m.shop_id)?.name || "店面")} · ${esc(m.sender_name || "訪客")}</b><br><small>${esc(m.body)}</small></button>`).join("") : '<p class="about-text">目前沒有新私訊。</p>'}<div class="modal-actions"><button class="outline-btn cancel-modal">關閉</button></div>`);
+          $("#modalContent").querySelectorAll("[data-dm-sender]").forEach((b)=>b.onclick=()=>{const shop=getShop(b.dataset.dmShop);closeModal();openOwnerDm(shop,b.dataset.dmSender);});
         }
         function renderWalkers() {
           const real = [...remotePlayers.values()].filter(
@@ -3090,11 +3514,11 @@
           );
           $("#walkerCount").textContent = `${real.length + npcs.length + 1} 位散步客`;
           $("#visitorCount").textContent = `${real.length + npcs.length + 1} 位`;
-          $("#onlineCount").textContent = channel
-            ? real.length
-              ? `${real.length} 位同行`
-              : "分頁連線"
-            : "本機體驗";
+          $("#onlineCount").textContent = cloudRealtimeStatus === "SUBSCRIBED"
+            ? `雲端連線 · ${real.length} 位同行`
+            : supabase
+              ? `雲端${cloudRealtimeStatus === "INITIALIZING" ? "連線中" : "未連線"}`
+              : channel ? "分頁連線" : "本機體驗";
           let people = [
             { name: playerName, emoji: "🙂", color: "#386c57" },
             ...real.map((p) => ({ name: p.name, emoji: "🙂", color: p.color })),
@@ -3211,7 +3635,7 @@
             p.y,
             1,
             custom || { ...AVATAR_DEFAULT, top: color },
-            isMe ? motion : { dir: "down", moving: false },
+            isMe ? (parkRide?.motion || motion) : { dir: "down", moving: false },
             isMe && streetState.bike,
             isMe && !!streetState.seated,
           );
@@ -3610,13 +4034,6 @@
               ctx.restore();
             }
           }
-          // Tiny location compass
-          ctx.fillStyle = "#ffffffd9";
-          roundRect(ctx, 18, 17, 92, 29, 12);
-          ctx.fill();
-          ctx.fillStyle = "#446852";
-          ctx.font = "700 10px sans-serif";
-          ctx.fillText("無人島 · v11", 32, 36);
         }
         function roundRect(c, x, y, w, h, r) {
           c.beginPath();
@@ -3660,23 +4077,17 @@
           player.y = Math.max(160, Math.min(3310, player.y));
           camera.x += (player.x - camera.x) * Math.min(1, dt * 5);
           camera.y += (player.y - camera.y) * Math.min(1, dt * 5);
-          const targets = [
-            [300, 292],
-            [780, 292],
-            [940, 450],
-            [300, 455],
-            [480, 292],
-            [700, 454],
-            [140, 452],
-          ].map((v) => [v[0] * MAP_EXPAND, v[1] * MAP_EXPAND]);
+          const randomNpcTarget = () => ({
+            x: -2350 + Math.random() * 10000,
+            y: 190 + Math.random() * 3100,
+          });
           npcs.forEach((n) => {
             const dx = n.tx - n.x,
               dy = n.ty - n.y,
               d = Math.hypot(dx, dy);
             if (d < 16) {
-              const q = targets[Math.floor(Math.random() * targets.length)];
-              n.tx = q[0];
-              n.ty = q[1];
+              const q = randomNpcTarget();
+              n.tx = q.x; n.ty = q.y;
             } else {
               const vx = (dx / d) * n.speed * dt,
                 vy = (dy / d) * n.speed * dt;
@@ -3684,9 +4095,8 @@
                 n.x += vx;
                 n.y += vy;
               } else {
-                const q = targets[Math.floor(Math.random() * targets.length)];
-                n.tx = q[0];
-                n.ty = q[1];
+                const q = randomNpcTarget();
+                n.tx = q.x; n.ty = q.y;
               }
             }
           });
@@ -3713,6 +4123,20 @@
                 at: Date.now(),
               });
             lastBroadcast = Date.now();
+          }
+          if (
+            cloudChannel &&
+            cloudRealtimeStatus === "SUBSCRIBED" &&
+            Date.now() - cloudLastBroadcast >= 250 &&
+            (cloudLastX == null || Math.hypot(player.x - cloudLastX, player.y - cloudLastY) >= 6)
+          ) {
+            const nextCell = `${Math.floor(player.x / 600)},${Math.floor(player.y / 600)}`;
+            if (nextCell !== cloudCellKey) updateAoiChannels();
+            const position = { id: playerId, name: playerName, x: player.x, y: player.y, at: Date.now() };
+            if (cloudChannel.state === "joined") cloudChannel.send({ type: "broadcast", event: "position", payload: position });
+            cloudLastBroadcast = Date.now();
+            cloudLastX = player.x;
+            cloudLastY = player.y;
           }
         }
         function isImageSrc(src) {
@@ -3802,9 +4226,67 @@
         }
         async function uploadCloudMedia(file, path) {
           if (!supabase) return "";
-          const {error}=await supabase.storage.from("market-media").upload(path,file,{upsert:true,contentType:file.type});
+          const { error } = await supabase.storage.from("market-media").upload(path, file, {
+            upsert: false,
+            contentType: file.type,
+            cacheControl: "86400",
+          });
           if(error) throw error;
           return supabase.storage.from("market-media").getPublicUrl(path).data.publicUrl;
+        }
+        async function deleteCloudMediaKeys(keys, ownerId) {
+          const paths = [...new Set(keys.filter((key) => typeof key === "string" && /^[A-Za-z0-9_-]{1,240}$/.test(key)).map((key) => ownerId + "/" + key))];
+          if (!paths.length) return null;
+          if (!supabase || !ownerId) return Error("雲端儲存尚未連線，無法確認圖片已刪除。");
+          const { error } = await supabase.storage.from("market-media").remove(paths);
+          return error || null;
+        }
+        function deleteCloudMusicAfterSave(shopId, ownerId, keys) {
+          if (!keys.length || !supabase) return;
+          setTimeout(async () => {
+            const { data, error } = await supabase
+              .from("market_shops")
+              .select("payload")
+              .eq("id", shopId)
+              .maybeSingle();
+            if (error || !data?.payload || accountId !== ownerId) return;
+            const stillUsed = collectCloudMediaKeys(data.payload);
+            const safeToDelete = keys.filter((key) => !stillUsed.has(key));
+            if (safeToDelete.length) await deleteCloudMediaKeys(safeToDelete, ownerId);
+          }, 1200);
+        }
+        function collectMediaKeys(value, keys = new Set()) {
+          if (Array.isArray(value)) value.forEach((item) => collectMediaKeys(item, keys));
+          else if (value && typeof value === "object") {
+            if (typeof value.mediaKey === "string") keys.add(value.mediaKey);
+            Object.values(value).forEach((item) => collectMediaKeys(item, keys));
+          }
+          return keys;
+        }
+        function collectCloudMediaKeys(value, keys = new Set()) {
+          if (Array.isArray(value)) value.forEach((item) => collectCloudMediaKeys(item, keys));
+          else if (value && typeof value === "object") {
+            if (
+              typeof value.mediaKey === "string" &&
+              typeof value.publicURL === "string" &&
+              value.publicURL.startsWith(SUPABASE_URL + "/storage/v1/object/public/market-media/")
+            ) keys.add(value.mediaKey);
+            Object.values(value).forEach((item) => collectCloudMediaKeys(item, keys));
+          }
+          return keys;
+        }
+        function scheduleUnusedShopMediaCleanup(shopId, candidateKeys, ownerId) {
+          const keys = [...new Set(candidateKeys || [])];
+          if (!supabase || !shopId || !ownerId || !keys.length) return;
+          setTimeout(async () => {
+            const { data, error } = await supabase.from("market_shops").select("payload").eq("id", shopId).maybeSingle();
+            if (error || !data?.payload) return;
+            const stillUsed = collectCloudMediaKeys(data.payload);
+            const unused = keys.filter((key) => !stillUsed.has(key));
+            if (!unused.length) return;
+            const deleteError = await deleteCloudMediaKeys(unused, ownerId);
+            if (deleteError) console.warn("未使用的店面圖片清理失敗", deleteError);
+          }, 1500);
         }
         function mediaElementFor(p) {
           p = frameSource(p);
@@ -3931,10 +4413,13 @@
           const media = p.media?.length ? p.media : [p];
           const urls = await Promise.all(media.map(mediaUrlFor));
           if (activeShopId !== shop.id || selectedProductIndex !== index) return;
-          const playerURL = externalPlayer(p.externalURL || "");
+          const playerURL = externalPlayer(p.externalURL || ""),
+            hasUploadedImage = media.some((m) => m.mediaType === "image" && (m.mediaKey || m.mediaURL || m.image || m.publicURL)),
+            fallbackPoster = !hasUploadedImage && p.externalURL ? externalVideoPoster(p.externalURL) : "",
+            videoSource = /tiktok/.test(p.externalURL || "") ? "TikTok" : /youtu/.test(p.externalURL || "") ? "YouTube" : "外部影片";
           showModal(
             p.title,
-            `<div class="listing-detail premium-detail"><div class="product-gallery"><div class="gallery-kicker">ISLAND MARKET · 精選作品</div>${playerURL ? `<iframe id="externalVideo" src="${esc(playerURL)}" title="${esc(p.title)}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><p id="externalVideoStatus">請按播放器的播放鍵。若平台限制嵌入，可到原網站觀看。</p><a href="${esc(p.externalURL)}" target="_blank" rel="noopener">到原網站觀看 ↗</a>` : ""}${!playerURL && p.externalURL ? (directVideo(p.externalURL) ? `<video src="${esc(p.externalURL)}" controls playsinline></video>` : `<a href="${esc(p.externalURL)}" target="_blank" rel="noopener">🌐 開啟外部作品網站</a>`) : ""}${urls.map((url, i) => (!url ? "" : media[i].mediaType === "video" ? `<video src="${esc(url)}" controls playsinline preload="metadata"></video>` : `<img src="${esc(url)}" alt="${esc(p.title)} · ${i + 1}" loading="lazy">`)).join("") || (!playerURL ? "<p>此示範作品尚未上傳媒體。</p>" : "")}</div><aside><small class="product-badge">${p.category === "job" ? "徵才" : p.category === "sale" ? "產品販售" : "作品展示"}</small><h2>${esc(p.title)}</h2><p>${esc(p.desc || "")}</p>${p.category === "job" ? jobDetails(p.job) : ""}${p.price !== "" && p.price != null ? `<h3>NT$ ${esc(p.price)}</h3>` : ""}${p.location ? `<p>地點：${esc(p.location)}</p>` : ""}<b class="contact-heading">聯絡店主</b>${(p.contacts || [shop.contact || "尚未提供"]).map((v) => `<p>${safeLink(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</p>`).join("")}<button class="primary-btn" id="detailInquiry">詢問店主</button><button class="outline-btn" data-owner-dm="${esc(shop.id)}">私訊店主</button></aside></div>`,
+            `<div class="listing-detail premium-detail"><div class="product-gallery"><div class="gallery-kicker">ISLAND MARKET · 精選作品</div>${fallbackPoster ? `<a class="external-video-poster" href="${esc(p.externalURL)}" target="_blank" rel="noopener noreferrer"><img src="${esc(fallbackPoster)}" alt="${esc(videoSource)} 影片預覽" onerror="this.onerror=null;this.src='${esc(new URL("assets/video-link-landscape.svg", location.href).href)}'"><span>${esc(videoSource)} · 點擊開啟原影片</span></a>` : ""}${playerURL ? `<iframe id="externalVideo" src="${esc(playerURL)}" title="${esc(p.title)}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><p id="externalVideoStatus">請按播放器的播放鍵。若平台限制嵌入，可到原網站觀看。</p><a href="${esc(p.externalURL)}" target="_blank" rel="noopener">到原網站觀看 ↗</a>` : ""}${!playerURL && p.externalURL ? (directVideo(p.externalURL) ? `<video src="${esc(p.externalURL)}" controls playsinline></video>` : `<a href="${esc(p.externalURL)}" target="_blank" rel="noopener">🌐 開啟外部作品網站</a>`) : ""}${urls.map((url, i) => (!url ? "" : media[i].mediaType === "video" ? `<video src="${esc(url)}" controls playsinline preload="metadata"></video>` : `<img src="${esc(url)}" alt="${esc(p.title)} · ${i + 1}" loading="lazy">`)).join("") || (!playerURL ? "<p>此示範作品尚未上傳媒體。</p>" : "")}</div><aside><small class="product-badge">${p.category === "job" ? "徵才" : p.category === "sale" ? "產品販售" : "作品展示"}</small><h2>${esc(p.title)}</h2><p>${esc(p.desc || "")}</p>${p.category === "job" ? jobDetails(p.job) : ""}${p.price !== "" && p.price != null ? `<h3>NT$ ${esc(p.price)}</h3>` : ""}${p.location ? `<p>地點：${esc(p.location)}</p>` : ""}<b class="contact-heading">聯絡店主</b>${(p.contacts || [shop.contact || "尚未提供"]).map((v) => `<p>${safeLink(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</p>`).join("")}<button class="primary-btn" id="detailInquiry">詢問店主</button><button class="outline-btn" data-owner-dm="${esc(shop.id)}">私訊店主</button></aside></div>`,
           );
           $("#detailInquiry").onclick = () => openInquiry(shop, p);
           if (playerURL) setupExternalPlayer(p.externalURL);
@@ -4031,10 +4516,15 @@
               : "獨立創作者 · 線上展廳";
           $("#shopAbout").textContent = s.about || "店主還沒有填寫介紹。";
           $("#shopContact").textContent = s.contact || "店主還沒有填寫聯絡資訊。";
+          const trafficLink = $("#shopTrafficLink"),
+            validTrafficLink = safeLink(s.trafficUrl || "");
+          trafficLink.hidden = !validTrafficLink;
+          trafficLink.classList.toggle("hidden", !validTrafficLink);
+          if (validTrafficLink) trafficLink.href = s.trafficUrl;
           $("#ownerModeBtn").classList.toggle("hidden", roomPreviewOnly || !isMyShop(s));
           $("#ownerModeBtn").textContent = ownerMode ? "✓　完成設定" : "✦　店舖設定";
           $("#ownerModeBtn").classList.toggle("editing", ownerMode);
-          $("#ownerOrdersLink").classList.toggle("hidden", !ownerMode);
+          $("#ownerOrdersLink").classList.toggle("hidden", !isMyShop(s));
           ($("#productCount") || {}).textContent =
             `${s.products.length} 件作品 / 商品 · 相框在牆上`;
           $("#ownerEditor").classList.toggle("hidden", !ownerMode);
@@ -4066,7 +4556,7 @@
                   return `<option value="${esc(val)}" ${current === val ? "selected" : ""}>${esc(label)}</option>`;
                 })
                 .join("")}</select></div>`;
-          e.innerHTML = `<div class="editor-head"><b>✦ 店主工作台｜自訂展廳</b><small>租期到期時，這間店的資料和媒體會清除</small></div><form id="ownerForm">${shopTypeField(shopType(s))}<div class="edit-grid"><div class="field"><label>店鋪名稱</label><input name="name" maxlength="24" value="${esc(s.name)}" required></div><div class="field"><label>店主暱稱</label><input name="owner" maxlength="18" value="${esc(s.owner)}"></div><div class="field wide"><label>一句店鋪介紹</label><input name="tagline" maxlength="60" value="${esc(s.tagline)}"></div><div class="field wide"><label>店鋪故事 / 產品介紹</label><textarea name="about" maxlength="500">${esc(s.about)}</textarea></div><div class="field wide"><label>聯絡方式（最多 10 個）</label><div id="shopContacts">${(s.contactItems || [{ type: "其他", value: s.contact || "" }]).map(contactItemHTML).join("")}</div><button type="button" id="addShopContact">＋ 新增聯絡方式</button></div><div class="field"><label>店外觀主色</label><input name="exterior" type="color" value="${esc(s.color)}"></div><div class="field"><label>到期時間</label><input value="${new Date(s.lease.expires).toLocaleString("zh-TW")}" disabled></div></div><div class="section-caption">室內裝潢</div><div class="edit-grid">${sel("wallColor", "牆壁顏色", WALL_COLORS, room.wallColor)}${sel("wallType", "牆壁類型", WALL_TYPES, room.wallType)}${sel("floorColor", "地板顏色", FLOOR_COLORS, room.floorColor)}${sel("floorType", "地板造型", FLOOR_TYPES, room.floorType)}<div class="field wide"><label>A 字立牌顏色</label><input name="signColor" type="color" value="${esc(room.signColor || "#347958")}"></div><div class="field wide"><label><input name="adsEnabled" type="checkbox" ${room.adsEnabled ? "checked" : ""}> 添加兩側大型廣告立牌</label><small>儲存後可從「裝飾與擺設」上傳圖片及調整位置。</small></div></div><div class="section-caption">商品與牆面相框</div><p class="about-text">圖片最高接受 4K（3840 × 3840 以內）；影片僅接受外部網址，不提供檔案上傳。大檔案保存在這個瀏覽器；正式多人共用需接雲端媒體儲存。</p><div class="editor-products">${s.products.map((p, i) => `<div class="edit-product-summary">${esc(p.title)} <button type="button" data-edit-listing="${i}">編輯登記</button> <button type="button" class="remove-product" data-remove="${i}">移除</button></div>`).join("")}</div><div class="editor-actions"><button type="button" class="add-btn" id="addProduct">＋ 新增相框</button><button type="submit" class="save-btn">儲存店舖與裝潢</button></div></form>`;
+          e.innerHTML = `<div class="editor-head"><b>✦ 店主工作台｜自訂展廳</b><small>租期到期時，這間店的資料和媒體會清除</small></div><form id="ownerForm">${shopTypeField(shopType(s))}<div class="edit-grid"><div class="field"><label>店鋪名稱</label><input name="name" maxlength="24" value="${esc(s.name)}" required></div><div class="field"><label>店主暱稱</label><input name="owner" maxlength="18" value="${esc(s.owner)}"></div><div class="field wide"><label>一句店鋪介紹</label><input name="tagline" maxlength="60" value="${esc(s.tagline)}"></div><div class="field wide"><label>店鋪故事 / 產品介紹</label><textarea name="about" maxlength="500">${esc(s.about)}</textarea></div><div class="field wide"><label>店家網址引流（選填）</label><button type="button" class="outline-btn" id="showTrafficUrl">${s.trafficUrl ? "修改引流網址" : "＋ 設定引流網址"}</button><div id="trafficUrlFields" class="${s.trafficUrl ? "" : "hidden"}"><label>引流網址<input name="trafficUrl" type="text" maxlength="500" autocomplete="off" value="${esc(s.trafficUrl || "")}" placeholder="https://example.com"></label><small>可填入公司網址、店面網址、Facebook 粉絲專頁，或個人部落格等頁面。</small></div></div><div class="field wide"><label>聯絡方式（最多 10 個）</label><div id="shopContacts">${(s.contactItems || [{ type: "其他", value: s.contact || "" }]).map(contactItemHTML).join("")}</div><button type="button" id="addShopContact">＋ 新增聯絡方式</button></div><div class="field"><label>店外觀主色</label><input name="exterior" type="color" value="${esc(s.color)}"></div><div class="field"><label>到期時間</label><input value="${new Date(s.lease.expires).toLocaleString("zh-TW")}" disabled></div></div><div class="section-caption">室內裝潢</div><div class="edit-grid">${sel("wallColor", "牆壁顏色", WALL_COLORS, room.wallColor)}${sel("wallType", "牆壁類型", WALL_TYPES, room.wallType)}${sel("floorColor", "地板顏色", FLOOR_COLORS, room.floorColor)}${sel("floorType", "地板造型", FLOOR_TYPES, room.floorType)}<div class="field wide"><label>A 字立牌顏色</label><input name="signColor" type="color" value="${esc(room.signColor || "#347958")}"></div><div class="field wide"><label><input name="adsEnabled" type="checkbox" ${room.adsEnabled ? "checked" : ""}> 添加兩側大型廣告立牌</label><small>儲存後可從「裝飾與擺設」上傳圖片及調整位置。</small></div></div><div class="section-caption">商品與牆面相框</div><p class="about-text">上傳圖片可能會壓縮，但會盡量保持品質。影片僅接受外部網址，不提供檔案上傳。</p><div class="editor-products">${s.products.map((p, i) => `<div class="edit-product-summary">${esc(p.title)} <button type="button" data-edit-listing="${i}">編輯登記</button> <button type="button" class="remove-product" data-remove="${i}">移除</button></div>`).join("")}</div><div class="editor-actions"><button type="button" class="add-btn" id="addProduct">＋ 新增相框</button><button type="submit" class="save-btn">儲存店舖與裝潢</button></div></form>`;
           const moveButton = document.createElement("button");
           moveButton.type = "button";
           moveButton.className = "outline-btn";
@@ -4074,6 +4564,11 @@
           moveButton.onclick = () => startPlacement(s.id);
           e.prepend(moveButton);
           addShopPreview(e, s);
+          $("#showTrafficUrl").onclick = () => {
+            const fields = $("#trafficUrlFields");
+            fields.classList.toggle("hidden");
+            if (!fields.classList.contains("hidden")) fields.querySelector("input").focus();
+          };
           $("#addShopContact").onclick = () => {
             if ($("#shopContacts").children.length < 10)
               $("#shopContacts").insertAdjacentHTML(
@@ -4105,8 +4600,9 @@
                 toast("沒有修改權限");
                 return;
               }
-              s.products.splice(Number(b.dataset.remove), 1);
+              const [removed] = s.products.splice(Number(b.dataset.remove), 1);
               save();
+              scheduleUnusedShopMediaCleanup(s.id, [...collectCloudMediaKeys(removed || {})], accountId);
               renderEditor(s);
             }),
           );
@@ -4117,17 +4613,18 @@
               const card = input.closest(".edit-product");
               try {
                 const size = await inspectMediaSize(file);
-                if (size.width > 3840 || size.height > 3840) {
-                  toast("媒體超過 4K 上限，請選擇 3840 × 3840 以內的檔案。");
+                if (sourceImageTooLarge(size)) {
+                  toast("圖片解析度過高，請先縮小圖片後再試。");
                   input.value = "";
                   return;
                 }
+                const prepared = await compressImageForUpload(file);
                 const key = activeShopId + "-" + randomId();
-                await saveMediaBlob(key, file);
+                await saveMediaBlob(key, prepared.file);
                 card.dataset.newMediaKey = key;
-                card.dataset.newMediaType = file.type.startsWith("video/") ? "video" : "image";
+                card.dataset.newMediaType = "image";
                 card.querySelector(".file-info").textContent =
-                  `已選取 ${file.name} · ${size.width}×${size.height} ✓`;
+                  `已選取 ${file.name} · ${prepared.width}×${prepared.height} · ${(file.size / 1024 / 1024).toFixed(1)} MB → ${(prepared.file.size / 1024 / 1024).toFixed(1)} MB ✓`;
               } catch (err) {
                 toast("這個瀏覽器無法保存此媒體，請縮小檔案或放入媒體網址。");
               }
@@ -4141,6 +4638,11 @@
             }
             const fd = new FormData(ev.currentTarget),
               oldKeys = s.products.map((p) => p.mediaKey).filter(Boolean);
+            const trafficUrl = String(fd.get("trafficUrl") || "").trim();
+            if (trafficUrl && !safeLink(trafficUrl)) {
+              toast("請填入以 http:// 或 https:// 開頭的有效網址。");
+              return;
+            }
             s.shopType = normalizeShopType(fd.get("shopType"));
             commitBoardDesign(s, fd);
             s.boardColor = String(fd.get("boardColor") || "#294e46");
@@ -4149,6 +4651,7 @@
             s.owner = String(fd.get("owner")).trim() || playerName;
             s.tagline = String(fd.get("tagline")).trim();
             s.about = String(fd.get("about")).trim();
+            s.trafficUrl = trafficUrl;
             s.contactItems = [...$("#shopContacts").querySelectorAll(".contact-row")]
               .map((row) => ({
                 type: row.querySelector("select").value,
@@ -4182,7 +4685,7 @@
           });
         }
         function editProductHTML(p, i) {
-          return `<div class="edit-product" data-media-key="${esc(p.mediaKey || "")}" data-new-media-key="" data-new-media-type=""><header><span>牆面相框 ${i + 1}</span><button type="button" class="remove-product" data-remove="${i}">移除</button></header><input data-p-title maxlength="50" value="${esc(p.title)}" placeholder="作品 / 商品名稱"><input data-p-price maxlength="24" value="${esc(p.price)}" placeholder="價格或歡迎詢價"><input data-p-emoji maxlength="4" value="${esc(p.emoji || "🖼️")}" placeholder="封面符號"><select data-media-type><option value="image" ${p.mediaType !== "video" ? "selected" : ""}>圖片預覽</option><option value="video" ${p.mediaType === "video" ? "selected" : ""}>影片預覽</option></select><input data-media-url value="${esc(p.mediaURL || p.image || "")}" placeholder="圖片 / 影片網址（選填）"><input data-p-link value="${esc(p.link || "")}" placeholder="相關作品連結（選填）"><textarea data-p-desc maxlength="260" placeholder="商品介紹、影片資訊與其他說明">${esc(p.desc || "")}</textarea><div class="file-info">${p.mediaKey ? "已有上傳媒體" : "裝置上傳：僅圖片，最多 4K"}</div><input type="file" accept="image/*"></div>`;
+          return `<div class="edit-product" data-media-key="${esc(p.mediaKey || "")}" data-new-media-key="" data-new-media-type=""><header><span>牆面相框 ${i + 1}</span><button type="button" class="remove-product" data-remove="${i}">移除</button></header><input data-p-title maxlength="50" value="${esc(p.title)}" placeholder="作品 / 商品名稱"><input data-p-price maxlength="24" value="${esc(p.price)}" placeholder="價格或歡迎詢價"><input data-p-emoji maxlength="4" value="${esc(p.emoji || "🖼️")}" placeholder="封面符號"><select data-media-type><option value="image" ${p.mediaType !== "video" ? "selected" : ""}>圖片預覽</option><option value="video" ${p.mediaType === "video" ? "selected" : ""}>影片預覽</option></select><input data-media-url value="${esc(p.mediaURL || p.image || "")}" placeholder="圖片 / 影片網址（選填）"><input data-p-link value="${esc(p.link || "")}" placeholder="相關作品連結（選填）"><textarea data-p-desc maxlength="260" placeholder="商品介紹、影片資訊與其他說明">${esc(p.desc || "")}</textarea><div class="file-info">${p.mediaKey ? "已有上傳媒體" : "上傳圖片可能會壓縮，但會盡量保持品質。"}</div><input type="file" accept="image/*"></div>`;
         }
         async function inspectMediaSize(file) {
           if (file.type.startsWith("image/")) {
@@ -4211,6 +4714,57 @@
             URL.revokeObjectURL(url);
             throw e;
           }
+        }
+        function sourceImageTooLarge(size) {
+          return size.width > 10000 || size.height > 10000 || size.width * size.height > 50000000;
+        }
+        async function compressImageForUpload(file, maxEdge = 2560) {
+          let bitmap;
+          try { bitmap = await createImageBitmap(file); }
+          catch { throw Error("無法讀取這張圖片，請改用 JPG、PNG 或 WebP 圖片。"); }
+          try {
+            const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d", { alpha: true });
+            if (!context) throw Error("瀏覽器無法建立圖片畫布。");
+            let width = Math.max(1, Math.round(bitmap.width * scale));
+            let height = Math.max(1, Math.round(bitmap.height * scale));
+            let blob = null;
+            while (true) {
+              canvas.width = width;
+              canvas.height = height;
+              context.drawImage(bitmap, 0, 0, width, height);
+              for (const quality of [0.92, 0.89, 0.86]) {
+                blob = await new Promise((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(Error("圖片壓縮失敗，請重試。")), "image/webp", quality));
+                if (blob.size <= 2 * 1024 * 1024) break;
+              }
+              if (blob.size <= 2 * 1024 * 1024 || Math.max(width, height) <= 1280) break;
+              const nextScale = Math.max(1280 / Math.max(width, height), 0.9);
+              width = Math.max(1, Math.round(width * nextScale));
+              height = Math.max(1, Math.round(height * nextScale));
+            }
+            const type = blob.type || "image/webp";
+            const ext = type === "image/webp" ? "webp" : type === "image/png" ? "png" : "jpg";
+            const compressed = new File([blob], (file.name || "image").replace(/\.[^.]+$/, "") + "." + ext, { type, lastModified: Date.now() });
+            return { file: compressed, width, height, originalBytes: file.size, compressedBytes: compressed.size };
+          } finally { bitmap.close?.(); }
+        }
+        function isCloudStoredImage(media) {
+          return !!(media?.mediaKey && String(media.publicURL || "").startsWith(SUPABASE_URL + "/storage/v1/object/public/market-media/"));
+        }
+        function shopCloudImageCount(shop, excludedProductIndex = -1) {
+          return (shop?.products || []).reduce((total, product, index) => {
+            if (index === excludedProductIndex) return total;
+            const list = Array.isArray(product.media) && product.media.length ? product.media : [product];
+            return total + list.filter((item) => item?.mediaType !== "video" && isCloudStoredImage(item)).length;
+          }, 0);
+        }
+        function validateShopCloudImageQuota(shop, draftMedia, excludedProductIndex = -1) {
+          const draftCount = (draftMedia || []).filter((item) => item?.mediaType !== "video" && (item?.file || isCloudStoredImage(item))).length;
+          const currentCount = shopCloudImageCount(shop);
+          const nextCount = shopCloudImageCount(shop, excludedProductIndex) + draftCount;
+          if (nextCount > 5 && nextCount > currentCount)
+            throw Error("每間店的商品、作品與徵才合計最多上傳 5 張雲端圖片；請先刪除其他圖片。");
         }
         function drawFirstPersonFrame(frame, p) {
           const x = frame.x,
@@ -4286,7 +4840,7 @@
         }
         function openInquiry(s, p) {
           $("#modalContent").innerHTML =
-            `<div class="modal-head"><h2>詢問「${esc(p.title)}」</h2><button class="close-modal" type="button">×</button></div><p class="about-text">這是示範詢問流程，不會真的收款。購買人綁定按鈕暫不連接外部帳號。</p><form id="inquiryForm"><div class="field"><label>怎麼稱呼你</label><input name="customer" maxlength="24" value="${esc(playerName)}" required></div><div class="field"><label>聯絡方式</label><input name="reply" maxlength="80" placeholder="Email / LINE / 社群帳號" required></div><div class="field"><label>示範綁定購買帳號</label><select name="buyerProvider"><option>Google（示範）</option><option>Facebook（示範）</option><option>LINE（示範）</option></select></div><div class="field"><label>想跟店主說的話</label><textarea name="message" maxlength="400" required></textarea></div><div class="modal-actions"><button type="button" class="outline-btn cancel-modal">先逛逛</button><button class="primary-btn" type="submit">送出詢問</button></div></form>`;
+            `<div class="modal-head"><h2>詢問「${esc(p.title)}」</h2><button class="close-modal" type="button">×</button></div><p class="about-text">這是示範詢問流程，不會真的收款。</p><form id="inquiryForm"><div class="field"><label>怎麼稱呼你</label><input name="customer" maxlength="24" value="${esc(playerName)}" required></div><div class="field"><label>聯絡方式</label><input name="reply" maxlength="80" placeholder="Email / 社群帳號" required></div><div class="field"><label>想跟店主說的話</label><textarea name="message" maxlength="400" required></textarea></div><div class="modal-actions"><button type="button" class="outline-btn cancel-modal">先逛逛</button><button class="primary-btn" type="submit">送出詢問</button></div></form>`;
           $("#modalBackdrop").classList.remove("hidden");
           $("#modalContent").querySelector(".close-modal").onclick = closeModal;
           $("#modalContent").querySelector(".cancel-modal").onclick = closeModal;
@@ -4301,7 +4855,6 @@
                 reply: String(f.get("reply")).trim(),
                 message: String(f.get("message")).trim(),
                 buyerId: accountId,
-                buyerProvider: String(f.get("buyerProvider")),
                 time: Date.now(),
                 status: "待回覆",
               };
@@ -4316,14 +4869,14 @@
                 product: order.product,
               });
             closeModal();
-            toast("詢問已送出，購買人示範帳號已綁定。");
+            toast("詢問已送出。");
           });
         }
         function openOrders() {
           const s = getShop(activeShopId),
             own = orders.filter((o) => o.shopId === s.id);
           $("#modalContent").innerHTML =
-            `<div class="modal-head"><h2>收到的詢問　${own.length ? `(${own.length})` : ""}</h2><button class="close-modal" type="button" aria-label="關閉">×</button></div>${own.length ? `<div class="order-list">${own.map((o) => `<div class="order-item"><b>${esc(o.customer)} 詢問：${esc(o.product)}</b><small>${new Date(o.time).toLocaleString("zh-TW")} · 回覆方式：${esc(o.reply)} · ${esc(o.buyerProvider || "未綁定")} · ${esc(o.status)}</small><div style="margin-top:5px">${esc(o.message)}</div></div>`).join("")}</div>` : '<div class="empty-products">還沒有詢問訊息。把商品介紹完整一點，讓更多客人看見吧！</div>'}<div class="modal-actions"><button class="primary-btn cancel-modal">完成</button></div>`;
+            `<div class="modal-head"><h2>收到的詢問　${own.length ? `(${own.length})` : ""}</h2><button class="close-modal" type="button" aria-label="關閉">×</button></div>${own.length ? `<div class="order-list">${own.map((o) => `<div class="order-item"><b>${esc(o.customer)} 詢問：${esc(o.product)}</b><small>${new Date(o.time).toLocaleString("zh-TW")} · 回覆方式：${esc(o.reply)} · ${esc(o.status)}</small><div style="margin-top:5px">${esc(o.message)}</div></div>`).join("")}</div>` : '<div class="empty-products">還沒有詢問訊息。把商品介紹完整一點，讓更多客人看見吧！</div>'}<div class="modal-actions"><button class="primary-btn cancel-modal">完成</button></div>`;
           $("#modalBackdrop").classList.remove("hidden");
           $("#modalContent").querySelector(".close-modal").onclick = closeModal;
           $("#modalContent").querySelector(".cancel-modal").onclick = closeModal;
@@ -4344,6 +4897,12 @@
           showModal(
             "操作說明",
             `<p>WASD／方向鍵移動；室內拖曳滑鼠環視四周。</p><p>搜尋或點選店名只會標示位置，按「前往這間店」才自動行走。移動鍵可取消導航。</p><p>走到店門按 E 租店或進入。室內站上作品方格按 E 觀看，站上出口方格按 E 離開。</p><p>自行車架：E 借還（每架 15／20）。騎乘速度 ×2.5；Q 隨時下車，靠近路邊單車按 E 騎回。請歸還車架。</p><p>長椅：E 坐下或起身。店主的店舖設定可修改外觀、裝潢與位置，旁邊有即時預覽。</p><p>本機原型：帳號綁定、連線與權限尚未接正式後端；跨裝置多人和交易尚未提供。</p>`,
+          );
+        }
+        function showAnnouncement() {
+          showModal(
+            "平台公告",
+            `<div class="announcement-copy"><p>我們製作這個平台，希望用不同於傳統履歷網站與線上市集的方式，幫助大家展示作品、分享職缺、尋找合作夥伴，讓更多人看見你和你的店家。</p><p>目前平台提供資訊展示與外部導流，暫不提供站內金流或代收付款服務。若有交易或合作需求，請直接聯絡對方並自行確認相關細節。</p><p>平台仍在成長與維護中。若未來使用人數增加、營運成本提高，我們可能推出自願贊助方式；屆時若你覺得平台對你有幫助，歡迎依意願支持。</p><p>謝謝每一位來島上逛逛、分享資訊與支持平台的人。</p></div>`,
           );
         }
         function showModal(title, body) {
@@ -4405,7 +4964,12 @@
           openInquiry(s, { title: "一般聯絡 / 合作詢問" });
         });
         $("#viewOrdersBtn").addEventListener("click", openOrders);
+        $("#viewDmInboxBtn").addEventListener("click", openDmInbox);
         $("#avatarBtn").addEventListener("click", renderAvatarModal);
+        $("#accountButton").addEventListener("click", openAccountModal);
+        $("#logoutButton").addEventListener("click", logoutAccount);
+        $("#roomAccountButton").addEventListener("click", openAccountModal);
+        $("#roomLogoutButton").addEventListener("click", logoutAccount);
         $("#chatToggle").addEventListener("click", () => {
           chatOpen = !chatOpen;
           $("#chatPanel").classList.toggle("hidden", !chatOpen);
@@ -4419,6 +4983,8 @@
         document.addEventListener("click", (e) => { const b=e.target.closest("[data-owner-dm]"); if (b) { const s=getShop(b.dataset.ownerDm); openOwnerDm(s); } });
         $("#showHelp").addEventListener("click", help);
         $("#navHelp").addEventListener("click", help);
+        $("#announcementBtn").addEventListener("click", showAnnouncement);
+        $("#navAnnouncement").addEventListener("click", showAnnouncement);
         $("#navShops").addEventListener("click", () =>
           $("#shopList").scrollIntoView({
             behavior: "smooth",
@@ -4431,17 +4997,23 @@
         $("#modalBackdrop").addEventListener("click", (e) => {
           if (e.target.closest(".close-modal")) closeModal();
         });
+        function streetPointFromEvent(e) {
+          const r = canvas.getBoundingClientRect();
+          const sx = ((e.clientX - r.left) / r.width) * W;
+          const sy = ((e.clientY - r.top) / r.height) * H;
+          return {
+            x: Math.max(-2420, Math.min(7753.333333, camera.x + (sx - W * 0.5) / VIEW_K)),
+            y: Math.max(160, Math.min(3310, camera.y + (sy - H * 0.5) / VIEW_K)),
+          };
+        }
         canvas.addEventListener("pointerdown", (e) => {
+          if (parkRide) { e.preventDefault(); stopParkRide(); return; }
           if (placement) {
             updatePlacementPointer(e);
             return;
           }
           document.activeElement?.blur?.();
-          const r = canvas.getBoundingClientRect(),
-            sx = ((e.clientX - r.left) / r.width) * W,
-            sy = ((e.clientY - r.top) / r.height) * H,
-            x = camera.x + (sx - W * 0.5) / VIEW_K,
-            y = camera.y + (sy - H * 0.5) / VIEW_K;
+          const point = streetPointFromEvent(e), { x, y } = point;
           let hit = -1;
           shopSpots.forEach((a, i) => {
             if (
@@ -4460,16 +5032,35 @@
             mapPickedShop = id;
             if (again) goSelected();
           } else {
+            e.preventDefault();
             mapPickedShop = null;
             autoRoute = [];
             player.targetX = x;
             player.targetY = y;
+            streetPointerId = e.pointerId;
+            try { canvas.setPointerCapture(e.pointerId); } catch {}
             selectedShopId = null;
             guideShopId = null;
             renderShopList();
             renderSelectedBox();
           }
         });
+        canvas.addEventListener("pointermove", (e) => {
+          if (streetPointerId !== e.pointerId) return;
+          e.preventDefault();
+          const { x, y } = streetPointFromEvent(e);
+          autoRoute = [];
+          player.targetX = x;
+          player.targetY = y;
+        });
+        const stopStreetPointer = (e) => {
+          if (streetPointerId !== e.pointerId) return;
+          streetPointerId = null;
+          try { if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId); } catch {}
+        };
+        canvas.addEventListener("pointerup", stopStreetPointer);
+        canvas.addEventListener("pointercancel", stopStreetPointer);
+        canvas.addEventListener("lostpointercapture", stopStreetPointer);
         roomCanvas.addEventListener("pointerdown", (e) => {
           document.activeElement?.blur?.();
           const r = roomCanvas.getBoundingClientRect(),
@@ -4525,6 +5116,22 @@
         };
         roomCanvas.addEventListener("pointerup", stopRoomLook);
         roomCanvas.addEventListener("pointercancel", stopRoomLook);
+        document.querySelectorAll?.(".touch-controls [data-key]")?.forEach((button) => {
+          const press = (e) => { e.preventDefault(); downKeys.add(button.dataset.key); button.setPointerCapture?.(e.pointerId); };
+          const release = (e) => { e.preventDefault(); downKeys.delete(button.dataset.key); };
+          button.addEventListener("pointerdown", press);
+          button.addEventListener("pointerup", release);
+          button.addEventListener("pointercancel", release);
+          button.addEventListener("lostpointercapture", release);
+        });
+        document.querySelectorAll?.("[data-touch-action]")?.forEach((button) => button.addEventListener("click", () => {
+          if (button.dataset.touchAction === "street") streetInteract();
+          else if (!$("#showroomView").classList.contains("hidden")) chooseNearestFrame();
+        }));
+        document.querySelectorAll?.("[data-turn]")?.forEach((button) => button.addEventListener("click", () => {
+          roomPlayer.yaw += Number(button.dataset.turn) * 0.35;
+          drawInterior.key = null;
+        }));
         document.addEventListener("keydown", (e) => {
           if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
           const k = e.key.toLowerCase(),
@@ -4560,9 +5167,8 @@
             }
             if (m.type === "shops" && Array.isArray(m.shops)) {
               shops = loadShops();
-              syncShopPositions();
+              if (syncShopPositions()) save();
               clearDemolishedState();
-              if (Array.isArray(m.orders)) orders = m.orders;
               renderShopList();
               renderSelectedBox();
               if (activeShopId) renderShowroom();
@@ -4577,12 +5183,12 @@
         window.addEventListener("storage", (e) => {
           if (e.key === STORE_KEY) {
             shops = loadShops();
-            syncShopPositions();
+            if (syncShopPositions()) save();
             renderShopList();
             renderSelectedBox();
             if (activeShopId) renderShowroom();
           }
-          if (e.key === STORE_KEY + "-orders") orders = loadOrders();
+          if (e.key?.startsWith(STORE_KEY + "-orders-")) orders = loadOrders();
         });
         window.addEventListener("pagehide", () => {
           if (channel) channel.postMessage({ type: "leave", id: playerId });
@@ -4591,17 +5197,10 @@
           let changed = false;
           shops.forEach((s, i) => {
             if (s.lease && s.lease.expires <= Date.now()) {
-              (s.products || []).forEach((p) => {
-                for (const key of new Set(
-                  [p.mediaKey, ...(p.media || []).map((m) => m.mediaKey)].filter(Boolean),
-                ))
-                  deleteMediaBlob(key);
-              });
-              orders = orders.filter((o) => o.shopId !== s.id);
-              playlistTracks(s).forEach((t) => t.mediaKey && deleteMediaBlob(t.mediaKey));
-              (s.room?.ads || []).forEach((a) => a.mediaKey && deleteMediaBlob(a.mediaKey));
-              if (s.logo?.mediaKey) deleteMediaBlob(s.logo.mediaKey);
-              const reset = emptyShop(s, i);
+              clearShopDm(s.id);
+              collectMediaKeys(s).forEach((key) => deleteMediaBlob(key));
+              clearLocalOrdersForShop(s.id);
+              const reset = { ...emptyShop(s, i), cloudOwnerId: null };
               Object.keys(s).forEach((k) => delete s[k]);
               Object.assign(s, reset);
               changed = true;
@@ -5395,6 +5994,22 @@
             return null;
           }
         }
+        function externalVideoPoster(raw) {
+          try {
+            const u = new URL(raw),
+              embed = externalPlayer(raw);
+            if (/youtube|youtu\.be/.test(u.hostname) && embed) {
+              const id = new URL(embed).pathname.split("/").filter(Boolean).pop();
+              if (/^[a-zA-Z0-9_-]{11}$/.test(id || "")) return "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg";
+            }
+            const asset = /tiktok|youtube\.com\/shorts/.test(raw)
+              ? "assets/video-link-vertical.svg"
+              : "assets/video-link-landscape.svg";
+            return new URL(asset, location.href).href;
+          } catch {
+            return "";
+          }
+        }
         function validateListing(data, files) {
           if (!data.title.trim() || !data.desc.trim()) throw Error("請填寫名稱和介紹。");
           if (
@@ -5415,7 +6030,7 @@
               throw Error("販售商品至少需一張圖片。");
           }
           for (const m of files)
-            if (m.width > 3840 || m.height > 3840) throw Error("媒體超過 4K 上限。");
+            if (sourceImageTooLarge(m)) throw Error("圖片解析度過高，請先縮小圖片後再試。");
         }
         // === 相框登記：商品、作品與外部影片網址 ===
         function openRegister(index = null, forceGeneral = false) {
@@ -5450,7 +6065,7 @@
             category = existing?.category || "sale";
           showModal(
             existing ? "編輯相框內容" : "登記商品／作品／徵才",
-            `<form id="listingForm" class="listing-form"><label>項目類型<select name="category"><option value="sale" ${category === "sale" ? "selected" : ""}>產品販售</option><option value="showcase" ${category === "showcase" ? "selected" : ""}>作品展示</option>${shopType(shop) === "hiring" ? '<option value="job">徵才</option>' : ""}</select></label><label>名稱<input name="title" required maxlength="60" value="${esc(existing?.title || "")}"></label><label>介紹<textarea name="desc" required maxlength="2000">${esc(existing?.desc || "")}</textarea></label><div id="saleFields"><label>指定價格（NT$）<input name="price" type="number" min="0" step="0.01" value="${esc(existing?.price || "")}"></label><label>地點／位置／區域<input name="location" maxlength="200" placeholder="請輸入位置 舉例：台北市 或 詳細地點" value="${esc(existing?.location || "")}"></label></div><fieldset><legend>圖片 · 最多 3 張</legend><p>可一次選多張或分次新增。點圖片旁的刪除可移除；建議至少 720P，最高 4K。</p><input id="listingImages" type="file" accept="image/*" multiple><div id="imagePreviews" class="media-previews"></div></fieldset><fieldset><legend>影片 · 使用外部網址</legend><select id="videoMode"><option value="none" ${mode === "none" ? "selected" : ""}>不放影片</option>${video ? `<option value="legacy" ${mode === "legacy" ? "selected" : ""}>保留原有影片</option>` : ""}<option value="url" ${mode === "url" ? "selected" : ""}>貼上影片網址</option></select><div id="videoFileArea"><div id="videoPreview"></div></div><label id="videoUrlArea">外部影片網址<input name="externalURL" type="url" value="${esc(existing?.externalURL || "")}" placeholder="YouTube、TikTok 或其他影片網址"></label><small>作品展示可只貼影片網址，不必上傳圖片。本站不儲存外部影片檔案；若平台不允許內嵌，可使用原站連結觀看。</small></fieldset><label>聯絡方式（最多 10 個）</label><div id="contactRows">${(existing?.contacts?.length ? existing.contacts : [shop.contact || ""]).map(contactRow).join("")}</div><button type="button" id="addContact">＋ 新增聯絡方式</button><p id="listingError" role="alert" class="listing-error"></p><button type="submit" class="primary-btn">儲存並上架</button></form>`,
+            `<form id="listingForm" class="listing-form" autocomplete="off"><label>項目類型<select name="category"><option value="sale" ${category === "sale" ? "selected" : ""}>產品販售</option><option value="showcase" ${category === "showcase" ? "selected" : ""}>作品展示</option><option value="job" ${category === "job" ? "selected" : ""}>徵才</option></select></label><label>名稱<input name="title" required maxlength="60" value="${esc(existing?.title || "")}"></label><label>介紹<textarea name="desc" required maxlength="2000">${esc(existing?.desc || "")}</textarea></label><div id="saleFields"><label>指定價格（NT$）<input name="price" type="number" min="0" step="0.01" value="${esc(existing?.price || "")}"></label><label>地點／位置／區域<input name="location" maxlength="200" placeholder="請輸入位置 舉例：台北市 或 詳細地點" value="${esc(existing?.location || "")}"></label></div><fieldset><legend>圖片 · 最多 3 張</legend><p>可一次選多張或分次新增；上傳圖片可能會壓縮，但會盡量保持品質。</p><input id="listingImages" type="file" accept="image/*" multiple><div id="imagePreviews" class="media-previews"></div></fieldset><fieldset><legend>影片 · 使用外部網址</legend><select id="videoMode"><option value="none" ${mode === "none" ? "selected" : ""}>不放影片</option>${video ? `<option value="legacy" ${mode === "legacy" ? "selected" : ""}>保留原有影片</option>` : ""}<option value="url" ${mode === "url" ? "selected" : ""}>貼上影片網址</option></select><div id="videoFileArea"><div id="videoPreview"></div></div><label id="videoUrlArea">外部影片網址<input name="externalURL" type="url" value="${esc(existing?.externalURL || "")}" placeholder="YouTube、TikTok 或其他影片網址"></label><small>暫不提供影片上傳功能，資金不足（<img class="awkward-smile" src="assets/awkward-smile.svg" alt="尷尬的笑臉">）。可先上傳至 YouTube、TikTok 或其他影片網站，再貼上網址。沒有上傳圖片時會使用 YouTube 公開縮圖；其他平台會顯示本站製作的通用影片預覽圖。</small></fieldset><label>聯絡方式（最多 10 個）</label><div id="contactRows">${(existing?.contacts?.length ? existing.contacts : [shop.contact || ""]).map(contactRow).join("")}</div><button type="button" id="addContact">＋ 新增聯絡方式</button><p id="listingError" role="alert" class="listing-error"></p><button type="submit" class="primary-btn">儲存並上架</button></form>`,
           );
           const form = $("#listingForm"),
             error = (msg) => {
@@ -5508,10 +6123,12 @@
             const size = await inspectMediaSize(file);
             if ($("#listingForm") !== form || $("#modalBackdrop").classList.contains("hidden"))
               throw Error("編輯已關閉。");
-            if (size.width > 3840 || size.height > 3840) throw Error("媒體超過 4K 上限。");
-            const tempURL = URL.createObjectURL(file);
+                if (type === "image" && sourceImageTooLarge(size)) throw Error("圖片解析度過高，請先縮小圖片後再試。");
+            const prepared = type === "image" ? await compressImageForUpload(file) : { file };
+            const outputSize = type === "image" ? { width: prepared.width, height: prepared.height } : size;
+            const tempURL = URL.createObjectURL(prepared.file);
             mediaDraftURLs.push(tempURL);
-            return { ...size, mediaType: type, file, tempURL };
+            return { ...outputSize, mediaType: type, file: prepared.file, tempURL, originalBytes: prepared.originalBytes, compressedBytes: prepared.compressedBytes };
           };
           $("#listingImages").onchange = async (e) => {
             const input = e.target,
@@ -5567,6 +6184,7 @@
                 (m) => ({ ...m }),
               );
               validateListing(data, media);
+              validateShopCloudImageQuota(shop, media, index ?? -1);
               for (const m of media) {
                 if (m.file) {
                   m.mediaKey = shop.id + "-" + randomId();
@@ -5587,15 +6205,19 @@
                 emoji: category === "sale" ? "🛍️" : "🎨",
                 expire_at: shop.lease?.expires ? new Date(shop.lease.expires).toISOString() : null,
               };
+              const replacedCloudKeys = [...collectCloudMediaKeys(existing || {})];
               if (index == null) shop.products.push(p);
               else shop.products[index] = p;
               save();
+              scheduleUnusedShopMediaCleanup(shop.id, replacedCloudKeys, accountId);
               drawInterior.key = null;
               closeModal();
               renderShowroom();
               toast("相框內容已儲存。");
             } catch (err) {
               for (const key of created) deleteMediaBlob(key);
+              const cleanupError = await deleteCloudMediaKeys(created, accountId);
+              if (cleanupError) console.warn("未完成上架圖片清理失敗", cleanupError);
               error(err.message || "儲存失敗");
             } finally {
               button.disabled = false;
@@ -5604,7 +6226,7 @@
         }
 
         function contactRow(value) {
-          return `<div class="contact-row"><input required maxlength="200" placeholder="Email、電話、LINE 或社群網址" value="${esc(value)}"><button type="button" data-remove-contact>移除</button></div>`;
+          return `<div class="contact-row"><input required maxlength="200" placeholder="Email、電話或社群網址" value="${esc(value)}"><button type="button" data-remove-contact>移除</button></div>`;
         }
 
         let youtubeApiPromise = null;
@@ -6526,7 +7148,7 @@
           return horizontal ? (dx > 0 ? "right" : "left") : dy > 0 ? "down" : "up";
         }
         function contactItemHTML(item) {
-          return `<div class="contact-row"><select>${["電話", "MAIL", "IG", "FB", "LINE", "其他"].map((t) => `<option ${item.type === t ? "selected" : ""}>${t}</option>`).join("")}</select><input maxlength="200" value="${esc(item.value || "")}" placeholder="請填寫聯絡資訊"><button type="button" data-remove-contact>刪除</button></div>`;
+          return `<div class="contact-row"><select>${["電話", "MAIL", "IG", "FB", "其他"].map((t) => `<option ${item.type === t ? "selected" : ""}>${t}</option>`).join("")}</select><input maxlength="200" value="${esc(item.value || "")}" placeholder="請填寫聯絡資訊"><button type="button" data-remove-contact>刪除</button></div>`;
         }
         function syncRoomControls(shop) {
           if (insideCounter && !canEditShop(shop)) {
@@ -6537,9 +7159,9 @@
           if (!look) {
             look = document.createElement("button");
             look.id = "freeLookBtn";
-            look.className = "outline-btn";
+            look.className = "outline-btn free-look-btn";
             look.textContent = "360° 滑鼠環視（Esc 解除）";
-            $("#ownerModeBtn").insertAdjacentElement("beforebegin", look);
+            $(".first-person-card").appendChild(look);
             look.onclick = () => {
               roomCanvas
                 .requestPointerLock?.()
@@ -6566,7 +7188,7 @@
             audio.id = "musicControls";
             audio.className = "music-control";
             audio.innerHTML =
-              '<button id="musicPlayBtn" type="button">播放店內音樂</button><label>音量 <input id="musicVolume" aria-label="店內音量" type="range" min="0" max="100" value="40"></label><span id="musicTrackName"></span><button id="playlistBtn" type="button">音樂清單</button><button id="musicUploadBtn" type="button">新增音樂</button><input id="musicUpload" type="file" accept="audio/*" multiple hidden><button id="musicRemoveBtn" type="button">移除音樂</button>';
+              '<button id="musicPlayBtn" type="button">播放店內音樂</button><label>音量 <input id="musicVolume" aria-label="店內音量" type="range" min="0" max="100" value="40"></label><span id="musicTrackName"></span><button id="musicUploadBtn" type="button">設定／更換單曲</button><input id="musicUpload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/webm" hidden><button id="musicRemoveBtn" type="button">移除音樂</button><small class="music-rights-note">只上傳有權公開播放的音檔；不支援抽取 YouTube 音訊或 Spotify 背景播放。</small>';
             $("#roomTools").insertAdjacentElement("afterend", audio);
             $("#musicVolume").value = localStorage.getItem("market-music-volume") || "40";
             $("#musicVolume").oninput = (e) => {
@@ -6578,19 +7200,16 @@
               if (!canEditShop(shop)) return;
               setMusicTransport(shop, { paused: !shop.music?.paused });
             };
-            $("#playlistBtn").onclick = openPlaylist;
             $("#musicUploadBtn").onclick = () => $("#musicUpload").click();
             $("#musicUpload").onchange = uploadShopMusic;
             $("#musicRemoveBtn").onclick = () => {
               const s = getShop(activeShopId);
               if (!canEditShop(s)) return;
-              removePlaylistTrack(s, trackIndex);
-              openPlaylist();
+              removeShopMusic(s);
             };
           }
           const owner = canEditShop(shop) && !roomPreviewOnly;
           $("#musicPlayBtn").classList.toggle("hidden", !owner);
-          $("#playlistBtn").classList.toggle("hidden", !owner);
           $("#musicUploadBtn").classList.toggle("hidden", !owner);
           $("#musicRemoveBtn").classList.toggle("hidden", !owner);
           loadShopMusic(shop);
@@ -6738,8 +7357,11 @@
           const track = tracks[trackIndex],
             key = track.mediaKey || track.mediaURL || "";
           if ($("#musicTrackName"))
-            $("#musicTrackName").textContent =
-              trackIndex + 1 + "/" + tracks.length + " " + (track.name || "音樂");
+            $("#musicTrackName").textContent = !track.publicURL && track.mediaKey
+              ? canEditShop(shop)
+                ? "舊音樂只在此裝置；請重新上傳讓訪客聽見"
+                : "店主需重新上傳音樂，訪客才能播放"
+              : track.name || "店內單曲循環";
           if ($("#musicPlayBtn"))
             $("#musicPlayBtn").textContent = shop.music.paused ? "播放店內音樂" : "暫停店內音樂";
           if (key === musicKey && !force) {
@@ -6769,6 +7391,7 @@
           if (typeof Audio === "undefined") return;
           musicPlayer = musicPlayer || new Audio();
           const audio = musicPlayer;
+          audio.preload = shop.music.paused ? "none" : "auto";
           const sync = () => {
             if (ticket !== musicTicket || musicKey !== key) return;
             const pos = musicPosition(getShop(shop.id) || shop);
@@ -6787,7 +7410,7 @@
               });
             else audio.pause();
           };
-          audio.loop = false;
+          audio.loop = true;
           applyMusicGain();
           audio.onloadedmetadata = () => {
             if (Number.isFinite(audio.duration) && audio.duration > 0 && !track.duration) {
@@ -6818,44 +7441,43 @@
         });
 
         async function uploadShopMusic(e) {
-          const shop = getShop(activeShopId),
-            files = [...e.target.files];
-          if (!files.length || !canEditShop(shop)) return;
-          const keys = [];
+          const shop = getShop(activeShopId), file = e.target.files?.[0];
+          if (!file || !canEditShop(shop)) return;
+          let uploadedKey = "";
           try {
-            const tracks = playlistTracks(shop);
-            if (tracks.length + files.length > 10) throw Error("音樂清單最多 10 首。");
-            for (const file of files) {
-              if (!file.type.startsWith("audio/")) throw Error("只接受音樂檔案。");
-              if (file.size > 50 * 1024 * 1024) throw Error("每首音樂最多 50 MB。");
-            }
-            const added = [];
-            for (const file of files) {
-              const key = shop.id + "-music-" + randomId();
-              await saveMediaBlob(key, file);
-              keys.push(key);
-              added.push({
-                mediaKey: key,
-                name: file.name,
-                duration: await inspectAudioDuration(file),
-              });
-            }
+            if (!supabase || !accountId) throw Error("請先登入並連線 Supabase，才能讓其他訪客聽到店內音樂。");
+            if (!file.type.startsWith("audio/")) throw Error("只接受音樂檔案。");
+            if (file.size > 10 * 1024 * 1024) throw Error("單曲最多 10 MB，請先轉成較精簡的 MP3 或 AAC。");
+            if (!window.confirm("請確認你創作了這首音樂，或已取得將它上傳並在公開店面播放的授權。音檔會存入 Supabase，供其他訪客串流播放。沒有授權的 Spotify／YouTube 音樂不能轉成背景音源。")) return;
+            const duration = await inspectAudioDuration(file);
+            const key = shop.id + "-music-" + randomId();
+            const publicURL = await uploadCloudMedia(file, `${accountId}/${key}`);
+            uploadedKey = key;
             if (!canEditShop(shop)) throw Error("店主權限已失效。");
-            const latest = playlistTracks(shop);
-            if (latest.length + added.length > 10) throw Error("音樂清單最多 10 首。");
+            const previous = allShopMusicTracks(shop);
+            const storageOwnerId = accountId;
+            const oldCloudKeys = previous.filter((track) => track.publicURL && track.mediaKey).map((track) => track.mediaKey);
+            const oldLocalKeys = previous.filter((track) => track.mediaKey).map((track) => track.mediaKey);
             shop.music = {
-              ...shop.music,
-              tracks: [...latest, ...added],
-              mode: shop.music?.mode || "list",
-              startedAt: shop.music?.startedAt || Date.now(),
+              mediaKey: key,
+              publicURL,
+              mediaType: file.type,
+              name: file.name,
+              duration,
+              mode: "single",
+              paused: false,
+              startedAt: Date.now(),
+              pausedAt: null,
             };
             save();
-            loadShopMusic(shop);
-            if ($("#playlistMode")) openPlaylist();
-            toast("已新增 " + added.length + " 首音樂。");
+            stopShopMusic();
+            loadShopMusic(shop, true);
+            oldLocalKeys.forEach(deleteMediaBlob);
+            deleteCloudMusicAfterSave(shop.id, storageOwnerId, oldCloudKeys);
+            toast("單曲已上傳雲端，訪客進入店面時會自動循環播放。");
           } catch (err) {
-            for (const k of keys) deleteMediaBlob(k);
-            toast(err.message);
+            if (uploadedKey) await deleteCloudMediaKeys([uploadedKey], accountId);
+            toast(err.message || "音樂上傳失敗。");
           } finally {
             e.target.value = "";
           }
@@ -7076,7 +7698,7 @@
           const staged = [];
           showModal(
             "裝飾與擺設",
-            `<div id="layoutEditor" class="layout-grid"><section><b>室內平面預覽 · 上方為北牆，下方為出口</b><p>直接按住物件拖曳，放開完成移位；綠色可放、紅色禁止。相框自動貼牆，虛線為互動區，禁止重疊。櫃台和 A 字立牌固定不可移動。</p><canvas id="layoutMap" width="600" height="840"></canvas><p id="layoutHint" role="status"></p></section><aside><label>新增裝飾（每樣最多 3 個）<select id="decorType">${DECORS.map(([name, icon]) => `<option>${name}</option>`).join("")}</select></label><label>新增數量 <input id="decorCount" type="number" min="1" max="3" value="1"></label><button id="addDecor" class="primary-btn" type="button">＋ 新增裝飾</button><label><input id="layoutAdsEnabled" type="checkbox" ${shop.room?.adsEnabled ? "checked" : ""}> 添加大型廣告立牌</label><div id="layoutObjects" class="layout-list"></div><label id="adUploadLabel" class="hidden">大型立牌圖片（不支援影片）<input id="adImageFile" type="file" accept="image/*"></label><button id="removeDecor" class="outline-btn">刪除選取裝飾</button><button id="saveLayout" class="primary-btn">儲存擺設</button></aside></div>`,
+            `<div id="layoutEditor" class="layout-grid"><section><b>室內平面預覽 · 上方為北牆，下方為出口</b><p>直接按住物件拖曳，放開完成移位；綠色可放、紅色禁止。相框自動貼牆，虛線為互動區，禁止重疊。櫃台和 A 字立牌固定不可移動。</p><canvas id="layoutMap" width="600" height="840"></canvas><p id="layoutHint" role="status"></p></section><aside><label>新增裝飾（每樣最多 3 個）<select id="decorType">${DECORS.map(([name, icon]) => `<option>${name}</option>`).join("")}</select></label><label>新增數量 <input id="decorCount" type="number" min="1" max="3" value="1"></label><button id="addDecor" class="primary-btn" type="button">＋ 新增裝飾</button><label><input id="layoutAdsEnabled" type="checkbox" ${shop.room?.adsEnabled ? "checked" : ""}> 添加大型廣告立牌</label><div id="layoutObjects" class="layout-list"></div><label id="adUploadLabel" class="hidden">大型立牌圖片（不支援影片）<input id="adImageFile" type="file" accept="image/*"><small>上傳圖片可能會壓縮，但會盡量保持品質。</small></label><button id="removeDecor" class="outline-btn">刪除選取裝飾</button><button id="saveLayout" class="primary-btn">儲存擺設</button></aside></div>`,
           );
           const layoutElement = $("#layoutEditor");
           modalCleanup = () => {
@@ -7259,9 +7881,10 @@
               if (!file.type.startsWith("image/"))
                 throw Error("大型廣告立牌只接受圖片，不支援影片。");
               const size = await inspectMediaSize(file);
-              if (size.width > 3840 || size.height > 3840) throw Error("圖片超過 4K。");
+              if (sourceImageTooLarge(size)) throw Error("圖片解析度過高，請先縮小圖片後再試。");
               const key = shop.id + "-ad-" + randomId();
-              await saveMediaBlob(key, file);
+              const prepared = await compressImageForUpload(file);
+              await saveMediaBlob(key, prepared.file);
               if (
                 $("#layoutEditor") !== layoutElement ||
                 $("#modalBackdrop").classList.contains("hidden") ||
@@ -7309,85 +7932,30 @@
         }
 
         let trackIndex = 0;
+        function allShopMusicTracks(shop) {
+          return Array.isArray(shop?.music?.tracks)
+            ? shop.music.tracks.filter(Boolean)
+            : shop?.music?.mediaKey
+              ? [shop.music]
+              : [];
+        }
         function playlistTracks(shop) {
-          return shop?.music?.tracks || (shop?.music?.mediaKey ? [shop.music] : []);
+          return allShopMusicTracks(shop).slice(0, 1);
         }
-        function nextTrackIndex(count, index, mode, random = Math.random) {
-          if (count < 2 || mode === "single") return Math.max(0, index);
-          if (mode === "random") return (index + 1 + Math.floor(random() * (count - 1))) % count;
-          return (index + 1) % count;
-        }
-        function removePlaylistTrack(shop, index) {
+        function removeShopMusic(shop) {
           if (!canEditShop(shop)) return false;
-          const tracks = [...playlistTracks(shop)],
-            removed = tracks.splice(index, 1)[0];
-          shop.music = {
-            tracks,
-            mode: shop.music?.mode || "list",
-            startedAt: Date.now(),
-            startIndex: 0,
-          };
+          const storageOwnerId = accountId,
+            oldTracks = allShopMusicTracks(shop),
+            localKeys = oldTracks.map((track) => track.mediaKey).filter(Boolean),
+            cloudKeys = oldTracks.filter((track) => track.publicURL).map((track) => track.mediaKey).filter(Boolean);
+          shop.music = { tracks: [], mode: "single", paused: true, startedAt: Date.now() };
           save();
-          if (removed?.mediaKey) deleteMediaBlob(removed.mediaKey);
-          trackIndex = Math.min(trackIndex, Math.max(0, tracks.length - 1));
           stopShopMusic();
-          loadShopMusic(shop);
+          localKeys.forEach(deleteMediaBlob);
+          deleteCloudMusicAfterSave(shop.id, storageOwnerId, cloudKeys);
+          if ($("#musicTrackName")) $("#musicTrackName").textContent = "尚未設定店內音樂";
+          toast("已移除店內音樂。");
           return true;
-        }
-        function openPlaylist() {
-          const shop = getShop(activeShopId);
-          if (!shop || !canEditShop(shop)) return;
-          const owner = true;
-          showModal(
-            "店內音樂清單",
-            `<p>最多 10 首。店主控制選曲、循環及播放；訪客只能調音量。離店不影響店內播放進度。</p><label>循環模式 <select id="playlistMode" ${owner ? "" : "disabled"}>${[
-              ["list", "清單循環"],
-              ["single", "單首循環"],
-              ["random", "隨機循環"],
-            ]
-              .map(
-                ([value, label]) =>
-                  `<option value="${value}" ${(shop.music?.mode || "list") === value ? "selected" : ""}>${label}</option>`,
-              )
-              .join("")}</select></label><div class="layout-list">${
-              playlistTracks(shop)
-                .map(
-                  (t, i) =>
-                    `<div class="media-tile"><b>${i + 1}. ${esc(t.name || "音樂")}</b><button data-track="${i}">播放這首</button>${owner ? `<button data-remove-track="${i}">移除此首</button>` : ""}</div>`,
-                )
-                .join("") || "<p>尚無音樂，使用上傳音樂新增。</p>"
-            }</div>${owner ? '<button id="addPlaylistFiles" class="primary-btn">新增音樂（可多選）</button>' : ""}`,
-          );
-          $("#playlistMode").onchange = (e) => {
-            if (!canEditShop(shop)) return;
-            setMusicTransport(shop, {
-              mode: e.target.value,
-              index: trackIndex,
-              paused: false,
-            });
-          };
-          $("#modalContent")
-            .querySelectorAll("[data-track]")
-            .forEach(
-              (b) =>
-                (b.onclick = () => {
-                  if (!canEditShop(shop)) return;
-                  setMusicTransport(shop, {
-                    index: Number(b.dataset.track),
-                    paused: false,
-                  });
-                }),
-            );
-          $("#modalContent")
-            .querySelectorAll("[data-remove-track]")
-            .forEach(
-              (b) =>
-                (b.onclick = () => {
-                  removePlaylistTrack(shop, Number(b.dataset.removeTrack));
-                  openPlaylist();
-                }),
-            );
-          if (owner) $("#addPlaylistFiles").onclick = () => $("#musicUpload").click();
         }
         function frameSource(p) {
           if (!p) return {};
@@ -7398,16 +7966,8 @@
           const media = p.media?.find((m) => m.mediaKey || m.mediaURL || m.image);
           if (media) return media;
           if (p.mediaKey || p.mediaURL || p.image) return p;
-          try {
-            const embed = externalPlayer(p.externalURL || "");
-            if (embed && /youtube/.test(embed)) {
-              const id = new URL(embed).pathname.split("/").pop();
-              return {
-                mediaURL: "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg",
-                mediaType: "image",
-              };
-            }
-          } catch {}
+          const poster = externalVideoPoster(p.externalURL || "");
+          if (poster) return { mediaURL: poster, mediaType: "image" };
           return p;
         }
         function zoneFor(p) {
@@ -7543,6 +8103,64 @@
             b.onclick = () => requestEndLease(getShop(activeShopId));
           }
           b.classList.toggle("hidden", !canEditShop(shop));
+          let renew = $("#renewLeaseBtn");
+          if (!renew) {
+            renew = document.createElement("button");
+            renew.id = "renewLeaseBtn";
+            renew.className = "primary-btn";
+            renew.textContent = "續租";
+            $("#roomTools").appendChild(renew);
+            renew.onclick = () => openRenewLease(getShop(activeShopId));
+          }
+          renew.classList.toggle("hidden", !canEditShop(shop));
+        }
+        function openRenewLease(shop) {
+          if (!canEditShop(shop)) return;
+          const expirationLabel = new Date(shop.lease.expires).toLocaleString("zh-TW");
+          const options = [7, 14, 15].map((days, i) =>
+            '<label><input type="radio" name="days" value="' + days + '"' + (i === 0 ? " checked" : "") + '> ' + days + ' 天</label>'
+          ).join("");
+          showModal(
+            "續租店面",
+            '<p class="about-text">目前租期至 ' + expirationLabel + '。續租會從目前到期時間往後延長，店主和店面內容保持不變。</p>' +
+            '<form id="renewLeaseForm"><div class="field"><label>續租天數</label><div class="rental-options">' + options +
+            '</div></div><p id="renewLeaseError" class="listing-error" role="alert"></p><div class="modal-actions">' +
+            '<button type="button" class="outline-btn cancel-modal">取消</button><button type="submit" class="primary-btn">確認續租</button></div></form>',
+          );
+          $("#modalContent").querySelector(".close-modal").onclick = closeModal;
+          $("#modalContent").querySelector(".cancel-modal").onclick = closeModal;
+          $("#renewLeaseForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const form = event.currentTarget, button = form.querySelector('[type="submit"]');
+            const days = Number(new FormData(form).get("days"));
+            if (!canEditShop(shop) || ![7, 14, 15].includes(days)) {
+              $("#renewLeaseError").textContent = "目前帳號沒有這間店的續租權限。";
+              return;
+            }
+            if (!supabase) {
+              $("#renewLeaseError").textContent = "雲端尚未連線，請稍後再試。";
+              return;
+            }
+            button.disabled = true;
+            $("#renewLeaseError").textContent = "正在確認店主權限並寫入新到期時間…";
+            try {
+              const { data, error } = await supabase.rpc("renew_market_shop", { p_shop_id: shop.id, p_days: days });
+              if (error) throw error;
+              const expires = Number(data?.expires), duration = Number(data?.duration);
+              if (!Number.isFinite(expires) || !Number.isFinite(duration)) throw Error("後端未回傳有效的新租期。");
+              shop.lease.expires = expires;
+              shop.lease.duration = duration;
+              shop.lease.renewals = Array.isArray(data.renewals) ? data.renewals : shop.lease.renewals || [];
+              save();
+              closeModal();
+              renderShowroom();
+              renderShopList();
+              toast("續租完成，已延長 " + days + " 天；新到期時間：" + new Date(expires).toLocaleString("zh-TW"));
+            } catch (error) {
+              $("#renewLeaseError").textContent = "續租未完成：" + (error.message || error);
+              button.disabled = false;
+            }
+          });
         }
         function requestEndLease(shop) {
           if (!canEditShop(shop)) return;
@@ -7550,29 +8168,35 @@
             "確認退租並恢復空店",
             `<p>退租「${esc(shop.name)}」會清除商品、圖片、音樂與裝潢，房屋保留在原位置並恢復預設外觀，供其他人租用。此操作無法復原。</p><button id="confirmEndLease" class="primary-btn">確認退租並清空內容</button><button class="outline-btn cancel-modal">取消</button>`,
           );
-          $("#confirmEndLease").onclick = () => endLease(shop);
+          $("#confirmEndLease").onclick = async (event) => {
+            const button = event.currentTarget;
+            button.disabled = true;
+            if (!(await endLease(shop))) button.disabled = false;
+          };
         }
-        function endLease(shop) {
+        async function endLease(shop) {
           if (!canEditShop(shop)) return false;
-          const keys = new Set(
-            [
-              shop.logo?.mediaKey,
-              ...(shop.products || []).flatMap((p) => [
-                p.mediaKey,
-                ...(p.media || []).map((m) => m.mediaKey),
-              ]),
-              ...playlistTracks(shop).map((t) => t.mediaKey),
-              ...(shop.room?.ads || []).map((a) => a.mediaKey),
-            ].filter(Boolean),
-          );
+          const keys = collectMediaKeys(shop);
+          const cloudError = await deleteCloudMediaKeys([...collectCloudMediaKeys(shop)], accountId);
+          if (cloudError) {
+            toast("雲端圖片尚未刪除，退租已取消：" + cloudError.message);
+            return false;
+          }
+          const { error: endError } = await supabase.rpc("end_market_shop", { p_shop_id: shop.id });
+          if (endError) {
+            toast("店面資料尚未清除，請稍後再試：" + endError.message);
+            return false;
+          }
+          clearShopDm(shop.id);
           for (const k of keys) deleteMediaBlob(k);
           const id = shop.id,
             position = shop.position;
           Object.keys(shop).forEach((k) => delete shop[k]);
           Object.assign(shop, emptyShop({ id, position }, shops.indexOf(shop)), {
             destroyed: false,
+            cloudOwnerId: accountId,
           });
-          orders = orders.filter((o) => o.shopId !== id && o.shop !== id);
+          clearLocalOrdersForShop(id);
           save();
           if (activeShopId === id) {
             closeModal();
@@ -7589,6 +8213,7 @@
           return true;
         }
         function beginBuild(name, days, category = "sale") {
+          if (!hasBoundAccount()) { toast("請先登入或綁定帳號才能建店。"); openAccountModal(); return false; }
           if (leaseCount() >= 2 || ![3, 7, 15, 30].includes(days)) return false;
           const s = {
             id: "custom-" + randomId(),
@@ -7597,6 +8222,7 @@
             destroyed: true,
             pendingBuild: true,
             owner: playerName,
+            cloudOwnerId: accountId,
             tagline: "新開幕",
             contact: "",
             about: "",
@@ -7628,6 +8254,7 @@
           return s;
         }
         function openBuild() {
+          if (!hasBoundAccount()) { toast("請先登入或綁定帳號才能建店。"); openAccountModal(); return; }
           const pending = shops.find((s) => s.pendingBuild && isMyShop(s));
           if (pending) {
             startPlacement(pending.id);
@@ -7701,7 +8328,7 @@
             if (!shops[i].destroyed && shops[i].id !== id) {
               const a = shopSpots[i];
               if (overlaps(box, { x: a.x - 20, y: a.y - 20, w: 260, h: 260 }))
-                return { ok: false, reason: "與其他店面或入口重疊" };
+                return { ok: false, reason: "不能與其他建築物或店面重疊" };
             }
           }
           for (const a of [...racks, ...benches])
@@ -7717,37 +8344,30 @@
           return { ok: true, reason: "可放置 · 所有店面均為 220 × 170" };
         }
         function syncShopPositions() {
-          while (shopSpots.length < shops.length)
-            shopSpots.push({
-              x: 180,
-              y: 180,
-              w: 220,
-              h: 170,
-              doorX: 290,
-              doorY: 384,
-              side: "top",
-            });
+          let changed = false;
+          const occupied = [];
+          const isValidPosition = (x, y) => Number.isFinite(x) && Number.isFinite(y) && x >= -2420 && x <= 7533.333333 && y >= 170 && y <= 3060;
+          const free = (x, y) => !occupied.some((p) => overlaps({ x: x - 20, y: y - 20, w: 260, h: 260 }, p));
+          while (shopSpots.length < shops.length) shopSpots.push({ x: 180, y: 230, w: 220, h: 170, doorX: 290, doorY: 434, side: "top" });
           shops.forEach((s, i) => {
-            const x = s.position?.x,
-              y = s.position?.y;
-            if (
-              Number.isFinite(x) &&
-              Number.isFinite(y) &&
-              x >= -2420 &&
-              x <= 7533.333333 &&
-              y >= 170 &&
-              y <= 3060
-            )
-              Object.assign(shopSpots[i], {
-                x,
-                y,
-                w: 220,
-                h: 170,
-                doorX: x + 110,
-                doorY: y + 204,
-                side: "top",
-              });
+            const defaultX = i < 24 ? 180 + (i % 6) * 700 : 180 + ((i - 24) % 10) * 700;
+            const defaultY = i < 24 ? 230 + Math.floor(i / 6) * 620 : 2600 + Math.floor((i - 24) / 10) * 300;
+            let x = s.position?.x, y = s.position?.y;
+            if (!isValidPosition(x, y) || (!s.destroyed && !free(x, y))) {
+              if (free(defaultX, defaultY)) { x = defaultX; y = defaultY; }
+              else {
+                let found = false;
+                for (let cy = 170; cy <= 2860 && !found; cy += 300) for (let cx = -2400; cx <= 7300 && !found; cx += 300)
+                  if (isValidPosition(cx, cy) && free(cx, cy)) { x = cx; y = cy; found = true; }
+                if (!found) { x = defaultX; y = defaultY; }
+              }
+              s.position = { x, y };
+              changed = true;
+            }
+            if (!s.destroyed) occupied.push({ x: x - 20, y: y - 20, w: 260, h: 260 });
+            Object.assign(shopSpots[i], { x, y, w: 220, h: 170, doorX: x + 110, doorY: y + 204, side: "top" });
           });
+          return changed;
         }
         function startPlacement(id) {
           const s = getShop(id);
@@ -8033,16 +8653,51 @@
           })),
         );
         let parkRide = null;
-        function useParkFacility(facility) {
-          parkRide = { facility, time: 0, x: player.x, y: player.y };
+        const parkSessions = new Map();
+        const parkClaimInFlight = new Set();
+        let parkRenewTimer = 0;
+        async function refreshParkSessions() {
+          if (!supabase) return;
+          const { data, error } = await supabase.from("park_sessions").select("facility_id,user_id,session_id,expires_at");
+          if (error) { console.error("公園設備狀態同步失敗", error); return; }
+          parkSessions.clear();
+          (data || []).filter((s) => Date.parse(s.expires_at) > Date.now()).forEach((s) => parkSessions.set(s.facility_id, s));
+        }
+        async function useParkFacility(facility) {
+          if (parkRide || parkClaimInFlight.has(facility.id)) return;
+          if (!authUser || !supabase) { toast("目前無法連接設備狀態，請稍後重試。"); return; }
+          parkClaimInFlight.add(facility.id);
+          const sessionKey = `${authUser.id}:${playerId}`;
+          let claimed, error;
+          try {
+            ({ data: claimed, error } = await supabase.rpc("claim_park_facility", { p_facility_id: facility.id, p_session_id: sessionKey }));
+          } catch (err) { error = err; }
+          parkClaimInFlight.delete(facility.id);
+          if (error) { console.error("公園設備鎖定失敗", error); toast("無法使用設備，請確認已套用 Supabase 更新設定。"); return; }
+          if (!claimed) { await refreshParkSessions(); toast("這項設備目前由其他使用者使用，等對方離開後即可使用。"); return; }
+          parkSessions.set(facility.id, { facility_id: facility.id, user_id: authUser.id, session_id: sessionKey, expires_at: new Date(Date.now()+15000).toISOString() });
+          parkRide = { facility, time: 0, x: player.x, y: player.y, sessionKey };
+          const facing = { swing: "down", slide: "down", seesaw: "right", carousel: "down", trampoline: "down", balance: "right" };
+          parkRide.motion = { dir: facing[facility.kind] || "down", moving: true, phase: 0 };
+          clearInterval(parkRenewTimer);
+          parkRenewTimer = setInterval(async () => {
+            if (!parkRide || !authUser) return;
+            const result = await supabase.rpc("renew_park_facility", { p_facility_id: parkRide.facility.id, p_session_id: parkRide.sessionKey });
+            if (result.error || !result.data) { console.error("設備使用權續期失敗", result.error); stopParkRide(); toast("設備使用權已結束。"); }
+          }, 5000);
           player.targetX = player.targetY = null;
           autoRoute = [];
           streetState.seated = null;
+          await refreshParkSessions();
           toast("正在玩" + facility.name + "！按 E 或移動鍵離開。");
         }
         function stopParkRide() {
           if (!parkRide) return;
           const f = parkRide.facility;
+          clearInterval(parkRenewTimer);
+          parkSessions.delete(f.id);
+          const sessionKey = parkRide.sessionKey;
+          if (supabase && authUser) supabase.rpc("release_park_facility", { p_facility_id: f.id, p_session_id: sessionKey }).then(({error}) => { if(error) console.error("設備使用權釋放失敗", error); });
           player.x = f.x;
           player.y = f.y + 90;
           parkRide = null;
@@ -8057,6 +8712,8 @@
             f = ride.facility;
           ride.time += dt;
           const t = ride.time;
+          ride.motion.phase = t * 4;
+          ride.motion.moving = true;
           player.x = f.x;
           player.y = f.y;
           switch (f.kind) {
@@ -8070,10 +8727,12 @@
               break;
             }
             case "seesaw":
+              ride.motion.dir = Math.sin(t * 2.4) >= 0 ? "right" : "left";
               player.x += 70;
               player.y += Math.sin(t * 2.4) * 35;
               break;
             case "carousel":
+              ride.motion.dir = Math.cos(t * 1.7) < 0 ? "left" : "right";
               player.x += Math.cos(t * 1.7) * 65;
               player.y += Math.sin(t * 1.7) * 45;
               break;
@@ -8153,6 +8812,7 @@
           if (!visibleWorld(f.x, f.y, 200)) return;
           const p = project(f.x, f.y),
             active = parkRide?.facility.id === f.id,
+            occupied = parkSessions.has(f.id) && parkSessions.get(f.id).user_id !== accountId,
             t = active ? parkRide.time : 0;
           ctx.save();
           ctx.translate(p.x, p.y);
@@ -8254,7 +8914,7 @@
           ctx.fillStyle = "white";
           ctx.textAlign = "center";
           ctx.font = "bold 13px sans-serif";
-          ctx.fillText(f.name + (active ? " · E 離開" : " · E 遊玩"), p.x, p.y + 124);
+          ctx.fillText(f.name + (active ? " · E 離開" : occupied ? " · 使用中" : " · E 遊玩"), p.x, p.y + 124);
         }
         function drawShopBubble() {
           const id = guideShopId || mapPickedShop,
@@ -8522,7 +9182,7 @@
             `<label>${label}<input type="number" name="board_${key}" min="${min}" max="${max}" value="${d[key]}"></label>`;
           field.insertAdjacentHTML(
             "beforeend",
-            `<label><input type="checkbox" name="board_logoEnabled" ${d.logoEnabled ? "checked" : ""}> 是否上傳 LOGO</label><div id="boardLogoUpload" class="${d.logoEnabled ? "" : "hidden"}"><input id="boardLogoFile" type="file" accept="image/*"><small id="boardLogoStatus">${shop.logo ? "已有 LOGO，可重新上傳替換。" : "請選擇圖片，最高 4K。"}</small></div><label><input name="showBubbleLogo" type="checkbox" ${shop.showBubbleLogo ? "checked" : ""}> 店面簡介右上角顯示 LOGO</label><div class="board-controls">${range("logoX", "LOGO 水平位置 %", 0, 100)}${range("logoY", "LOGO 垂直位置 %", 0, 100)}${range("logoSize", "LOGO 寬度 %", 3, 60)}${range("textX", "文字水平位置 %", 0, 100)}${range("textY", "文字垂直位置 %", 0, 100)}${range("fontSize", "文字大小", 16, 160)}<label>字型<select name="board_font">${BOARD_FONTS.map((font, i) => `<option value="${font}" ${d.font === font ? "selected" : ""}>${["黑體", "明體", "等寬字型", "微軟正黑體"][i]}</option>`).join("")}</select></label><label>文字顏色<input name="board_textColor" type="color" value="${d.textColor}"></label><label>文字對齊<select name="board_align">${[
+            `<label><input type="checkbox" name="board_logoEnabled" ${d.logoEnabled ? "checked" : ""}> 是否上傳 LOGO</label><div id="boardLogoUpload" class="${d.logoEnabled ? "" : "hidden"}"><input id="boardLogoFile" type="file" accept="image/*"><small id="boardLogoStatus">${shop.logo ? "已有 LOGO，可重新上傳替換。" : "上傳圖片可能會壓縮，但會盡量保持品質。"}</small></div><label><input name="showBubbleLogo" type="checkbox" ${shop.showBubbleLogo ? "checked" : ""}> 店面簡介右上角顯示 LOGO</label><div class="board-controls">${range("logoX", "LOGO 水平位置 %", 0, 100)}${range("logoY", "LOGO 垂直位置 %", 0, 100)}${range("logoSize", "LOGO 寬度 %", 3, 60)}${range("textX", "文字水平位置 %", 0, 100)}${range("textY", "文字垂直位置 %", 0, 100)}${range("fontSize", "文字大小", 16, 160)}<label>字型<select name="board_font">${BOARD_FONTS.map((font, i) => `<option value="${font}" ${d.font === font ? "selected" : ""}>${["黑體", "明體", "等寬字型", "微軟正黑體"][i]}</option>`).join("")}</select></label><label>文字顏色<input name="board_textColor" type="color" value="${d.textColor}"></label><label>文字對齊<select name="board_align">${[
               ["left", "靠左"],
               ["center", "置中"],
               ["right", "靠右"],
@@ -8564,18 +9224,19 @@
             saveButton.disabled = true;
             try {
               if (!file.type.startsWith("image/")) throw Error("LOGO 只接受圖片。");
-              if (file.size > 20 * 1024 * 1024) throw Error("LOGO 圖片最多 20 MB。");
+              if (file.size > 100 * 1024 * 1024) throw Error("原始圖片超過 100 MB，請先縮小圖片後再試。");
               const size = await inspectMediaSize(file);
-              if (size.width > 3840 || size.height > 3840) throw Error("LOGO 最高接受 4K。");
+              if (sourceImageTooLarge(size)) throw Error("圖片解析度過高，請先縮小圖片後再試。");
               if ($("#ownerForm") !== form || !canEditShop(shop)) return;
               const key = shop.id + "-logo-" + randomId();
-              await saveMediaBlob(key, file);
+              const prepared = await compressImageForUpload(file);
+              await saveMediaBlob(key, prepared.file);
               if ($("#ownerForm") !== form || !canEditShop(shop)) {
                 deleteMediaBlob(key);
                 return;
               }
               state.keys.push(key);
-              state.logo = { mediaKey: key, mediaType: "image", ...size };
+              state.logo = { mediaKey: key, mediaType: "image", width: prepared.width, height: prepared.height };
               const url = await mediaUrlFor(state.logo),
                 img = new Image();
               img.src = url;
@@ -8736,24 +9397,31 @@
             (!Number.isInteger(Number(job.teamSize)) || Number(job.teamSize) < 1)
           )
             throw Error("請填寫管理人數。");
+          for (const value of [job.salaryMin, job.salaryMax])
+            if (value && (!Number.isFinite(Number(value)) || Number(value) < 0))
+              throw Error("請輸入有效的薪資金額。");
+          if (job.salaryMin && job.salaryMax && Number(job.salaryMin) > Number(job.salaryMax))
+            throw Error("最高薪資需大於或等於最低薪資。");
           if (job.travel === "有" && !job.travelTime.trim()) throw Error("請填寫預計出差時間。");
-          if (!!job.startTime !== !!job.endTime)
-            throw Error("上班時間請同時填寫起、迄時間，或兩格都留白。");
           if (photos.length > 3 || photos.some((p) => p.mediaType !== "image"))
             throw Error("徵才最多可放 3 張照片，不接受影片。");
-          if (photos.some((p) => p.width > 3840 || p.height > 3840))
-            throw Error("照片最高接受 4K。");
+          if (photos.some((p) => sourceImageTooLarge(p)))
+            throw Error("圖片解析度過高，請先縮小圖片後再試。");
         }
         function jobDetails(job = {}) {
+          const salary = [job.salaryMin, job.salaryMax].filter((value) => value !== "" && value != null).join(" ~ ") || job.salary || "",
+            workTime = job.workTime || (job.startTime ? job.startTime + (job.endTime ? "～" + job.endTime : "") : "");
           const rows = [
             ["工作性質", job.nature],
+            ["薪資", salary ? "NT$ " + salary : ""],
             ["上班實際地點", job.location],
             ["管理責任", job.management === "有" ? "管理 " + job.teamSize + " 人" : "無"],
             ["出差", job.travel === "有" ? job.travelTime : "無"],
             [
-              "上班時段",
-              (job.shift || "") + (job.startTime ? " " + job.startTime + "～" + job.endTime : ""),
+              "上班班別",
+              job.shift || "",
             ],
+            ["上班時間", workTime],
             ["加班情況", job.overtime],
             ["休假制度", job.leave],
             ["可上班日", job.available],
@@ -8770,56 +9438,80 @@
           }
           const old = index == null ? null : shop.products[index],
             job = old?.job || {},
+            leaveOptions = ["週休二日", "隔週休二日", "排休", "輪休", "做一休一", "做二休二", "依公司規定", "其他"],
+            availableOptions = ["即可上班", "一週內", "兩週內", "一個月內", "可年後上班", "錄取後可上班", "日期可議", "其他"],
+            leaveIsPreset = leaveOptions.includes(job.leave),
+            availableIsPreset = availableOptions.includes(job.available),
+            requirements = (job.requirements || []).map((r) => ({ text: r.text || "", level: r.level || "" })),
             photos = (old?.media || [])
               .filter((m) => m.mediaType === "image")
               .map((m) => ({ ...m }));
           const input = (name, label, value = "", required = true) =>
-              `<label>${label}<input name="${name}" value="${esc(value)}" maxlength="250" ${required ? "required" : ""}></label>`,
+              `<label>${label}<input name="${name}" value="${esc(value)}" maxlength="250" autocomplete="off" ${required ? "required" : ""}></label>`,
             area = (name, label, value = "", required = true) =>
               `<label class="wide">${label}<textarea name="${name}" rows="4" maxlength="4000" ${required ? "required" : ""}>${esc(value)}</textarea></label>`,
             select = (name, label, values, value) =>
               `<label>${label}<select name="${name}">${values.map((v) => `<option ${v === value ? "selected" : ""}>${v}</option>`).join("")}</select></label>`;
           showModal(
             "登記商品／作品／徵才",
-            `<form id="jobForm" class="listing-form"><label>項目類型<select id="jobCategory"><option value="job">徵才</option><option value="general">商品／作品</option></select></label><p>建議填寫得越完整越好，讓求職者清楚了解職缺。照片為選填，最多 3 張。</p><div class="job-grid">${input("title", "職位名稱", job.title || old?.title || "")}${select("nature", "工作性質", ["全職", "兼職", "約聘", "臨時", "實習"], job.nature || "全職")}${area("content", "工作內容", job.content || old?.desc || "")}${input("location", "上班實際地點", job.location || "")}${select("management", "管理責任", ["無", "有"], job.management || "無")}<label id="teamSizeRow">管理人數<input name="teamSize" type="number" min="1" step="1" value="${esc(job.teamSize || "")}"></label>${select("travel", "出差", ["無", "有"], job.travel || "無")}<label id="travelTimeRow">預計出差時間<input name="travelTime" maxlength="250" placeholder="例如每月 3 天、每季 1 週" value="${esc(job.travelTime || "")}"></label>${select("shift", "上班時段", ["日班", "中班", "晚班", "三班制", "兩班制"], job.shift || "日班")}<label>上班時間（選填）<div class="job-list-row"><input name="startTime" type="time" value="${esc(job.startTime || "")}"><span>～</span><input name="endTime" type="time" value="${esc(job.endTime || "")}"></div></label>${area("overtime", "加班情況", job.overtime || "")}${input("leave", "休假制度", job.leave || "")}${input("available", "可上班日", job.available || "")}${area("requirements", "條件要求（選填，每行一個項目）", (job.requirements || []).map((r) => r.text).join("\n"), false)}<div class="wide" id="requirementLevels"></div><div class="wide"><label>福利制度（填寫一項後會自動新增下一格）</label><div id="benefitRows"></div></div></div><fieldset><legend>工作相關照片（選填，最多 3 張）</legend><input id="jobPhotos" type="file" accept="image/*" multiple><div id="jobPhotoPreviews" class="media-previews"></div></fieldset><p class="listing-error" id="jobError" role="alert"></p><button type="submit" class="primary-btn">儲存並上架徵才</button></form>`,
+            `<form id="jobForm" class="listing-form" autocomplete="off"><label>項目類型<select id="jobCategory"><option value="job">徵才</option><option value="general">商品／作品</option></select></label><p>建議填寫得越完整越好，讓求職者清楚了解職缺。照片為選填，最多 3 張。上傳圖片可能會壓縮，但會盡量保持品質。</p><div class="job-grid">${input("title", "職位名稱", job.title || old?.title || "")}${`<label>最低薪資（選填）<input name="salaryMin" type="number" min="0" step="1" autocomplete="off" value="${esc(job.salaryMin || "")}" placeholder="例如 35000"></label><label>最高薪資（選填）<input name="salaryMax" type="number" min="0" step="1" autocomplete="off" value="${esc(job.salaryMax || "")}" placeholder="例如 40000"></label>`}${select("nature", "工作性質", ["全職", "兼職", "約聘", "臨時", "實習"], job.nature || "全職")}${area("content", "工作內容", job.content || old?.desc || "")}${input("location", "上班實際地點", job.location || "")}${select("management", "管理責任", ["無", "有"], job.management || "無")}<label id="teamSizeRow">管理人數<input name="teamSize" type="number" min="1" step="1" value="${esc(job.teamSize || "")}"></label>${select("travel", "出差", ["無", "有"], job.travel || "無")}<label id="travelTimeRow">預計出差時間<input name="travelTime" maxlength="250" placeholder="例如每月 3 天、每季 1 週" value="${esc(job.travelTime || "")}"></label>${select("shift", "上班時段", ["日班", "中班", "晚班", "三班制", "兩班制"], job.shift || "日班")}<label class="wide">上班時間（選填，可自行輸入）<input id="workTimeText" name="workTime" maxlength="120" autocomplete="off" placeholder="例如：09:00～18:00，或依排班表安排" value="${esc(job.workTime || (job.startTime ? job.startTime + "～" + (job.endTime || "") : ""))}"></label><div class="wide"><small>也可選擇起迄時間；按「確認時間」後才會填入上方欄位。</small><div class="job-list-row"><input id="workTimeStart" type="time" aria-label="選擇上班開始時間"><span>～</span><input id="workTimeEnd" type="time" aria-label="選擇上班結束時間"><button type="button" id="confirmWorkTime">確認時間</button></div></div>${area("overtime", "加班情況", job.overtime || "")}${select("leaveChoice", "休假制度", leaveOptions, leaveIsPreset ? job.leave : "其他")}<label id="leaveOtherRow">其他休假制度<input name="leaveOther" maxlength="250" value="${esc(job.leaveOther || (!leaveIsPreset ? job.leave || "" : ""))}"></label>${select("availableChoice", "可上班日", availableOptions, availableIsPreset ? job.available : "其他")}<label id="availableOtherRow">其他可上班日<input name="availableOther" maxlength="250" value="${esc(job.availableOther || (!availableIsPreset ? job.available || "" : ""))}"></label><div class="wide"><label for="requirementInput">條件要求（選填，輸入一項後按新增）</label><div class="job-list-row"><input id="requirementInput" maxlength="300" placeholder="例如：具備相關工作經驗"><button type="button" id="addRequirement">新增條件</button></div><ol id="requirementList"></ol></div><div class="wide"><label>福利制度（填寫一項後會自動新增下一格）</label><div id="benefitRows"></div></div></div><fieldset><legend>工作相關照片（選填，最多 3 張）</legend><input id="jobPhotos" type="file" accept="image/*" multiple><div id="jobPhotoPreviews" class="media-previews"></div></fieldset><p class="listing-error" id="jobError" role="alert"></p><button type="submit" class="primary-btn">儲存並上架徵才</button></form>`,
           );
           const form = $("#jobForm"),
-            levels = new Map((job.requirements || []).map((r) => [r.text, r.level])),
             error = (text) => {
               if ($("#jobForm") === form) $("#jobError").textContent = text;
             },
             toggle = () => {
               const team = form.elements.management.value === "有",
-                travel = form.elements.travel.value === "有";
+                travel = form.elements.travel.value === "有",
+                otherLeave = form.elements.leaveChoice.value === "其他",
+                otherAvailable = form.elements.availableChoice.value === "其他";
               $("#teamSizeRow").classList.toggle("hidden", !team);
               form.elements.teamSize.required = team;
               $("#travelTimeRow").classList.toggle("hidden", !travel);
               form.elements.travelTime.required = travel;
+              $("#leaveOtherRow").classList.toggle("hidden", !otherLeave);
+              form.elements.leaveOther.required = otherLeave;
+              $("#availableOtherRow").classList.toggle("hidden", !otherAvailable);
+              form.elements.availableOther.required = otherAvailable;
             };
           form.elements.management.onchange = toggle;
           form.elements.travel.onchange = toggle;
+          form.elements.leaveChoice.onchange = toggle;
+          form.elements.availableChoice.onchange = toggle;
           toggle();
-          const lines = () =>
-            form.elements.requirements.value
-              .split(/\r?\n/)
-              .map((v) => v.trim())
-              .filter(Boolean);
-          const showLevels = () => {
-            $("#requirementLevels").innerHTML = lines()
-              .map(
-                (text, i) =>
-                  `<div class="job-list-row"><span>${esc(text)}</span><select data-level="${i}" aria-label="條件 ${i + 1} 的必要程度">${["", "必要", "建議"].map((v) => `<option value="${v}" ${(levels.get(text) || "") === v ? "selected" : ""}>${v || "不指定"}</option>`).join("")}</select></div>`,
-              )
-              .join("");
-            $("#requirementLevels")
-              .querySelectorAll("[data-level]")
-              .forEach(
-                (el) =>
-                  (el.onchange = () => levels.set(lines()[Number(el.dataset.level)], el.value)),
-              );
+          $("#confirmWorkTime").onclick = () => {
+            const start = $("#workTimeStart").value,
+              end = $("#workTimeEnd").value;
+            if (!start || !end) {
+              error("請先選擇上班時間的起始與結束，再按「確認時間」。");
+              return;
+            }
+            $("#workTimeText").value = `${start}～${end}`;
+            error("");
           };
-          form.elements.requirements.oninput = showLevels;
-          showLevels();
+          const renderRequirements = () => {
+            $("#requirementList").innerHTML = requirements
+              .map((item, i) => `<li class="job-list-row"><span>${i + 1}. ${esc(item.text)}</span><select data-level="${i}" aria-label="條件 ${i + 1} 的必要程度">${["", "必要", "建議"].map((v) => `<option value="${v}" ${item.level === v ? "selected" : ""}>${v || "不指定"}</option>`).join("")}</select><button type="button" data-delete-requirement="${i}">刪除</button></li>`)
+              .join("");
+            $("#requirementList").querySelectorAll("[data-level]").forEach((el) => {
+              el.onchange = () => { requirements[Number(el.dataset.level)].level = el.value; };
+            });
+            $("#requirementList").querySelectorAll("[data-delete-requirement]").forEach((el) => {
+              el.onclick = () => { requirements.splice(Number(el.dataset.deleteRequirement), 1); renderRequirements(); };
+            });
+          };
+          $("#addRequirement").onclick = () => {
+            const text = $("#requirementInput").value.trim();
+            if (!text) { $("#requirementInput").focus(); return; }
+            requirements.push({ text, level: "" });
+            $("#requirementInput").value = "";
+            renderRequirements();
+            $("#requirementInput").focus();
+          };
+          $("#requirementInput").onkeydown = (ev) => {
+            if (ev.key === "Enter") { ev.preventDefault(); $("#addRequirement").click(); }
+          };
+          renderRequirements();
           const addBenefit = (value) => {
             const row = document.createElement("div");
             row.className = "job-list-row";
@@ -8868,10 +9560,11 @@
               for (const file of files) {
                 if (!file.type.startsWith("image/")) throw Error("只接受工作相關照片。");
                 const size = await inspectMediaSize(file);
-                if (size.width > 3840 || size.height > 3840) throw Error("照片最高接受 4K。");
-                const tempURL = URL.createObjectURL(file);
+                if (sourceImageTooLarge(size)) throw Error("圖片解析度過高，請先縮小圖片後再試。");
+                const prepared = await compressImageForUpload(file);
+                const tempURL = URL.createObjectURL(prepared.file);
                 mediaDraftURLs.push(tempURL);
-                added.push({ file, tempURL, mediaType: "image", ...size });
+                added.push({ file: prepared.file, tempURL, mediaType: "image", width: prepared.width, height: prepared.height, originalBytes: prepared.originalBytes, compressedBytes: prepared.compressedBytes });
               }
               if ($("#jobForm") !== form) return;
               photos.push(...added);
@@ -8898,6 +9591,8 @@
                 data = {};
               for (const key of [
                 "title",
+                "salaryMin",
+                "salaryMax",
                 "content",
                 "nature",
                 "location",
@@ -8906,21 +9601,22 @@
                 "travel",
                 "travelTime",
                 "shift",
-                "startTime",
-                "endTime",
+                "workTime",
                 "overtime",
-                "leave",
-                "available",
               ])
                 data[key] = String(fd.get(key) || "").trim();
-              data.requirements = lines().map((text) => ({
-                text,
-                level: levels.get(text) || "",
-              }));
+              data.leave = fd.get("leaveChoice") === "其他"
+                ? String(fd.get("leaveOther") || "").trim()
+                : String(fd.get("leaveChoice") || "").trim();
+              data.available = fd.get("availableChoice") === "其他"
+                ? String(fd.get("availableOther") || "").trim()
+                : String(fd.get("availableChoice") || "").trim();
+              data.requirements = requirements.map((item) => ({ ...item }));
               data.benefits = [...$("#benefitRows").querySelectorAll("input")]
                 .map((el) => el.value.trim())
                 .filter(Boolean);
               validateJob(data, photos);
+              validateShopCloudImageQuota(shop, photos, index ?? -1);
               const media = [];
               for (const p of photos) {
                 const copy = { ...p };
@@ -8957,13 +9653,17 @@
               for (const p of old?.media || [])
                 if (p.mediaKey && !media.some((m) => m.mediaKey === p.mediaKey))
                   deleteMediaBlob(p.mediaKey);
+              const replacedCloudKeys = [...collectCloudMediaKeys(old || {})];
               save();
+              scheduleUnusedShopMediaCleanup(shop.id, replacedCloudKeys, accountId);
               drawInterior.key = null;
               closeModal();
               renderShowroom();
               toast("徵才相框已上架。");
             } catch (err) {
               created.forEach(deleteMediaBlob);
+              const cleanupError = await deleteCloudMediaKeys(created, accountId);
+              if (cleanupError) console.warn("未完成徵才圖片清理失敗", cleanupError);
               error(err.message);
             } finally {
               button.disabled = false;
@@ -8971,6 +9671,8 @@
           };
         }
 
+        if (new URLSearchParams(location.search).get("resetShops") === "1" &&
+            clearLocalGameDataForReset()) return;
         if (!localStorage.getItem("market-empty-decor-v6")) {
           shops.forEach((s) => {
             s.room = s.room || defaultRoom();
@@ -8980,7 +9682,7 @@
           save();
           localStorage.setItem("market-empty-decor-v6", "1");
         }
-        syncShopPositions();
+        if (syncShopPositions()) save();
         migrateCompactIsland();
         expireLeases();
         try {
@@ -9008,3 +9710,4 @@
     </script>
   </body>
 </html>
+
