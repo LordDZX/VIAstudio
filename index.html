@@ -3278,6 +3278,24 @@
               clearShopDm(activeDmShopId);
           }
         }
+        async function refreshCloudShopMusic(shopId) {
+          if (!supabase || !shopId) return;
+          const { data, error } = await supabase.from("market_shops").select("payload").eq("id", shopId).maybeSingle();
+          if (error) {
+            console.warn("店面音樂狀態讀取失敗", error);
+            return;
+          }
+          const shop = getShop(shopId);
+          if (!shop) return;
+          if (data?.payload?.music) shop.music = data.payload.music;
+          else delete shop.music;
+          if (activeShopId !== shopId || $("#showroomView").classList.contains("hidden")) return;
+          if (playlistTracks(shop).length) loadShopMusic(shop, true);
+          else {
+            stopShopMusic();
+            if ($("#musicTrackName")) $("#musicTrackName").textContent = "這間店尚未設定音樂";
+          }
+        }
         function renderRemotePlayers() {
           const now = Date.now();
           for (const [id, p] of remotePlayers) if (now - (p.at || 0) > 12000) remotePlayers.delete(id);
@@ -4949,6 +4967,7 @@
           $("#streetView").classList.add("hidden");
           $("#showroomView").classList.remove("hidden");
           renderShowroom();
+          if (!previewOnly) refreshCloudShopMusic(id);
           if (!previewOnly && channel)
             channel.postMessage({
               type: "visit",
