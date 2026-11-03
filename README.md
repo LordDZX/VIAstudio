@@ -23,7 +23,7 @@ Prettier 僅用於開發時排版，網頁執行不需要它。
 
 | 區塊 | 函式 |
 | --- | --- |
-| 室外地圖、人物與店面 | drawTown、drawStore、moveStreet。室外右上角小地圖標示玩家位置、區域、地標與視野範圍；靠近單車或騎乘時，固定尺寸的提示卡顯示在小地圖下方 |
+| 室外地圖、人物與店面 | drawTown、drawStore、moveStreet。室外畫面最右側中央的地圖按鈕可展開／收合玩家位置、區域、地標與視野範圍；靠近單車或騎乘時，右上角顯示提示卡 |
 | 搜尋與店面列表 | renderShopList、shopType |
 | 室內畫面、移動與相框 | drawInterior、updateInterior、openProductDetails |
 | 租借、退租及店鋪設定 | openRental、endLease、renderEditor |

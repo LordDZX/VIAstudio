@@ -242,23 +242,52 @@
         position: relative;
         background: #dceee2;
       }
-      .map-compass {
+      .street-mini-map {
         position: absolute;
-        top: 14px;
-        left: 16px;
-        z-index: 2;
-        padding: 7px 12px;
-        border-radius: 12px;
-        background: #ffffffd9;
-        color: #446852;
-        font: 700 10px/1.4 sans-serif;
+        z-index: 9;
+        top: 50%;
+        right: 74px;
+        transform: translateY(-50%);
+        box-sizing: border-box;
+        width: min(232px, calc(100% - 88px));
+        padding: 8px 9px 9px;
+        border: 1px solid #d5e1d5;
+        border-radius: 13px;
+        background: #fffdf4f2;
+        box-shadow: 0 4px 14px #26382e26;
         pointer-events: none;
       }
+      .street-map-toggle {
+        position: absolute;
+        z-index: 10;
+        top: 50%;
+        right: 12px;
+        transform: translateY(-50%);
+        display: grid;
+        place-items: center;
+        gap: 3px;
+        width: 54px;
+        min-height: 68px;
+        padding: 7px 3px;
+        border: 1px solid #d5e1d5;
+        border-radius: 16px;
+        background: #fffdf4f2;
+        color: #386c57;
+        box-shadow: 0 4px 14px #26382e35;
+        font-size: 22px;
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+      .street-map-toggle small { font-size: 10px; font-weight: 800; }
+      .street-mini-map header { display:flex; justify-content:space-between; gap:8px; margin-bottom:5px; color:#385b49; font-size:10px; font-weight:700; }
+      .street-mini-map header span { color:#718278; font-weight:600; }
+      #streetMiniMapCanvas { display:block; width:100%; height:auto; aspect-ratio:220/72; border-radius:7px; }
       .street-bike-hint {
         position: absolute;
         z-index: 9;
-        top: 108px;
+        top: 14px;
         right: 14px;
+        box-sizing: border-box;
         display: grid;
         gap: 4px;
         width: min(232px, calc(100% - 28px));
@@ -1323,8 +1352,9 @@
         #mobileAvatarBtn { display:inline-flex; align-items:center; justify-content:center; min-height:32px; padding:5px 8px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#386c57; font-size:12px; font-weight:700; white-space:nowrap; }
         #streetView .map-wrap { position:absolute; inset:0; width:100%; height:100dvh; overflow:hidden; }
         #streetView #town { width:100%; height:100%; aspect-ratio:auto; object-fit:cover; object-position:center; }
-        #streetView .map-compass { top:calc(106px + env(safe-area-inset-top)); left:12px; }
-        #streetView .street-bike-hint { top:calc(36dvh + env(safe-area-inset-top)); right:12px; width:min(232px,calc(100% - 24px)); }
+        #streetView .street-map-toggle { right:calc(12px + env(safe-area-inset-right)); }
+        #streetView .street-mini-map { right:calc(74px + env(safe-area-inset-right)); width:min(220px,calc(100% - 88px - env(safe-area-inset-right))); }
+        #streetView .street-bike-hint { top:calc(106px + env(safe-area-inset-top)); right:calc(12px + env(safe-area-inset-right)); width:min(220px,calc(100% - 24px)); }
         #streetView .enter-hint { position:fixed; top:calc(150px + env(safe-area-inset-top)); left:50%; max-width:calc(100vw - 24px); white-space:normal; text-align:center; }
         #streetView .map-instructions,#streetView .map-footer { display:none !important; }
         #streetView .side-card { display:none; }
@@ -2352,7 +2382,8 @@
               ><span>海島商圈 · 公園與海岸　·　接近正面入口按 E</span><button id="mobileAvatarBtn" type="button" aria-label="角色造型">🧑‍🎨</button><button id="mobileAnnouncementBtn" type="button">公告</button><button id="mobileShopListToggle" type="button">店鋪</button>
             </div>
             <div class="map-wrap">
-              <div class="map-compass">無人島 · V12</div>
+              <button class="street-map-toggle" id="streetMapToggle" type="button" aria-label="開啟地圖" aria-controls="streetMiniMap" aria-expanded="false"><span aria-hidden="true">🗺️</span><small>地圖</small></button>
+              <div class="street-mini-map hidden" id="streetMiniMap"><header><strong>🗺️ 我的位置</strong><span id="streetMapArea">島嶼商圈</span></header><canvas id="streetMiniMapCanvas" width="220" height="72" aria-label="島嶼小地圖與目前位置"></canvas></div>
               <div class="street-bike-hint hidden" id="streetBikeHint" role="status" aria-live="polite"><strong id="streetBikeHintTitle">🚲 自行車</strong><span id="streetBikeHintText"></span></div>
               <div class="touch-joystick-zone" data-joystick="street" aria-label="拖曳移動"><div class="touch-joystick-base"><div class="touch-joystick-knob"></div></div></div><button class="touch-action" type="button" data-touch-action="street" aria-label="互動">E<br>互動</button>
               <canvas
@@ -4384,6 +4415,7 @@
         }
         function drawTown() {
           ctx.clearRect(0, 0, W, H);
+          updateStreetBikeHint();
           const sky = ctx.createLinearGradient(0, 0, 0, H);
           sky.addColorStop(0, "#bcd9df");
           sky.addColorStop(0.48, "#d6e8d8");
@@ -4417,7 +4449,7 @@
           ].sort((a, b) => a.depth - b.depth);
           actors.forEach((a) => a.draw());
           drawShopBubble();
-          drawIslandOverview();
+          if (!$("#streetMiniMap").classList.contains("hidden")) drawIslandOverview();
           drawStreetStatus();
           if (guideShopId && canEnter())
             drawPerson(player.x, player.y, "#396e58", "🙂", playerName, true, playerAvatar);
@@ -5584,6 +5616,16 @@
         $("#announcementBtn").addEventListener("click", showAnnouncement);
         $("#mobileAnnouncementBtn").addEventListener("click", showAnnouncement);
         $("#navAnnouncement").addEventListener("click", showAnnouncement);
+        $("#streetMapToggle").addEventListener("click", (e) => {
+          const map = $("#streetMiniMap"),
+            button = e.currentTarget,
+            expanded = map.classList.contains("hidden");
+          map.classList.toggle("hidden", !expanded);
+          button.setAttribute("aria-expanded", String(expanded));
+          button.setAttribute("aria-label", expanded ? "收起地圖" : "開啟地圖");
+          button.querySelector("small").textContent = expanded ? "收起" : "地圖";
+          if (expanded) drawIslandOverview();
+        });
         const toggleMobileShopList = (open) =>
           $("#streetView").classList.toggle("mobile-shop-list-open", open);
         $("#mobileShopListToggle").addEventListener("click", () => toggleMobileShopList(true));
@@ -9944,75 +9986,52 @@
           ctx.restore();
         }
         function drawIslandOverview() {
-          const x = W - 246,
-            y = portraitTouchQuery.matches ? 138 : 14,
-            w = 232,
-            h = 104,
-            mapX = x + 10,
-            mapY = y + 28,
-            mapW = w - 20,
-            mapH = 64,
+          const mini = $("#streetMiniMapCanvas"),
+            areaLabel = $("#streetMapArea");
+          if (!mini) return;
+          const mapCtx = mini.getContext("2d"),
+            mapW = mini.width,
+            mapH = mini.height,
             worldW = 10333.333333,
             worldH = 3400,
             mapPoint = (wx, wy) => ({
-              x: mapX + ((wx + 2500) / worldW) * mapW,
-              y: mapY + (wy / worldH) * mapH,
+              x: ((wx + 2500) / worldW) * mapW,
+              y: (wy / worldH) * mapH,
             });
-          ctx.save();
-          ctx.fillStyle = "#fffdf4f2";
-          roundRect(ctx, x, y, w, h, 12);
-          ctx.fill();
-          ctx.strokeStyle = "#476a5540";
-          ctx.lineWidth = 1;
-          roundRect(ctx, x, y, w, h, 12);
-          ctx.stroke();
-          ctx.fillStyle = "#dce9d8";
-          roundRect(ctx, mapX, mapY, mapW, mapH, 7);
-          ctx.fill();
-          ctx.save();
-          ctx.beginPath();
-          roundRect(ctx, mapX, mapY, mapW, mapH, 7);
-          ctx.clip();
+          mapCtx.clearRect(0, 0, mapW, mapH);
+          mapCtx.fillStyle = "#dce9d8";
+          mapCtx.fillRect(0, 0, mapW, mapH);
           // Island road and parks provide recognizable landmarks at a glance.
-          ctx.fillStyle = "#82948a";
-          ctx.fillRect(mapX, mapY + mapH * 0.47, mapW, mapH * 0.18);
+          mapCtx.fillStyle = "#82948a";
+          mapCtx.fillRect(0, mapH * 0.47, mapW, mapH * 0.18);
           for (const park of PARKS) {
-            ctx.fillStyle = "#5e9569";
+            mapCtx.fillStyle = "#5e9569";
             const p = mapPoint(park.x, park.y);
-            ctx.fillRect(p.x, p.y, (park.w / worldW) * mapW, (park.h / worldH) * mapH);
+            mapCtx.fillRect(p.x, p.y, (park.w / worldW) * mapW, (park.h / worldH) * mapH);
           }
           for (const a of shopSpots) {
             const p = mapPoint(a.x + (a.w || 0) / 2, a.y + (a.h || 0) / 2);
-            ctx.fillStyle = "#a88061";
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, 1.7, 0, Math.PI * 2);
-            ctx.fill();
+            mapCtx.fillStyle = "#a88061";
+            mapCtx.beginPath();
+            mapCtx.arc(p.x, p.y, 1.7, 0, Math.PI * 2);
+            mapCtx.fill();
           }
           const viewW = Math.max(4, (W / VIEW_K / worldW) * mapW),
             viewH = Math.max(5, (H / VIEW_K / worldH) * mapH),
             viewCenter = mapPoint(camera.x, camera.y);
-          ctx.strokeStyle = "#fffdf0";
-          ctx.lineWidth = 1.5;
-          ctx.strokeRect(viewCenter.x - viewW / 2, viewCenter.y - viewH / 2, viewW, viewH);
-          ctx.restore();
-          ctx.fillStyle = "#385b49";
-          ctx.font = "700 10px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("我的位置", x + 10, y + 17);
-          const area = player.x < -100 ? "森光公園" : player.x > 5300 ? "海風公園" : "島嶼商圈";
-          ctx.textAlign = "right";
-          ctx.fillStyle = "#718278";
-          ctx.font = "600 9px sans-serif";
-          ctx.fillText(area, x + w - 10, y + 17);
+          mapCtx.strokeStyle = "#fffdf0";
+          mapCtx.lineWidth = 1.5;
+          mapCtx.strokeRect(viewCenter.x - viewW / 2, viewCenter.y - viewH / 2, viewW, viewH);
+          mapCtx.fillStyle = "#e56c50";
+          mapCtx.beginPath();
           const marker = mapPoint(player.x, player.y);
-          ctx.fillStyle = "#e56c50";
-          ctx.beginPath();
-          ctx.arc(marker.x, marker.y, 4, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = "#fff";
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-          ctx.restore();
+          mapCtx.arc(marker.x, marker.y, 4, 0, Math.PI * 2);
+          mapCtx.fill();
+          mapCtx.strokeStyle = "#fff";
+          mapCtx.lineWidth = 1.5;
+          mapCtx.stroke();
+          const area = player.x < -100 ? "森光公園" : player.x > 5300 ? "海風公園" : "島嶼商圈";
+          if (areaLabel && areaLabel.textContent !== area) areaLabel.textContent = area;
         }
         for (const park of PARKS) {
           for (let i = 0; i < 2; i++)
