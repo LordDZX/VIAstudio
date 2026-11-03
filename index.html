@@ -1247,18 +1247,21 @@
         transform: translateY(-50%);
         box-shadow: 0 3px 12px #0003;
       }
-      .touch-joystick-zone { display:none; position:absolute; z-index:6; left:0; bottom:0; width:min(48vw,220px); height:min(42vw,200px); padding-left:env(safe-area-inset-left); padding-bottom:env(safe-area-inset-bottom); touch-action:none; user-select:none; -webkit-user-select:none; }
-      .touch-joystick-base { position:absolute; width:112px; height:112px; margin:-56px 0 0 -56px; border:2px solid #ffffffaa; border-radius:50%; background:#173c3270; box-shadow:0 3px 14px #0004; opacity:0; transition:opacity .12s ease; pointer-events:none; }
-      .touch-joystick-zone.active .touch-joystick-base { opacity:1; }
+      .touch-joystick-zone { display:none; position:absolute; z-index:6; left:0; bottom:0; width:50%; height:42dvh; min-height:170px; max-height:320px; touch-action:none; user-select:none; -webkit-user-select:none; }
+      .touch-joystick-base { position:absolute; left:68px; top:calc(100% - 68px); width:112px; height:112px; margin:-56px 0 0 -56px; border:2px solid #ffffffb8; border-radius:50%; background:#173c3275; box-shadow:0 3px 14px #0004; opacity:0; transition:opacity .12s ease; pointer-events:none; }
+      .touch-joystick-zone[data-joystick="look"] { left:auto; right:0; }
+      .touch-joystick-zone[data-joystick="look"] .touch-joystick-base { left:auto; right:68px; margin-right:-56px; }
+      .touch-joystick-zone.active .touch-joystick-base { opacity:.82; }
       .touch-joystick-knob { position:absolute; left:50%; top:50%; width:52px; height:52px; margin:-26px 0 0 -26px; border:2px solid #fff; border-radius:50%; background:#39705dcc; box-shadow:0 3px 10px #0004; }
       .touch-action { position:absolute; z-index:6; bottom:calc(72px + env(safe-area-inset-bottom)); right:calc(18px + env(safe-area-inset-right)); width:60px; height:60px; border:1px solid #fff; border-radius:50%; background:#c6754d; color:white; font-weight:800; touch-action:none; }
-      .touch-view { position:absolute; z-index:6; right:calc(18px + env(safe-area-inset-right)); bottom:calc(142px + env(safe-area-inset-bottom)); display:flex; gap:6px; }
-      .touch-view button { width:44px; height:40px; border:1px solid #fff; border-radius:12px; background:#173c32cc; color:#fff; font-size:18px; touch-action:none; }
-      @media (pointer:coarse), (max-width:760px) { .touch-joystick-zone { display:block; } .touch-action { display:block; } .touch-view { display:flex; } }
-      @media (min-width:761px) and (pointer:fine) { .touch-action,.touch-view { display:none; } }
+      .touch-action { bottom:calc(22px + env(safe-area-inset-bottom)); left:50%; right:auto; transform:translateX(-50%); width:54px; height:54px; }
+      @media (pointer:coarse), (max-width:760px) { .touch-joystick-zone { display:block; } .touch-action { display:block; } }
+      @media (min-width:761px) and (pointer:fine) { .touch-action { display:none; } }
       @media (pointer:coarse) and (orientation:portrait) { .first-person-layout { grid-template-columns:minmax(0,1fr); } .first-person-card canvas { max-height:58svh; } .room-sidebar { grid-template-columns:1fr; } }
       #mobileShopListToggle,#mobileShopListClose,#mobileRoomInfoToggle,#mobileRoomInfoClose { display:none; }
       @media (pointer:coarse), (max-width:760px) {
+        .touch-joystick-base { opacity:.42; }
+        .touch-joystick-zone.active .touch-joystick-base { opacity:.9; }
         #buildVersion { display:none !important; }
         #streetView .shell { max-width:none; width:100%; height:100dvh; min-height:100dvh; padding:0; margin:0; }
         #streetView .topbar { position:fixed; z-index:82; top:0; left:0; right:0; height:calc(54px + env(safe-area-inset-top)); min-height:0; padding:env(safe-area-inset-top) 12px 0; border:0; background:#f5f6eff2; backdrop-filter:blur(10px); }
@@ -1299,6 +1302,10 @@
         #showroomView .first-person-layout { position:absolute; inset:0; display:block; margin:0; padding:0; }
         #showroomView .first-person-card { position:absolute; inset:0; min-height:0; border:0; border-radius:0; }
         #showroomView #interiorScene { width:100%; height:100%; min-height:0 !important; max-height:none !important; aspect-ratio:auto; object-fit:cover; object-position:center; }
+        #showroomView .touch-joystick-zone { height:42dvh; min-height:190px; max-height:340px; }
+        #showroomView .touch-joystick-base { opacity:.42; }
+        #showroomView .touch-joystick-zone.active .touch-joystick-base { opacity:.9; }
+        #showroomView .exit-room { display:none; }
         .room-sidebar { display:none !important; }
         .mobile-room-sidebar-open .room-sidebar { display:flex !important; position:fixed; z-index:80; top:calc(58px + env(safe-area-inset-top)); right:0; bottom:0; width:min(90vw,420px); max-height:none; overflow:auto; padding:14px; border-radius:18px 0 0 0; background:#fff; box-shadow:-10px 0 35px #152c2340; }
         #mobileRoomInfoClose { display:block; align-self:flex-end; width:100%; padding:8px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#466d58; }
@@ -2366,7 +2373,7 @@
             height="700"
             aria-label="第一人稱室內展廳，可用鍵盤走動、滑鼠拖曳轉向並點選牆上作品"
           ></canvas>
-          <div class="touch-joystick-zone" data-joystick="room" aria-label="拖曳移動"><div class="touch-joystick-base"><div class="touch-joystick-knob"></div></div></div><div class="touch-view"><button type="button" data-turn="-1" aria-label="向左轉視角">↶</button><button type="button" data-turn="1" aria-label="向右轉視角">↷</button></div><button class="touch-action" type="button" data-touch-action="room" aria-label="查看作品">E<br>查看</button>
+          <div class="touch-joystick-zone" data-joystick="room" aria-label="拖曳移動"><div class="touch-joystick-base"><div class="touch-joystick-knob"></div></div></div><div class="touch-joystick-zone" data-joystick="look" aria-label="拖曳轉動視角"><div class="touch-joystick-base"><div class="touch-joystick-knob"></div></div></div><button class="touch-action" type="button" data-touch-action="room" aria-label="查看作品">E<br>查看</button>
           <div class="interior-hud">
             <span
               ><i>W</i><i>A</i><i>S</i><i>D</i> 走動　　拖曳 / ← → 看向　　按 E 或點相框觀看</span
@@ -5230,7 +5237,7 @@
         function help() {
           showModal(
             "操作說明",
-            `<p>電腦使用 WASD／方向鍵移動；室內可拖曳滑鼠環視。</p><p>手機／平板在左下方按住並拖曳，圓形搖桿會在操作時出現、放開後隱藏；右下方按鈕可互動，室內右側按鈕可轉動視角。畫面會跟隨裝置目前的直向或橫向方向調整。</p><p>搜尋或點選店名只會標示位置，按「前往這間店」才自動行走。移動鍵可取消導航。</p><p>走到店門按 E 租店或進入。室內站上作品方格按 E 觀看，站上出口方格按 E 離開。</p><p>自行車架：E 借還（每架 15／20）。騎乘速度 ×2.5；Q 隨時下車，靠近路邊單車按 E 騎回。請歸還車架。</p><p>長椅：E 坐下或起身。店主的店舖設定可修改外觀、裝潢與位置，旁邊有即時預覽。</p>`,
+            `<p>電腦使用 WASD／方向鍵移動；室內可拖曳滑鼠環視。</p><p>手機／平板使用畫面下方半透明圓形控制區：左側移動，進入店內後右側可拖曳轉動視角；中央按鈕用來互動或查看作品。畫面會跟隨裝置目前的直向或橫向方向調整。</p><p>搜尋或點選店名只會標示位置，按「前往這間店」才自動行走。移動鍵可取消導航。</p><p>走到店門按 E 租店或進入。室內站上作品方格按 E 觀看，站上出口方格按 E 離開。</p><p>自行車架：E 借還（每架 15／20）。騎乘速度 ×2.5；Q 隨時下車，靠近路邊單車按 E 騎回。請歸還車架。</p><p>長椅：E 坐下或起身。店主的店舖設定可修改外觀、裝潢與位置，旁邊有即時預覽。</p>`,
           );
         }
         function showAnnouncement() {
@@ -5282,6 +5289,7 @@
         const leaveInterior = () => {
           document.exitPointerLock?.();
           insideCounter = false;
+          $("#showroomView").classList.remove("mobile-room-sidebar-open");
           musicFadeStart = null;
           stopShopMusic();
           $("#showroomView").classList.add("hidden");
@@ -5467,7 +5475,7 @@
           const base = zone.querySelector(".touch-joystick-base");
           const knob = zone.querySelector(".touch-joystick-knob");
           const pressed = new Set();
-          let pointerId = null, centerX = 0, centerY = 0;
+          let pointerId = null, centerX = 0, centerY = 0, lastClientX = 0, lastClientY = 0;
           const release = (event) => {
             if (pointerId === null || (event?.pointerId != null && event.pointerId !== pointerId)) return;
             pressed.forEach((key) => downKeys.delete(key));
@@ -5475,6 +5483,9 @@
             pointerId = null;
             zone.classList.remove("active");
             knob.style.transform = "translate(0, 0)";
+            base.style.left = "";
+            base.style.right = "";
+            base.style.top = "";
           };
           zone._cancelJoystick = () => release();
           zone.addEventListener("pointerdown", (event) => {
@@ -5486,7 +5497,10 @@
             centerX = Math.max(58, Math.min(rect.width - 58, event.clientX - rect.left));
             centerY = Math.max(58, Math.min(rect.height - 58, event.clientY - rect.top));
             base.style.left = centerX + "px";
+            base.style.right = "auto";
             base.style.top = centerY + "px";
+            lastClientX = event.clientX;
+            lastClientY = event.clientY;
             zone.classList.add("active");
             zone.setPointerCapture?.(event.pointerId);
           });
@@ -5499,6 +5513,14 @@
             const length = Math.hypot(dx, dy), radius = 42;
             if (length > radius) { dx = dx / length * radius; dy = dy / length * radius; }
             knob.style.transform = `translate(${dx}px, ${dy}px)`;
+            if (zone.dataset.joystick === "look") {
+              roomPlayer.yaw = (roomPlayer.yaw + (event.clientX - lastClientX) * 0.014) % (Math.PI * 2);
+              roomPlayer.pitch = Math.max(-700, Math.min(700, (roomPlayer.pitch || 0) - (event.clientY - lastClientY) * 0.9));
+              lastClientX = event.clientX;
+              lastClientY = event.clientY;
+              drawInterior.key = null;
+              return;
+            }
             pressed.forEach((key) => downKeys.delete(key));
             pressed.clear();
             const threshold = 12;
@@ -5514,10 +5536,6 @@
         document.querySelectorAll?.("[data-touch-action]")?.forEach((button) => button.addEventListener("click", () => {
           if (button.dataset.touchAction === "street") streetInteract();
           else if (!$("#showroomView").classList.contains("hidden")) chooseNearestFrame();
-        }));
-        document.querySelectorAll?.("[data-turn]")?.forEach((button) => button.addEventListener("click", () => {
-          roomPlayer.yaw += Number(button.dataset.turn) * 0.35;
-          drawInterior.key = null;
         }));
         document.addEventListener("keydown", (e) => {
           if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
@@ -7558,7 +7576,10 @@
             roomPlayer = { x: 505, y: 1080, yaw: 0, pitch: 0 };
           }
           let look = $("#freeLookBtn");
-          if (!look) {
+          const touchDevice = matchMedia("(pointer:coarse), (max-width:760px)").matches;
+          if (touchDevice) {
+            look?.remove();
+          } else if (!look) {
             look = document.createElement("button");
             look.id = "freeLookBtn";
             look.className = "outline-btn free-look-btn";
