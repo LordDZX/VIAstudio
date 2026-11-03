@@ -566,6 +566,7 @@
         gap: 15px;
         margin-bottom: 17px;
       }
+      #roomMusicPlayTop { display:none; }
       .back-btn {
         border: 1px solid #dfe6dc;
         background: #fff;
@@ -1321,7 +1322,7 @@
         .showroom-auth .auth-status { display:none !important; }
         .showroom-auth .auth-button { padding:7px 8px; font-size:10px; }
         #mobileRoomInfoToggle { display:inline-flex; align-items:center; justify-content:center; padding:7px 9px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#466d58; font-size:11px; font-weight:700; white-space:nowrap; }
-        #roomMusicPlayTop { position:absolute; z-index:74; top:calc(66px + env(safe-area-inset-top)); right:12px; padding:9px 13px; border:1px solid #d8e2d7; border-radius:999px; background:#fffffff2; color:#386c57; font-size:12px; font-weight:700; box-shadow:0 3px 12px #17231d24; }
+        #roomMusicPlayTop { position:absolute; z-index:74; top:calc(66px + env(safe-area-inset-top)); right:12px; display:inline-flex; align-items:center; padding:9px 13px; border:1px solid #d8e2d7; border-radius:999px; background:#fffffff2; color:#386c57; font-size:12px; font-weight:700; box-shadow:0 3px 12px #17231d24; }
         #roomShopInfoTop { position:absolute; z-index:74; top:calc(66px + env(safe-area-inset-top)); left:12px; display:inline-flex; align-items:center; padding:9px 13px; border:1px solid #d8e2d7; border-radius:999px; background:#fffffff2; color:#386c57; font-size:12px; font-weight:700; box-shadow:0 3px 12px #17231d24; }
         #showroomView .touch-action[data-touch-action="room"] { right:calc(41px + env(safe-area-inset-right)); bottom:calc(134px + env(safe-area-inset-bottom)); }
         #showroomView .first-person-layout { position:absolute; inset:0; display:block; margin:0; padding:0; }
@@ -2379,7 +2380,7 @@
         <div class="auth-actions showroom-auth"><span id="roomAuthStatus" class="auth-status">訪客模式</span><button class="auth-button" id="roomAccountButton" type="button">登入</button><button class="auth-button logout hidden" id="roomLogoutButton" type="button">登出</button></div>
         <button id="mobileRoomInfoToggle" type="button" aria-label="開啟店內選單">☰　選單</button>
       </div>
-      <button id="roomMusicPlayTop" class="hidden" type="button">♫ 播放音樂</button>
+      <button id="roomMusicPlayTop" type="button">♫ 播放音樂</button>
       <button id="roomShopInfoTop" type="button">ℹ 店家資訊</button>
       <section class="first-person-layout">
         <div class="first-person-card">
@@ -7827,7 +7828,7 @@
             audio.id = "musicControls";
             audio.className = "music-control";
             audio.innerHTML =
-              '<label>音量 <input id="musicVolume" aria-label="店內音量" type="range" min="0" max="100" value="40"></label><span id="musicTrackName"></span><button id="musicPlayBtn" type="button" class="outline-btn hidden">▶ 播放音樂</button><button id="musicUploadBtn" type="button">設定／更換單曲</button><input id="musicUpload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/webm" hidden><button id="musicRemoveBtn" type="button">移除音樂</button><small class="music-rights-note">有人進入店內時自動播放；若瀏覽器阻擋自動播放，請按「播放音樂」啟用。離開店面後停止。</small>';
+              '<label>音量 <input id="musicVolume" aria-label="店內音量" type="range" min="0" max="100" value="40"></label><span id="musicTrackName"></span><button id="musicPlayBtn" type="button" class="outline-btn">▶ 播放音樂</button><button id="musicUploadBtn" type="button">設定／更換單曲</button><input id="musicUpload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/webm" hidden><button id="musicRemoveBtn" type="button">移除音樂</button><small class="music-rights-note">有人進入店內時自動播放；若瀏覽器阻擋自動播放，請按「播放音樂」啟用。離開店面後停止。</small>';
             $("#roomTools").insertAdjacentElement("afterend", audio);
             $("#musicVolume").value = localStorage.getItem("market-music-volume") || "40";
             $("#musicVolume").oninput = (e) => {
@@ -7847,9 +7848,6 @@
           const owner = canEditShop(shop) && !roomPreviewOnly;
           $("#musicUploadBtn").classList.toggle("hidden", !owner);
           $("#musicRemoveBtn").classList.toggle("hidden", !owner);
-          const hasMusic = playlistTracks(shop).length > 0;
-          $("#musicPlayBtn").classList.toggle("hidden", !hasMusic);
-          $("#roomMusicPlayTop").classList.toggle("hidden", !hasMusic);
           loadShopMusic(shop);
         }
         function toggleCounter() {
