@@ -254,6 +254,26 @@
         font: 700 10px/1.4 sans-serif;
         pointer-events: none;
       }
+      .street-bike-hint {
+        position: absolute;
+        z-index: 9;
+        top: 108px;
+        right: 14px;
+        display: grid;
+        gap: 4px;
+        width: min(232px, calc(100% - 28px));
+        padding: 10px 12px;
+        border: 1px solid #d5e1d5;
+        border-radius: 13px;
+        background: #fffdf6f2;
+        box-shadow: 0 4px 14px #26382e26;
+        color: #526b5d;
+        pointer-events: none;
+        font-size: 12px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+      .street-bike-hint strong { color: #315f4c; font-size: 13px; }
       .auth-actions { display:flex; align-items:center; gap:6px; order:-1; }
       .showroom-auth { margin-left:auto; }
       .auth-status { max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#466d58; font-size:10px; font-weight:700; }
@@ -1304,6 +1324,7 @@
         #streetView .map-wrap { position:absolute; inset:0; width:100%; height:100dvh; overflow:hidden; }
         #streetView #town { width:100%; height:100%; aspect-ratio:auto; object-fit:cover; object-position:center; }
         #streetView .map-compass { top:calc(106px + env(safe-area-inset-top)); left:12px; }
+        #streetView .street-bike-hint { top:calc(36dvh + env(safe-area-inset-top)); right:12px; width:min(232px,calc(100% - 24px)); }
         #streetView .enter-hint { position:fixed; top:calc(150px + env(safe-area-inset-top)); left:50%; max-width:calc(100vw - 24px); white-space:normal; text-align:center; }
         #streetView .map-instructions,#streetView .map-footer { display:none !important; }
         #streetView .side-card { display:none; }
@@ -2332,6 +2353,7 @@
             </div>
             <div class="map-wrap">
               <div class="map-compass">無人島 · V12</div>
+              <div class="street-bike-hint hidden" id="streetBikeHint" role="status" aria-live="polite"><strong id="streetBikeHintTitle">🚲 自行車</strong><span id="streetBikeHintText"></span></div>
               <div class="touch-joystick-zone" data-joystick="street" aria-label="拖曳移動"><div class="touch-joystick-base"><div class="touch-joystick-knob"></div></div></div><button class="touch-action" type="button" data-touch-action="street" aria-label="互動">E<br>互動</button>
               <canvas
                 id="town"
@@ -6066,7 +6088,6 @@
               "#d9dec8",
             );
           }
-          const counts = rackCounts();
           for (const a of racks) {
             const p = project(a.x, a.y);
             ctx.fillStyle = "#edf4e9";
@@ -7147,38 +7168,7 @@
             const p = project(parkedBike.x, parkedBike.y);
             drawCycle(ctx, p.x, p.y, parkedBike.dir, 0);
           }
-          const nearby = nearbyStreetObject();
-          const nearParkedBike = parkedBike && Math.hypot(player.x - parkedBike.x, player.y - parkedBike.y) < 80;
-          let bikeHint = "";
-          if (streetState.bike) {
-            bikeHint = nearby?.type === "rack"
-              ? `按 E 還車 · 車架 ${rackCounts()[nearby.id] ?? 15}/20`
-              : "按 E 下車 · 到車架可還車";
-          } else if (nearParkedBike) {
-            bikeHint = "按 E 騎回停放的單車";
-          } else if (nearby?.type === "rack") {
-            bikeHint = `按 E 借車 · 車架 ${rackCounts()[nearby.id] ?? 15}/20`;
-          }
-          if (bikeHint) {
-            const x = W - 246,
-              y = portraitTouchQuery.matches ? 250 : 126,
-              w = 232,
-              h = 46;
-            ctx.fillStyle = "#fffdf4f2";
-            roundRect(ctx, x, y, w, h, 11);
-            ctx.fill();
-            ctx.strokeStyle = "#476a5540";
-            ctx.lineWidth = 1;
-            roundRect(ctx, x, y, w, h, 11);
-            ctx.stroke();
-            ctx.textAlign = "left";
-            ctx.fillStyle = "#385b49";
-            ctx.font = "700 10px sans-serif";
-            ctx.fillText("🚲 自行車", x + 11, y + 15);
-            ctx.fillStyle = "#526b5d";
-            ctx.font = "10px sans-serif";
-            ctx.fillText(bikeHint, x + 11, y + 33, w - 22);
-          }
+          updateStreetBikeHint();
           if (Date.now() < bikeWarningUntil) {
             ctx.globalAlpha = 0.55 + 0.45 * Math.sin(Date.now() / 130) ** 2;
             ctx.fillStyle = "#a04636";
@@ -7190,6 +7180,38 @@
             ctx.fillText("請勿亂放單車，請歸還停放區", W / 2, 142);
           }
           ctx.restore();
+        }
+        let streetBikeHintCache = "";
+        function updateStreetBikeHint() {
+          const box = $("#streetBikeHint");
+          if (!box) return;
+          const title = $("#streetBikeHintTitle"),
+            text = $("#streetBikeHintText"),
+            nearby = nearbyStreetObject(),
+            nearParkedBike = parkedBike && Math.hypot(player.x - parkedBike.x, player.y - parkedBike.y) < 80;
+          let heading = "",
+            message = "";
+          if (streetState.bike) {
+            if (nearby?.type === "rack") {
+              heading = "🚲 自行車架";
+              message = `按 E 還車 · 車架 ${rackCounts()[nearby.id] ?? 15}/20`;
+            } else {
+              heading = "🚲 騎乘中";
+              message = "按 E 下車 · 到車架按 E 還車";
+            }
+          } else if (nearParkedBike) {
+            heading = "🚲 停放中的單車";
+            message = "按 E 騎回這輛單車";
+          } else if (nearby?.type === "rack") {
+            heading = "🚲 自行車架";
+            message = `按 E 借車 · 車架 ${rackCounts()[nearby.id] ?? 15}/20`;
+          }
+          const key = `${heading}|${message}`;
+          if (key === streetBikeHintCache) return;
+          streetBikeHintCache = key;
+          box.classList.toggle("hidden", !message);
+          if (title) title.textContent = heading;
+          if (text) text.textContent = message;
         }
         function drawCycle(c, x, y, dir, phase) {
           c.save();
