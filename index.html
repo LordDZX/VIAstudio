@@ -1276,7 +1276,7 @@
       @media (min-width:761px) and (pointer:fine) { .touch-action { display:none; } }
       @media (min-width:761px) and (pointer:fine) { .park-shortcut { display:none !important; } }
       @media (pointer:coarse) and (orientation:portrait) { .first-person-layout { grid-template-columns:minmax(0,1fr); } .first-person-card canvas { max-height:58svh; } .room-sidebar { grid-template-columns:1fr; } }
-      #mobileShopListToggle,#mobileShopListClose,#mobileRoomInfoToggle,#mobileRoomInfoClose,#mobileAnnouncementBtn,#mobileAvatarBtn { display:none; }
+      #mobileShopListToggle,#mobileShopListClose,#mobileRoomInfoToggle,#mobileRoomInfoClose,#mobileAnnouncementBtn,#mobileAvatarBtn,#roomShopInfoTop { display:none; }
       @media (pointer:coarse), (max-width:760px) {
         .touch-joystick-base { opacity:.42; }
         .touch-joystick-zone.active .touch-joystick-base { opacity:.9; }
@@ -1321,6 +1321,8 @@
         .showroom-auth .auth-status { display:none !important; }
         .showroom-auth .auth-button { padding:7px 8px; font-size:10px; }
         #mobileRoomInfoToggle { display:inline-flex; align-items:center; justify-content:center; padding:7px 9px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#466d58; font-size:11px; font-weight:700; white-space:nowrap; }
+        #roomMusicPlayTop { position:absolute; z-index:74; top:calc(66px + env(safe-area-inset-top)); right:12px; padding:9px 13px; border:1px solid #d8e2d7; border-radius:999px; background:#fffffff2; color:#386c57; font-size:12px; font-weight:700; box-shadow:0 3px 12px #17231d24; }
+        #roomShopInfoTop { position:absolute; z-index:74; top:calc(66px + env(safe-area-inset-top)); left:12px; display:inline-flex; align-items:center; padding:9px 13px; border:1px solid #d8e2d7; border-radius:999px; background:#fffffff2; color:#386c57; font-size:12px; font-weight:700; box-shadow:0 3px 12px #17231d24; }
         #showroomView .touch-action[data-touch-action="room"] { right:calc(41px + env(safe-area-inset-right)); bottom:calc(134px + env(safe-area-inset-bottom)); }
         #showroomView .first-person-layout { position:absolute; inset:0; display:block; margin:0; padding:0; }
         #showroomView .first-person-card { position:absolute; inset:0; min-height:0; border:0; border-radius:0; }
@@ -2377,6 +2379,8 @@
         <div class="auth-actions showroom-auth"><span id="roomAuthStatus" class="auth-status">訪客模式</span><button class="auth-button" id="roomAccountButton" type="button">登入</button><button class="auth-button logout hidden" id="roomLogoutButton" type="button">登出</button></div>
         <button id="mobileRoomInfoToggle" type="button" aria-label="開啟店內選單">☰　選單</button>
       </div>
+      <button id="roomMusicPlayTop" class="hidden" type="button">♫ 播放音樂</button>
+      <button id="roomShopInfoTop" type="button">ℹ 店家資訊</button>
       <section class="first-person-layout">
         <div class="first-person-card">
           <canvas
@@ -2876,7 +2880,8 @@
         let authUser = null,
           authStatusError = "",
           accountId = null,
-          accountChangeTimer = 0;
+          accountChangeTimer = 0,
+          profileNameChannel = null;
         let playerName = localStorage.getItem(NAME_KEY) || "巷口旅人",
           playerId = randomId(),
           playerAvatar = loadAvatar();
@@ -3123,8 +3128,61 @@
             }
           }
           renderAccountState(); renderWalkers(); renderChat();
+          if (hasBoundAccount()) {
+            const signedInId = accountId;
+            setTimeout(() => {
+              if (hasBoundAccount() && accountId === signedInId) syncAccountPlayerName(authUser);
+            }, 0);
+          } else if (profileNameChannel) {
+            supabase?.removeChannel(profileNameChannel);
+            profileNameChannel = null;
+          }
           if (!wasBound && hasBoundAccount() && ["SIGNED_IN", "USER_UPDATED"].includes(event))
             toast("登入完成，現在可租店與管理自己的店面。");
+        }
+        function applyPlayerName(name, broadcast = true) {
+          const next = String(name || "").trim().slice(0, 12);
+          if (!next || next === playerName) return false;
+          playerName = next;
+          const input = $("#playerName");
+          if (input) input.value = playerName;
+          try { localStorage.setItem(NAME_KEY, playerName); } catch {}
+          renderWalkers();
+          if (broadcast) publishPlayerName();
+          return true;
+        }
+        async function syncAccountPlayerName(user) {
+          if (!hasBoundAccount() || !user || user.id !== accountId) return;
+          const savedName = String(user.user_metadata?.player_name || "").trim().slice(0, 12);
+          if (savedName) applyPlayerName(savedName, false);
+          else {
+            const { error } = await supabase.auth.updateUser({ data: { player_name: playerName } });
+            if (error) console.warn("帳號暱稱同步失敗", error);
+          }
+          if (!profileNameChannel || profileNameChannel.topic !== `realtime:account-profile-${accountId}`) {
+            if (profileNameChannel) supabase.removeChannel(profileNameChannel);
+            const ownerId = accountId;
+            profileNameChannel = supabase.channel(`account-profile-${ownerId}`)
+              .on("broadcast", { event: "player_name" }, ({ payload }) => {
+                if (accountId === ownerId && payload?.accountId === ownerId)
+                  applyPlayerName(payload.name, false);
+              })
+              .subscribe((status) => {
+                if (status === "SUBSCRIBED" && accountId === ownerId)
+                  profileNameChannel.send({ type: "broadcast", event: "player_name", payload: { accountId: ownerId, name: playerName } });
+              });
+          }
+          publishPlayerName();
+        }
+        function publishPlayerName() {
+          const position = { id: playerId, name: playerName, x: player.x, y: player.y, at: Date.now() };
+          if (channel) channel.postMessage({ type: "presence", ...position, color: "#7b95c7", avatar: playerAvatar, accountId, shop: null });
+          if (cloudChannel?.state === "joined") {
+            cloudChannel.track(position);
+            cloudChannel.send({ type: "broadcast", event: "position", payload: position });
+          }
+          if (hasBoundAccount() && profileNameChannel?.state === "joined")
+            profileNameChannel.send({ type: "broadcast", event: "player_name", payload: { accountId, name: playerName } });
         }
         function openAccountModal() {
           const bound = hasBoundAccount();
@@ -4891,6 +4949,25 @@
             $("#roomProductInfo").innerHTML =
               "<b>空白展廳</b><p>店主正在準備商品或作品相框。租用這間店後，可在「店舖設定」上架圖片與影片。</p><span>WASD 走動，滑鼠拖曳或 ← → 轉向</span>";
         }
+        function openRoomShopInfo() {
+          const shop = getShop(activeShopId);
+          if (!shop) return;
+          const contacts = Array.isArray(shop.contactItems) && shop.contactItems.length
+            ? shop.contactItems
+            : shop.contact ? [{ type: "聯絡方式", value: shop.contact }] : [];
+          const contactHTML = contacts.length
+            ? contacts.map((item) => {
+                const value = String(item.value || "").trim();
+                if (!value) return "";
+                const rendered = safeLink(value)
+                  ? `<a href="${esc(value)}" target="_blank" rel="noopener noreferrer">${esc(value)}</a>`
+                  : esc(value);
+                return `<p><b>${esc(item.type || "聯絡方式")}</b>：${rendered}</p>`;
+              }).join("")
+            : "<p>店主尚未填寫聯絡方式。</p>";
+          showModal("店家資訊", `<div class="room-section"><h3>${esc(shop.name)}</h3><p>${esc(shop.tagline || "")}</p><p>${esc(shop.about || "店主尚未填寫店家介紹。")}</p></div><div class="contact-card"><b>店主資訊</b><p>店主：${esc(shop.owner || "尚未設定")}</p>${contactHTML}</div><p class="about-text">商品、作品或職缺的詳細內容與外部連結，請查看店內牆上的相框。</p><div class="modal-actions"><button type="button" class="primary-btn" id="roomInfoContactOwner">✉ 聯絡店主</button></div>`);
+          $("#roomInfoContactOwner").onclick = () => openInquiry(shop, { title: "一般聯絡 / 合作詢問" });
+        }
         function renderEditor(s) {
           ownerMode = false;
           if (!canEditShop(s)) {
@@ -5278,12 +5355,16 @@
         }
         $("#playerName").value = playerName;
         $("#playerName").addEventListener("change", (e) => {
-          playerName = e.target.value.trim().slice(0, 12) || "巷口旅人";
+          applyPlayerName(e.target.value.trim().slice(0, 12) || "巷口旅人");
           e.target.value = playerName;
-          try {
-            localStorage.setItem(NAME_KEY, playerName);
-          } catch (err) {}
-          renderWalkers();
+          if (hasBoundAccount()) {
+            supabase.auth.updateUser({ data: { player_name: playerName } }).then(({ error }) => {
+              if (error) {
+                console.error("Supabase 帳號暱稱儲存失敗", error);
+                toast("暱稱已在此裝置更新，但帳號同步失敗；請確認網路後重試。");
+              } else publishPlayerName();
+            });
+          }
         });
         $("#enterShopBtn").addEventListener("click", handleShopDoor);
         $("#openSelectedTop").addEventListener("click", handleShopDoor);
@@ -5320,6 +5401,7 @@
         $("#mobileRoomInfoToggle").addEventListener("click", () =>
           $("#showroomView").classList.toggle("mobile-room-sidebar-open"),
         );
+        $("#roomShopInfoTop").addEventListener("click", openRoomShopInfo);
         $("#mobileRoomInfoClose").addEventListener("click", () =>
           $("#showroomView").classList.remove("mobile-room-sidebar-open"),
         );
@@ -7755,6 +7837,7 @@
             $("#musicUploadBtn").onclick = () => $("#musicUpload").click();
             $("#musicUpload").onchange = uploadShopMusic;
             $("#musicPlayBtn").onclick = toggleShopMusicFromGesture;
+            $("#roomMusicPlayTop").onclick = toggleShopMusicFromGesture;
             $("#musicRemoveBtn").onclick = () => {
               const s = getShop(activeShopId);
               if (!canEditShop(s)) return;
@@ -7764,7 +7847,9 @@
           const owner = canEditShop(shop) && !roomPreviewOnly;
           $("#musicUploadBtn").classList.toggle("hidden", !owner);
           $("#musicRemoveBtn").classList.toggle("hidden", !owner);
-          $("#musicPlayBtn").classList.toggle("hidden", !playlistTracks(shop).length);
+          const hasMusic = playlistTracks(shop).length > 0;
+          $("#musicPlayBtn").classList.toggle("hidden", !hasMusic);
+          $("#roomMusicPlayTop").classList.toggle("hidden", !hasMusic);
           loadShopMusic(shop);
         }
         function toggleCounter() {
