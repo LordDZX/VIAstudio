@@ -1254,11 +1254,13 @@
       .touch-joystick-zone.active .touch-joystick-base { opacity:.82; }
       .touch-joystick-knob { position:absolute; left:50%; top:50%; width:52px; height:52px; margin:-26px 0 0 -26px; border:2px solid #fff; border-radius:50%; background:#39705dcc; box-shadow:0 3px 10px #0004; }
       .touch-action { position:absolute; z-index:6; bottom:calc(72px + env(safe-area-inset-bottom)); right:calc(18px + env(safe-area-inset-right)); width:60px; height:60px; border:1px solid #fff; border-radius:50%; background:#c6754d; color:white; font-weight:800; touch-action:none; }
-      .touch-action { bottom:calc(22px + env(safe-area-inset-bottom)); left:50%; right:auto; transform:translateX(-50%); width:54px; height:54px; }
+      .touch-action { bottom:calc(22px + env(safe-area-inset-bottom)); left:auto; right:calc(18px + env(safe-area-inset-right)); transform:none; width:54px; height:54px; }
+      .touch-action[data-touch-action="room"] { right:calc(41px + env(safe-area-inset-right)); bottom:calc(134px + env(safe-area-inset-bottom)); }
       @media (pointer:coarse), (max-width:760px) { .touch-joystick-zone { display:block; } .touch-action { display:block; } }
       @media (min-width:761px) and (pointer:fine) { .touch-action { display:none; } }
+      @media (min-width:761px) and (pointer:fine) { .park-shortcut { display:none !important; } }
       @media (pointer:coarse) and (orientation:portrait) { .first-person-layout { grid-template-columns:minmax(0,1fr); } .first-person-card canvas { max-height:58svh; } .room-sidebar { grid-template-columns:1fr; } }
-      #mobileShopListToggle,#mobileShopListClose,#mobileRoomInfoToggle,#mobileRoomInfoClose { display:none; }
+      #mobileShopListToggle,#mobileShopListClose,#mobileRoomInfoToggle,#mobileRoomInfoClose,#mobileAnnouncementBtn { display:none; }
       @media (pointer:coarse), (max-width:760px) {
         .touch-joystick-base { opacity:.42; }
         .touch-joystick-zone.active .touch-joystick-base { opacity:.9; }
@@ -1279,6 +1281,7 @@
         #streetView .map-toolbar strong { font-size:11px; }
         #streetView .map-toolbar span { display:none; }
         #mobileShopListToggle { display:inline-flex; align-items:center; justify-content:center; min-height:32px; padding:5px 10px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#386c57; font-size:12px; font-weight:700; white-space:nowrap; }
+        #mobileAnnouncementBtn { display:inline-flex; align-items:center; justify-content:center; min-height:32px; padding:5px 10px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#386c57; font-size:12px; font-weight:700; white-space:nowrap; }
         #streetView .map-wrap { position:absolute; inset:0; width:100%; height:100dvh; overflow:hidden; }
         #streetView #town { width:100%; height:100%; aspect-ratio:auto; object-fit:cover; object-position:center; }
         #streetView .map-compass { top:calc(106px + env(safe-area-inset-top)); left:12px; }
@@ -1294,11 +1297,12 @@
         #showroomView .showroom-title { min-width:0; margin:0; }
         #showroomView .showroom-title small { display:none; }
         #showroomView .showroom-title h1 { margin:0; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .showroom-top .back-btn,.showroom-top .owner-btn { padding:7px 9px; font-size:11px; white-space:nowrap; }
+        .showroom-top .back-btn { padding:7px 9px; font-size:11px; white-space:nowrap; }
         .showroom-auth { display:flex !important; gap:4px; }
         .showroom-auth .auth-status { display:none !important; }
         .showroom-auth .auth-button { padding:7px 8px; font-size:10px; }
         #mobileRoomInfoToggle { display:inline-flex; align-items:center; justify-content:center; padding:7px 9px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#466d58; font-size:11px; font-weight:700; white-space:nowrap; }
+        #showroomView .touch-action[data-touch-action="room"] { right:calc(41px + env(safe-area-inset-right)); bottom:calc(134px + env(safe-area-inset-bottom)); }
         #showroomView .first-person-layout { position:absolute; inset:0; display:block; margin:0; padding:0; }
         #showroomView .first-person-card { position:absolute; inset:0; min-height:0; border:0; border-radius:0; }
         #showroomView #interiorScene { width:100%; height:100%; min-height:0 !important; max-height:none !important; aspect-ratio:auto; object-fit:cover; object-position:center; }
@@ -1309,6 +1313,7 @@
         .room-sidebar { display:none !important; }
         .mobile-room-sidebar-open .room-sidebar { display:flex !important; position:fixed; z-index:80; top:calc(58px + env(safe-area-inset-top)); right:0; bottom:0; width:min(90vw,420px); max-height:none; overflow:auto; padding:14px; border-radius:18px 0 0 0; background:#fff; box-shadow:-10px 0 35px #152c2340; }
         #mobileRoomInfoClose { display:block; align-self:flex-end; width:100%; padding:8px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#466d58; }
+        #showroomView .room-sidebar > #ownerModeBtn { display:block; width:100%; margin:0 0 8px; }
         .music-control { position:relative; z-index:76; margin:0; }
       }
       .first-person-card canvas {
@@ -2302,7 +2307,7 @@
           <section class="map-card">
             <div class="map-toolbar">
               <strong>☀　無人島商圈　·　俯視街景</strong
-              ><span>海島商圈 · 公園與海岸　·　接近正面入口按 E</span><button id="mobileShopListToggle" type="button">店鋪列表</button>
+              ><span>海島商圈 · 公園與海岸　·　接近正面入口按 E</span><button id="mobileAnnouncementBtn" type="button">平台公告</button><button id="mobileShopListToggle" type="button">店鋪列表</button>
             </div>
             <div class="map-wrap">
               <div class="map-compass">無人島 · V12</div>
@@ -2363,7 +2368,7 @@
           <h1 id="showroomName">店內展廳</h1>
         </div>
         <div class="auth-actions showroom-auth"><span id="roomAuthStatus" class="auth-status">訪客模式</span><button class="auth-button" id="roomAccountButton" type="button">登入</button><button class="auth-button logout hidden" id="roomLogoutButton" type="button">登出</button></div>
-        <button id="mobileRoomInfoToggle" type="button">店內資訊</button><button id="ownerModeBtn" class="owner-btn">✦　店舖設定</button>
+        <button id="mobileRoomInfoToggle" type="button" aria-label="開啟店內選單">☰　選單</button>
       </div>
       <section class="first-person-layout">
         <div class="first-person-card">
@@ -2383,6 +2388,7 @@
         </div>
         <aside class="room-sidebar">
           <button id="mobileRoomInfoClose" type="button">關閉店內資訊　×</button>
+          <button id="ownerModeBtn" class="owner-btn">✦　店舖設定</button>
           <div class="owner-profile">
             <div id="ownerEmoji" class="owner-avatar">🌿</div>
             <div>
@@ -5237,7 +5243,7 @@
         function help() {
           showModal(
             "操作說明",
-            `<p>電腦使用 WASD／方向鍵移動；室內可拖曳滑鼠環視。</p><p>手機／平板使用畫面下方半透明圓形控制區：左側移動，進入店內後右側可拖曳轉動視角；中央按鈕用來互動或查看作品。畫面會跟隨裝置目前的直向或橫向方向調整。</p><p>搜尋或點選店名只會標示位置，按「前往這間店」才自動行走。移動鍵可取消導航。</p><p>走到店門按 E 租店或進入。室內站上作品方格按 E 觀看，站上出口方格按 E 離開。</p><p>自行車架：E 借還（每架 15／20）。騎乘速度 ×2.5；Q 隨時下車，靠近路邊單車按 E 騎回。請歸還車架。</p><p>長椅：E 坐下或起身。店主的店舖設定可修改外觀、裝潢與位置，旁邊有即時預覽。</p>`,
+            `<p>電腦使用 WASD／方向鍵移動；室內可拖曳滑鼠環視。</p><p>手機／平板使用畫面下方半透明圓形控制區：左側移動，室內右側拖曳轉動視角；互動／查看按鈕在畫面右邊，進入店內時位於右側轉向圓圈上方。畫面會跟隨裝置目前的直向或橫向方向調整。</p><p>搜尋或點選店名只會標示位置，按「前往這間店」才自動行走。移動鍵可取消導航。</p><p>走到店門按 E 租店或進入。室內站上作品方格按 E 觀看，站上出口方格按 E 離開。</p><p>自行車架：E 借還（每架 15／20）。騎乘速度 ×2.5；Q 隨時下車，靠近路邊單車按 E 騎回。請歸還車架。</p><p>長椅：E 坐下或起身。手機／平板點「選單」可開啟店內資訊、聯絡與店舖管理功能。</p>`,
           );
         }
         function showAnnouncement() {
@@ -5332,6 +5338,7 @@
         $("#showHelp").addEventListener("click", help);
         $("#navHelp").addEventListener("click", help);
         $("#announcementBtn").addEventListener("click", showAnnouncement);
+        $("#mobileAnnouncementBtn").addEventListener("click", showAnnouncement);
         $("#navAnnouncement").addEventListener("click", showAnnouncement);
         const toggleMobileShopList = (open) =>
           $("#streetView").classList.toggle("mobile-shop-list-open", open);
@@ -5514,8 +5521,8 @@
             if (length > radius) { dx = dx / length * radius; dy = dy / length * radius; }
             knob.style.transform = `translate(${dx}px, ${dy}px)`;
             if (zone.dataset.joystick === "look") {
-              roomPlayer.yaw = (roomPlayer.yaw + (event.clientX - lastClientX) * 0.014) % (Math.PI * 2);
-              roomPlayer.pitch = Math.max(-700, Math.min(700, (roomPlayer.pitch || 0) - (event.clientY - lastClientY) * 0.9));
+              roomPlayer.yaw = (roomPlayer.yaw + (event.clientX - lastClientX) * 0.011) % (Math.PI * 2);
+              roomPlayer.pitch = Math.max(-700, Math.min(700, (roomPlayer.pitch || 0) - (event.clientY - lastClientY) * 0.72));
               lastClientX = event.clientX;
               lastClientY = event.clientY;
               drawInterior.key = null;
@@ -9466,7 +9473,7 @@
               y: park.y + 860,
             });
           const button = document.createElement("button");
-          button.className = "outline-btn";
+          button.className = "outline-btn park-shortcut";
           button.textContent = "前往" + park.name;
           button.onclick = () => {
             guideShopId = null;
