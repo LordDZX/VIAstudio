@@ -19,16 +19,16 @@ Prettier 僅用於開發時排版，網頁執行不需要它。
 
 ## 程式碼導覽
 
-`index.html` 保留單檔，避免改變既有啟動及離線開啟方式；HTML、CSS、JavaScript 已統一縮排。主畫面含平台公告與未接廣告服務的版位預留；店主可在店舖設定新增或刪除最多 10 個引流網址，店面詳情會分別顯示外連按鈕。舊版單一 `trafficUrl` 會相容載入。搜尋以下函式可快速找到功能：
+`index.html` 保留單檔，避免改變既有啟動及離線開啟方式；HTML、CSS、JavaScript 已統一縮排。主畫面含平台公告與未接廣告服務的版位預留；店主可在每項商品、作品或職缺設定最多 10 個外部購買／聯絡網址，訪客在項目詳情中可直接開啟。舊版店鋪引流網址會在店主下次儲存店舖設定時移入尚未設定外連的項目。搜尋以下函式可快速找到功能：
 
 | 區塊 | 函式 |
 | --- | --- |
 | 室外地圖、人物與店面 | drawTown、drawStore、moveStreet |
 | 搜尋與店面列表 | renderShopList、shopType |
 | 室內畫面、移動與相框 | drawInterior、updateInterior、openProductDetails |
-| 租借、退租及店鋪設定 | openRental、endLease、renderEditor。店主可新增或刪除最多 10 個引流網址，店鋪詳情會分別顯示外連按鈕 |
-| 商品／作品登記 | openRegister、validateListing |
-| 徵才登記 | openJobRegister、validateJob。休假制度與可上班日提供常用選項及「其他」自填；條件逐筆新增、刪除並自動編號；薪資可填範圍或單一金額；上班時間可直接輸入或選擇後按鈕確認；工作照片選填 |
+| 租借、退租及店鋪設定 | openRental、endLease、renderEditor |
+| 商品／作品登記 | openRegister、validateListing。每個項目可設定最多 10 個外部購買／作品／聯絡網址，訪客在詳情中開啟 |
+| 徵才登記 | openJobRegister、validateJob。休假制度與可上班日提供常用選項及「其他」自填；條件逐筆新增、刪除並自動編號；薪資可填範圍或單一金額；上班時間可直接輸入或選擇後按鈕確認；工作照片選填；職缺可附最多 10 個履歷投遞／聯絡網址 |
 | LOGO 與看板 | initBoardDesign、paintBoard |
 | 本機媒體儲存 | saveMediaBlob、mediaUrlFor、deleteMediaBlob |
 | 店內音樂 | loadShopMusic、uploadShopMusic、removeShopMusic。每店單首循環；須已登入並上傳有公開播放授權的音檔，最多 10 MB，存入 Supabase Storage 供其他訪客播放。 |

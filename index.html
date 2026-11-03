@@ -480,14 +480,12 @@
         background: #a9bbb0;
         cursor: default;
       }
-      #selectedTrafficLinks,
-      #shopTrafficLinks {
+      .listing-traffic-links {
         display: grid;
         gap: 6px;
         margin-top: 8px;
       }
-      #selectedTrafficLinks .traffic-link,
-      #shopTrafficLinks .traffic-link {
+      .listing-traffic-links .traffic-link {
         display: block;
         width: 100%;
         text-align: center;
@@ -2352,7 +2350,6 @@
               <b id="selectedName">選一家店開始逛</b
               ><small id="selectedBlurb">走近店門就能進入室內展廳。</small
               ><button id="enterShopBtn" disabled>先選一間店</button>
-              <div id="selectedTrafficLinks" class="hidden" hidden></div>
             </div>
             <div class="side-divider"></div>
             <div class="walkers-head">街上遇見 <span id="walkerCount">4 位散步客</span></div>
@@ -2421,7 +2418,6 @@
             <b>聯絡店主</b>
             <p id="shopContact">店主還沒有填寫聯絡資訊。</p>
             <button id="contactOwnerBtn">✉　詢問商品或合作</button>
-            <div id="shopTrafficLinks" class="hidden" hidden></div>
           </div>
           <div id="ownerOrdersLink" class="hidden" style="margin-top: 10px">
             <button class="outline-btn" id="viewDmInboxBtn" style="width: 100%;margin-bottom:8px">查看店主私訊</button>
@@ -3448,14 +3444,12 @@
           if ($("#goShopBtn")) $("#goShopBtn").classList.add("hidden");
           const s = getShop(selectedShopId);
           if (!s) {
-            renderTrafficLinks($("#selectedTrafficLinks"), null);
             $("#selectedName").textContent = "選一家店開始逛";
             $("#selectedBlurb").textContent = "店面亮起來後，可租借或進入展廳。";
             $("#enterShopBtn").textContent = "先選一間店";
             $("#enterShopBtn").disabled = true;
             return;
           }
-          renderTrafficLinks($("#selectedTrafficLinks"), s);
           const near = distanceToDoor(s) < 75;
           $("#selectedName").textContent = `${s.emoji}　${s.name}`;
           $("#selectedBlurb").textContent = near
@@ -4212,12 +4206,6 @@
           roomFrames = [...frameMap.values()];
           drawRoomFurniture(shop);
           drawRoomGuests();
-          rctx.fillStyle = "#ffffffdf";
-          rctx.fillRect(16, 145, 550, 32);
-          rctx.fillStyle = "#304d43";
-          rctx.font = "14px sans-serif";
-          rctx.textAlign = "left";
-          rctx.fillText("WASD 移動 · 滑鼠拖曳環視 · 靠近作品，以準心對準後按 E", 28, 166);
           roomCanvas.dataset.renderMs = String(Date.now() - renderStart);
         }
 
@@ -4474,25 +4462,44 @@
             return false;
           }
         }
-        function trafficUrlsFor(shop) {
-          const values = Array.isArray(shop?.trafficUrls)
-            ? shop.trafficUrls
-            : [shop?.trafficUrl];
+        function listingTrafficUrlsFor(listing) {
+          const values = Array.isArray(listing?.trafficUrls)
+            ? listing.trafficUrls
+            : [listing?.trafficUrl];
           return [...new Set(values.map((url) => String(url || "").trim()).filter(safeLink))].slice(0, 10);
         }
-        function renderTrafficLinks(target, shop) {
-          const urls = trafficUrlsFor(shop);
-          target.innerHTML = urls
-            .map(
-              (url, index) =>
-                `<a class="outline-btn traffic-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ ${urls.length > 1 ? `引流連結 ${index + 1}` : "前往店家網站"}</a>`,
-            )
-            .join("");
-          target.hidden = !urls.length;
-          target.classList.toggle("hidden", !urls.length);
+        function listingTrafficLinksMarkup(listing, label = "前往購買／聯絡") {
+          const urls = listingTrafficUrlsFor(listing);
+          return urls.length
+            ? `<div class="listing-traffic-links">${urls.map((url, index) => `<a class="outline-btn traffic-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ ${urls.length > 1 ? `${esc(label)} ${index + 1}` : esc(label)}</a>`).join("")}</div>`
+            : "";
         }
-        function trafficUrlRowHTML(value = "") {
-          return `<div class="traffic-url-row"><input name="trafficUrls" type="url" maxlength="500" autocomplete="off" value="${esc(value)}" placeholder="https://example.com"><button type="button" data-remove-traffic-url>刪除</button></div>`;
+        function listingTrafficUrlRowHTML(value = "") {
+          return `<div class="traffic-url-row"><input name="listingTrafficUrls" type="url" maxlength="500" autocomplete="off" value="${esc(value)}" placeholder="https://example.com"><button type="button" data-remove-listing-url>刪除</button></div>`;
+        }
+        function bindListingTrafficUrlFields(form, reportError) {
+          const list = form.querySelector("#listingTrafficUrlList"),
+            addButton = form.querySelector("#addListingTrafficUrl");
+          addButton.onclick = () => {
+            if (list.children.length >= 10) {
+              reportError("每個商品／作品／職缺最多設定 10 個外部連結。");
+              return;
+            }
+            list.insertAdjacentHTML("beforeend", listingTrafficUrlRowHTML());
+            list.lastElementChild.querySelector("input").focus();
+          };
+          list.onclick = (event) => {
+            if (event.target.matches("[data-remove-listing-url]"))
+              event.target.closest(".traffic-url-row").remove();
+          };
+        }
+        function listingTrafficUrlsFromForm(form) {
+          const urls = [...form.querySelectorAll('[name="listingTrafficUrls"]')]
+            .map((input) => input.value.trim())
+            .filter(Boolean);
+          if (urls.length > 10 || urls.some((url) => !safeLink(url)))
+            throw Error("請輸入有效的 http／https 外部連結，每個項目最多 10 個。");
+          return [...new Set(urls)];
         }
         function openMediaDB() {
           if (mediaDbPromise) return mediaDbPromise;
@@ -4765,10 +4772,10 @@
                 ? `<img src="${esc(url)}" alt="${esc(p.title)} 工作環境照片 ${i + 1}" loading="lazy">`
                 : "")
               .join("");
-          const jobDetail = `<article class="job-listing-detail"><header><small class="product-badge">徵才職缺</small><h2>${esc(p.title)}</h2><p class="job-description">${esc(p.job?.content || p.desc || "")}</p></header>${jobDetails(p.job)}${jobPhotos ? `<section><h3>工作環境照片</h3><div class="job-detail-photos">${jobPhotos}</div></section>` : ""}<section><b class="contact-heading">聯絡店主</b>${(p.contacts || [shop.contact || "尚未提供"]).map((v) => `<p>${safeLink(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</p>`).join("")}<button class="primary-btn" id="detailInquiry">詢問店主</button><button class="outline-btn" data-owner-dm="${esc(shop.id)}">私訊店主</button></section></article>`;
+          const jobDetail = `<article class="job-listing-detail"><header><small class="product-badge">徵才職缺</small><h2>${esc(p.title)}</h2><p class="job-description">${esc(p.job?.content || p.desc || "")}</p></header>${jobDetails(p.job)}${jobPhotos ? `<section><h3>工作環境照片</h3><div class="job-detail-photos">${jobPhotos}</div></section>` : ""}${listingTrafficLinksMarkup(p, "投遞履歷／聯絡")}<section><b class="contact-heading">聯絡店主</b>${(p.contacts || [shop.contact || "尚未提供"]).map((v) => `<p>${safeLink(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</p>`).join("")}<button class="primary-btn" id="detailInquiry">詢問店主</button><button class="outline-btn" data-owner-dm="${esc(shop.id)}">私訊店主</button></section></article>`;
           showModal(
             p.title,
-            isJob ? jobDetail : `<div class="listing-detail premium-detail"><div class="product-gallery"><div class="gallery-kicker">ISLAND MARKET · 精選作品</div>${fallbackPoster ? `<a class="external-video-poster" href="${esc(p.externalURL)}" target="_blank" rel="noopener noreferrer"><img src="${esc(fallbackPoster)}" alt="${esc(videoSource)} 影片預覽" onerror="this.onerror=null;this.src='${esc(new URL("assets/video-link-landscape.svg", location.href).href)}'"><span>${esc(videoSource)} · 點擊開啟原影片</span></a>` : ""}${playerURL ? `<iframe id="externalVideo" src="${esc(playerURL)}" title="${esc(p.title)}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><p id="externalVideoStatus">請按播放器的播放鍵。若平台限制嵌入，可到原網站觀看。</p><a href="${esc(p.externalURL)}" target="_blank" rel="noopener">到原網站觀看 ↗</a>` : ""}${!playerURL && p.externalURL ? (directVideo(p.externalURL) ? `<video src="${esc(p.externalURL)}" controls playsinline></video>` : `<a href="${esc(p.externalURL)}" target="_blank" rel="noopener">🌐 開啟外部作品網站</a>`) : ""}${urls.map((url, i) => (!url ? "" : media[i].mediaType === "video" ? `<video src="${esc(url)}" controls playsinline preload="metadata"></video>` : `<img src="${esc(url)}" alt="${esc(p.title)} · ${i + 1}" loading="lazy">`)).join("") || (!playerURL ? "<p>此示範作品尚未上傳媒體。</p>" : "")}</div><aside><small class="product-badge">${p.category === "sale" ? "產品販售" : "作品展示"}</small><h2>${esc(p.title)}</h2><p>${esc(p.desc || "")}</p>${p.price !== "" && p.price != null ? `<h3>NT$ ${esc(p.price)}</h3>` : ""}${p.location ? `<p>地點：${esc(p.location)}</p>` : ""}<b class="contact-heading">聯絡店主</b>${(p.contacts || [shop.contact || "尚未提供"]).map((v) => `<p>${safeLink(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</p>`).join("")}<button class="primary-btn" id="detailInquiry">詢問店主</button><button class="outline-btn" data-owner-dm="${esc(shop.id)}">私訊店主</button></aside></div>`,
+            isJob ? jobDetail : `<div class="listing-detail premium-detail"><div class="product-gallery"><div class="gallery-kicker">ISLAND MARKET · 精選作品</div>${fallbackPoster ? `<a class="external-video-poster" href="${esc(p.externalURL)}" target="_blank" rel="noopener noreferrer"><img src="${esc(fallbackPoster)}" alt="${esc(videoSource)} 影片預覽" onerror="this.onerror=null;this.src='${esc(new URL("assets/video-link-landscape.svg", location.href).href)}'"><span>${esc(videoSource)} · 點擊開啟原影片</span></a>` : ""}${playerURL ? `<iframe id="externalVideo" src="${esc(playerURL)}" title="${esc(p.title)}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><p id="externalVideoStatus">請按播放器的播放鍵。若平台限制嵌入，可到原網站觀看。</p><a href="${esc(p.externalURL)}" target="_blank" rel="noopener">到原網站觀看 ↗</a>` : ""}${!playerURL && p.externalURL ? (directVideo(p.externalURL) ? `<video src="${esc(p.externalURL)}" controls playsinline></video>` : `<a href="${esc(p.externalURL)}" target="_blank" rel="noopener">🌐 開啟外部作品網站</a>`) : ""}${urls.map((url, i) => (!url ? "" : media[i].mediaType === "video" ? `<video src="${esc(url)}" controls playsinline preload="metadata"></video>` : `<img src="${esc(url)}" alt="${esc(p.title)} · ${i + 1}" loading="lazy">`)).join("") || (!playerURL ? "<p>此示範作品尚未上傳媒體。</p>" : "")}</div><aside><small class="product-badge">${p.category === "sale" ? "產品販售" : "作品展示"}</small><h2>${esc(p.title)}</h2><p>${esc(p.desc || "")}</p>${p.price !== "" && p.price != null ? `<h3>NT$ ${esc(p.price)}</h3>` : ""}${p.location ? `<p>地點：${esc(p.location)}</p>` : ""}${listingTrafficLinksMarkup(p)}<b class="contact-heading">聯絡店主</b>${(p.contacts || [shop.contact || "尚未提供"]).map((v) => `<p>${safeLink(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</p>`).join("")}<button class="primary-btn" id="detailInquiry">詢問店主</button><button class="outline-btn" data-owner-dm="${esc(shop.id)}">私訊店主</button></aside></div>`,
           );
           $("#detailInquiry").onclick = () => openInquiry(shop, p);
           if (playerURL) setupExternalPlayer(p.externalURL);
@@ -4866,7 +4873,6 @@
               : "獨立創作者 · 線上展廳";
           $("#shopAbout").textContent = s.about || "店主還沒有填寫介紹。";
           $("#shopContact").textContent = s.contact || "店主還沒有填寫聯絡資訊。";
-          renderTrafficLinks($("#shopTrafficLinks"), s);
           $("#ownerModeBtn").classList.toggle("hidden", roomPreviewOnly || !isMyShop(s));
           $("#ownerModeBtn").textContent = ownerMode ? "✓　完成設定" : "✦　店舖設定";
           $("#ownerModeBtn").classList.toggle("editing", ownerMode);
@@ -4894,7 +4900,6 @@
           showModal("店舖設定", '<div id="settingsBody"></div>');
           const e = $("#settingsBody"),
             room = s.room || defaultRoom(),
-            trafficUrls = trafficUrlsFor(s),
             sel = (key, labelText, choices, current) =>
               `<div class="field"><label>${labelText}</label><select name="${key}" data-room="${key}">${choices
                 .map((v) => {
@@ -4903,7 +4908,7 @@
                   return `<option value="${esc(val)}" ${current === val ? "selected" : ""}>${esc(label)}</option>`;
                 })
                 .join("")}</select></div>`;
-          e.innerHTML = `<div class="editor-head"><b>✦ 店主工作台｜自訂展廳</b><small>租期到期時，這間店的資料和媒體會清除</small></div><form id="ownerForm">${shopTypeField(shopType(s))}<div class="edit-grid"><div class="field"><label>店鋪名稱</label><input name="name" maxlength="24" value="${esc(s.name)}" required></div><div class="field"><label>店主暱稱</label><input name="owner" maxlength="18" value="${esc(s.owner)}"></div><div class="field wide"><label>一句店鋪介紹</label><input name="tagline" maxlength="60" value="${esc(s.tagline)}"></div><div class="field wide"><label>店鋪故事 / 產品介紹</label><textarea name="about" maxlength="500">${esc(s.about)}</textarea></div><div class="field wide"><label>店家網址引流（選填，最多 10 個）</label><button type="button" class="outline-btn" id="showTrafficUrl">${trafficUrls.length ? "修改引流網址" : "＋ 設定引流網址"}</button><div id="trafficUrlFields" class="${trafficUrls.length ? "" : "hidden"}"><div id="trafficUrlList">${trafficUrls.map(trafficUrlRowHTML).join("")}</div><button type="button" class="outline-btn" id="addTrafficUrl">＋ 新增引流網址</button><small>可填入公司網址、店面網址、Facebook 粉絲專頁，或個人部落格等頁面。每個網址需以 http:// 或 https:// 開頭。</small></div></div><div class="field wide"><label>聯絡方式（最多 10 個）</label><div id="shopContacts">${(s.contactItems || [{ type: "其他", value: s.contact || "" }]).map(contactItemHTML).join("")}</div><button type="button" id="addShopContact">＋ 新增聯絡方式</button></div><div class="field"><label>店外觀主色</label><input name="exterior" type="color" value="${esc(s.color)}"></div><div class="field"><label>到期時間</label><input value="${new Date(s.lease.expires).toLocaleString("zh-TW")}" disabled></div></div><div class="section-caption">室內裝潢</div><div class="edit-grid">${sel("wallColor", "牆壁顏色", WALL_COLORS, room.wallColor)}${sel("wallType", "牆壁類型", WALL_TYPES, room.wallType)}${sel("floorColor", "地板顏色", FLOOR_COLORS, room.floorColor)}${sel("floorType", "地板造型", FLOOR_TYPES, room.floorType)}<div class="field wide"><label>A 字立牌顏色</label><input name="signColor" type="color" value="${esc(room.signColor || "#347958")}"></div><div class="field wide"><label><input name="adsEnabled" type="checkbox" ${room.adsEnabled ? "checked" : ""}> 添加兩側大型廣告立牌</label><small>儲存後可從「裝飾與擺設」上傳圖片及調整位置。</small></div></div><div class="section-caption">商品與牆面相框</div><p class="about-text">上傳圖片可能會壓縮，但會盡量保持品質。影片僅接受外部網址，不提供檔案上傳。</p><div class="editor-products">${s.products.map((p, i) => `<div class="edit-product-summary">${esc(p.title)} <button type="button" data-edit-listing="${i}">編輯登記</button> <button type="button" class="remove-product" data-remove="${i}">移除</button></div>`).join("")}</div><div class="editor-actions"><button type="button" class="add-btn" id="addProduct">＋ 新增相框</button><button type="submit" class="save-btn">儲存店舖與裝潢</button></div></form>`;
+          e.innerHTML = `<div class="editor-head"><b>✦ 店主工作台｜自訂展廳</b><small>租期到期時，這間店的資料和媒體會清除</small></div><form id="ownerForm">${shopTypeField(shopType(s))}<div class="edit-grid"><div class="field"><label>店鋪名稱</label><input name="name" maxlength="24" value="${esc(s.name)}" required></div><div class="field"><label>店主暱稱</label><input name="owner" maxlength="18" value="${esc(s.owner)}"></div><div class="field wide"><label>一句店鋪介紹</label><input name="tagline" maxlength="60" value="${esc(s.tagline)}"></div><div class="field wide"><label>店鋪故事 / 產品介紹</label><textarea name="about" maxlength="500">${esc(s.about)}</textarea></div><div class="field wide"><label>聯絡方式（最多 10 個）</label><div id="shopContacts">${(s.contactItems || [{ type: "其他", value: s.contact || "" }]).map(contactItemHTML).join("")}</div><button type="button" id="addShopContact">＋ 新增聯絡方式</button></div><div class="field"><label>店外觀主色</label><input name="exterior" type="color" value="${esc(s.color)}"></div><div class="field"><label>到期時間</label><input value="${new Date(s.lease.expires).toLocaleString("zh-TW")}" disabled></div></div><div class="section-caption">室內裝潢</div><div class="edit-grid">${sel("wallColor", "牆壁顏色", WALL_COLORS, room.wallColor)}${sel("wallType", "牆壁類型", WALL_TYPES, room.wallType)}${sel("floorColor", "地板顏色", FLOOR_COLORS, room.floorColor)}${sel("floorType", "地板造型", FLOOR_TYPES, room.floorType)}<div class="field wide"><label>A 字立牌顏色</label><input name="signColor" type="color" value="${esc(room.signColor || "#347958")}"></div><div class="field wide"><label><input name="adsEnabled" type="checkbox" ${room.adsEnabled ? "checked" : ""}> 添加兩側大型廣告立牌</label><small>儲存後可從「裝飾與擺設」上傳圖片及調整位置。</small></div></div><div class="section-caption">商品與牆面相框</div><p class="about-text">上傳圖片可能會壓縮，但會盡量保持品質。影片僅接受外部網址，不提供檔案上傳。</p><div class="editor-products">${s.products.map((p, i) => `<div class="edit-product-summary">${esc(p.title)} <button type="button" data-edit-listing="${i}">編輯登記</button> <button type="button" class="remove-product" data-remove="${i}">移除</button></div>`).join("")}</div><div class="editor-actions"><button type="button" class="add-btn" id="addProduct">＋ 新增相框</button><button type="submit" class="save-btn">儲存店舖與裝潢</button></div></form>`;
           const moveButton = document.createElement("button");
           moveButton.type = "button";
           moveButton.className = "outline-btn";
@@ -4911,26 +4916,6 @@
           moveButton.onclick = () => startPlacement(s.id);
           e.prepend(moveButton);
           addShopPreview(e, s);
-          $("#showTrafficUrl").onclick = () => {
-            const fields = $("#trafficUrlFields");
-            fields.classList.remove("hidden");
-            fields.hidden = false;
-            const list = $("#trafficUrlList");
-            if (!list.children.length) list.insertAdjacentHTML("beforeend", trafficUrlRowHTML());
-            list.querySelector("input").focus();
-          };
-          $("#addTrafficUrl").onclick = () => {
-            const list = $("#trafficUrlList");
-            if (list.children.length >= 10) {
-              toast("每間店最多設定 10 個引流網址。");
-              return;
-            }
-            list.insertAdjacentHTML("beforeend", trafficUrlRowHTML());
-            list.lastElementChild.querySelector("input").focus();
-          };
-          $("#trafficUrlList").onclick = (ev) => {
-            if (ev.target.matches("[data-remove-traffic-url]")) ev.target.closest(".traffic-url-row").remove();
-          };
           $("#addShopContact").onclick = () => {
             if ($("#shopContacts").children.length < 10)
               $("#shopContacts").insertAdjacentHTML(
@@ -5009,14 +4994,7 @@
             s = currentShop;
             const fd = new FormData(ev.currentTarget),
               oldKeys = s.products.map((p) => p.mediaKey).filter(Boolean);
-            const trafficUrls = fd
-              .getAll("trafficUrls")
-              .map((url) => String(url || "").trim())
-              .filter(Boolean);
-            if (trafficUrls.length > 10 || trafficUrls.some((url) => !safeLink(url))) {
-              toast("請確認每個引流網址都以 http:// 或 https:// 開頭，且每間店最多 10 個。");
-              return;
-            }
+            const legacyTrafficUrls = listingTrafficUrlsFor(s);
             s.shopType = normalizeShopType(fd.get("shopType"));
             commitBoardDesign(s, fd);
             s.boardColor = String(fd.get("boardColor") || "#294e46");
@@ -5025,8 +5003,12 @@
             s.owner = String(fd.get("owner")).trim() || playerName;
             s.tagline = String(fd.get("tagline")).trim();
             s.about = String(fd.get("about")).trim();
-            s.trafficUrls = [...new Set(trafficUrls)];
-            s.trafficUrl = s.trafficUrls[0] || "";
+            if (legacyTrafficUrls.length)
+              s.products.forEach((listing) => {
+                if (!listingTrafficUrlsFor(listing).length) listing.trafficUrls = [...legacyTrafficUrls];
+              });
+            delete s.trafficUrls;
+            delete s.trafficUrl;
             s.contactItems = [...$("#shopContacts").querySelectorAll(".contact-row")]
               .map((row) => ({
                 type: row.querySelector("select").value,
@@ -5271,7 +5253,7 @@
         function help() {
           showModal(
             "操作說明",
-            `<p>電腦使用 WASD／方向鍵移動；室內可拖曳滑鼠環視。</p><p>手機／平板使用畫面下方半透明圓形控制區：左側移動，室內右側拖曳轉動視角；互動／查看按鈕在畫面右邊，進入店內時位於右側轉向圓圈上方。畫面會跟隨裝置目前的直向或橫向方向調整。</p><p>搜尋或點選店名只會標示位置，按「前往這間店」才自動行走。移動鍵可取消導航。</p><p>走到店門按 E 租店或進入。室內站上作品方格按 E 觀看，站上出口方格按 E 離開。</p><p>自行車架：E 借還（每架 15／20）。騎乘速度 ×2.5；Q 隨時下車，靠近路邊單車按 E 騎回。請歸還車架。</p><p>長椅：E 坐下或起身。手機／平板點「選單」可開啟店內資訊、聯絡與店舖管理功能。</p>`,
+            `<p>電腦使用 WASD／方向鍵移動；進入店內後可拖曳滑鼠轉動視角。走近相框並用畫面中央準心對準，按 E 或點選相框查看作品；走到出口按 E 離開。</p><p>手機／平板使用畫面下方半透明圓形控制區：左側移動，室內右側拖曳轉動視角；互動／查看按鈕在畫面右邊，進入店內時位於右側轉向圓圈上方。畫面會跟隨裝置目前的直向或橫向方向調整。</p><p>搜尋或點選店名只會標示位置，按「前往這間店」才自動行走。移動鍵可取消導航。</p><p>走到店門按 E 租店或進入。自行車架：E 借還（每架 15／20）。騎乘速度 ×2.5；Q 隨時下車，靠近路邊單車按 E 騎回。請歸還車架。</p><p>長椅：E 坐下或起身。手機／平板點「選單」可開啟店內資訊、聯絡與店舖管理功能。</p>`,
           );
         }
         function showAnnouncement() {
@@ -5336,7 +5318,7 @@
         $("#backToStreet").addEventListener("click", leaveInterior);
         $("#exitRoomBtn").addEventListener("click", leaveInterior);
         $("#mobileRoomInfoToggle").addEventListener("click", () =>
-          $("#showroomView").classList.add("mobile-room-sidebar-open"),
+          $("#showroomView").classList.toggle("mobile-room-sidebar-open"),
         );
         $("#mobileRoomInfoClose").addEventListener("click", () =>
           $("#showroomView").classList.remove("mobile-room-sidebar-open"),
@@ -6174,10 +6156,20 @@
           );
           add(
             [
-              [radio.x, radio.y + radio.d, radio.z],
-              [radio.x + radio.w, radio.y + radio.d, radio.z],
-              [radio.x + radio.w, radio.y + radio.d, radio.z + radio.h],
               [radio.x, radio.y + radio.d, radio.z + radio.h],
+              [radio.x + radio.w, radio.y + radio.d, radio.z + radio.h],
+              [radio.x + radio.w, radio.y + radio.d, radio.z],
+              [radio.x, radio.y + radio.d, radio.z],
+            ],
+            null,
+            radioFaceTexture(),
+          );
+          add(
+            [
+              [radio.x + radio.w, radio.y, radio.z + radio.h],
+              [radio.x, radio.y, radio.z + radio.h],
+              [radio.x, radio.y, radio.z],
+              [radio.x + radio.w, radio.y, radio.z],
             ],
             null,
             radioFaceTexture(),
@@ -6619,7 +6611,7 @@
             category = existing?.category || "sale";
           showModal(
             existing ? "編輯相框內容" : "登記商品／作品／徵才",
-            `<form id="listingForm" class="listing-form" autocomplete="off"><label>項目類型<select name="category"><option value="sale" ${category === "sale" ? "selected" : ""}>產品販售</option><option value="showcase" ${category === "showcase" ? "selected" : ""}>作品展示</option><option value="job" ${category === "job" ? "selected" : ""}>徵才</option></select></label><label>名稱<input name="title" required maxlength="60" value="${esc(existing?.title || "")}"></label><label>介紹<textarea name="desc" required maxlength="2000">${esc(existing?.desc || "")}</textarea></label><div id="saleFields"><label>指定價格（NT$）<input name="price" type="number" min="0" step="0.01" value="${esc(existing?.price || "")}"></label><label>地點／位置／區域<input name="location" maxlength="200" placeholder="請輸入位置 舉例：台北市 或 詳細地點" value="${esc(existing?.location || "")}"></label></div><fieldset><legend>圖片 · 最多 3 張</legend><p>可一次選多張或分次新增；上傳圖片可能會壓縮，但會盡量保持品質。</p><input id="listingImages" type="file" accept="image/*" multiple><div id="imagePreviews" class="media-previews"></div></fieldset><fieldset><legend>影片 · 使用外部網址</legend><select id="videoMode"><option value="none" ${mode === "none" ? "selected" : ""}>不放影片</option>${video ? `<option value="legacy" ${mode === "legacy" ? "selected" : ""}>保留原有影片</option>` : ""}<option value="url" ${mode === "url" ? "selected" : ""}>貼上影片網址</option></select><div id="videoFileArea"><div id="videoPreview"></div></div><label id="videoUrlArea">外部影片網址<input name="externalURL" type="url" value="${esc(existing?.externalURL || "")}" placeholder="YouTube、TikTok 或其他影片網址"></label><small>暫不提供影片上傳功能，資金不足（<img class="awkward-smile" src="assets/awkward-smile.svg" alt="尷尬的笑臉">）。可先上傳至 YouTube、TikTok 或其他影片網站，再貼上網址。沒有上傳圖片時會使用 YouTube 公開縮圖；其他平台會顯示本站製作的通用影片預覽圖。</small></fieldset><label>聯絡方式（最多 10 個）</label><div id="contactRows">${(existing?.contacts?.length ? existing.contacts : [shop.contact || ""]).map(contactRow).join("")}</div><button type="button" id="addContact">＋ 新增聯絡方式</button><p id="listingError" role="alert" class="listing-error"></p><button type="submit" class="primary-btn">儲存並上架</button></form>`,
+            `<form id="listingForm" class="listing-form" autocomplete="off"><label>項目類型<select name="category"><option value="sale" ${category === "sale" ? "selected" : ""}>產品販售</option><option value="showcase" ${category === "showcase" ? "selected" : ""}>作品展示</option><option value="job" ${category === "job" ? "selected" : ""}>徵才</option></select></label><label>名稱<input name="title" required maxlength="60" value="${esc(existing?.title || "")}"></label><label>介紹<textarea name="desc" required maxlength="2000">${esc(existing?.desc || "")}</textarea></label><div id="saleFields"><label>指定價格（NT$）<input name="price" type="number" min="0" step="0.01" value="${esc(existing?.price || "")}"></label><label>地點／位置／區域<input name="location" maxlength="200" placeholder="請輸入位置 舉例：台北市 或 詳細地點" value="${esc(existing?.location || "")}"></label></div><fieldset><legend>圖片 · 最多 3 張</legend><p>可一次選多張或分次新增；上傳圖片可能會壓縮，但會盡量保持品質。</p><input id="listingImages" type="file" accept="image/*" multiple><div id="imagePreviews" class="media-previews"></div></fieldset><fieldset><legend>影片 · 使用外部網址</legend><select id="videoMode"><option value="none" ${mode === "none" ? "selected" : ""}>不放影片</option>${video ? `<option value="legacy" ${mode === "legacy" ? "selected" : ""}>保留原有影片</option>` : ""}<option value="url" ${mode === "url" ? "selected" : ""}>貼上影片網址</option></select><div id="videoFileArea"><div id="videoPreview"></div></div><label id="videoUrlArea">外部影片網址<input name="externalURL" type="url" value="${esc(existing?.externalURL || "")}" placeholder="YouTube、TikTok 或其他影片網址"></label><small>暫不提供影片上傳功能，資金不足（<img class="awkward-smile" src="assets/awkward-smile.svg" alt="尷尬的笑臉">）。可先上傳至 YouTube、TikTok 或其他影片網站，再貼上網址。沒有上傳圖片時會使用 YouTube 公開縮圖；其他平台會顯示本站製作的通用影片預覽圖。</small></fieldset><label>聯絡方式（最多 10 個）</label><div id="contactRows">${(existing?.contacts?.length ? existing.contacts : [shop.contact || ""]).map(contactRow).join("")}</div><button type="button" id="addContact">＋ 新增聯絡方式</button><fieldset><legend>購買／作品／聯絡外部連結（選填）</legend><p>訪客可從作品內容點選前往其他平台購買、查看作品或聯絡。每個項目最多 10 個網址。</p><div id="listingTrafficUrlList">${listingTrafficUrlsFor(existing).map(listingTrafficUrlRowHTML).join("")}</div><button type="button" class="outline-btn" id="addListingTrafficUrl">＋ 新增外部連結</button></fieldset><p id="listingError" role="alert" class="listing-error"></p><button type="submit" class="primary-btn">儲存並上架</button></form>`,
           );
           const form = $("#listingForm"),
             error = (msg) => {
@@ -6655,6 +6647,7 @@
                 };
               } else $("#videoPreview").innerHTML = "";
             };
+          bindListingTrafficUrlFields(form, error);
           const toggle = () => {
             category = form.elements.category.value;
             mode = $("#videoMode").value;
@@ -6728,6 +6721,7 @@
                   price: category === "sale" ? String(fd.get("price") || "") : "",
                   location: String(fd.get("location") || "").trim(),
                   externalURL: mode === "url" ? String(fd.get("externalURL") || "").trim() : "",
+                  trafficUrls: listingTrafficUrlsFromForm(form),
                   contacts: [...$("#contactRows").querySelectorAll("input")].map((el) =>
                     el.value.trim(),
                   ),
@@ -7751,7 +7745,7 @@
             audio.id = "musicControls";
             audio.className = "music-control";
             audio.innerHTML =
-              '<label>音量 <input id="musicVolume" aria-label="店內音量" type="range" min="0" max="100" value="40"></label><span id="musicTrackName"></span><button id="musicUploadBtn" type="button">設定／更換單曲</button><input id="musicUpload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/webm" hidden><button id="musicRemoveBtn" type="button">移除音樂</button><small class="music-rights-note">有人進入店內時自動播放；離開店面後停止。</small>';
+              '<label>音量 <input id="musicVolume" aria-label="店內音量" type="range" min="0" max="100" value="40"></label><span id="musicTrackName"></span><button id="musicPlayBtn" type="button" class="outline-btn hidden">▶ 播放音樂</button><button id="musicUploadBtn" type="button">設定／更換單曲</button><input id="musicUpload" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/webm" hidden><button id="musicRemoveBtn" type="button">移除音樂</button><small class="music-rights-note">有人進入店內時自動播放；若瀏覽器阻擋自動播放，請按「播放音樂」啟用。離開店面後停止。</small>';
             $("#roomTools").insertAdjacentElement("afterend", audio);
             $("#musicVolume").value = localStorage.getItem("market-music-volume") || "40";
             $("#musicVolume").oninput = (e) => {
@@ -7760,6 +7754,7 @@
             };
             $("#musicUploadBtn").onclick = () => $("#musicUpload").click();
             $("#musicUpload").onchange = uploadShopMusic;
+            $("#musicPlayBtn").onclick = toggleShopMusicFromGesture;
             $("#musicRemoveBtn").onclick = () => {
               const s = getShop(activeShopId);
               if (!canEditShop(s)) return;
@@ -7769,6 +7764,7 @@
           const owner = canEditShop(shop) && !roomPreviewOnly;
           $("#musicUploadBtn").classList.toggle("hidden", !owner);
           $("#musicRemoveBtn").classList.toggle("hidden", !owner);
+          $("#musicPlayBtn").classList.toggle("hidden", !playlistTracks(shop).length);
           loadShopMusic(shop);
         }
         function toggleCounter() {
@@ -7810,6 +7806,32 @@
             document.visibilityState === "visible" &&
             !$("#showroomView").classList.contains("hidden")
           );
+        }
+        let musicAutoplayNoticeKey = "";
+        async function toggleShopMusicFromGesture() {
+          const shop = getShop(activeShopId);
+          const track = playlistTracks(shop)[0];
+          if (!shop || !track) {
+            toast("這間店尚未設定音樂。");
+            return;
+          }
+          const key = track.mediaKey || track.mediaURL || "";
+          musicVideoPaused = false;
+          if (musicPlayer && musicKey === key && musicPlayer.src && musicPlayer.paused) {
+            musicPlayer.play().then(() => {
+              musicAutoplayNoticeKey = "";
+            }).catch(() => {
+              toast("無法播放這個音檔，請確認音量，或重新上傳 MP3／AAC。");
+            });
+            return;
+          }
+          await loadShopMusic(shop, true);
+          if (!musicPlayer) return;
+          musicPlayer.play().then(() => {
+            musicAutoplayNoticeKey = "";
+          }).catch(() => {
+            toast("瀏覽器仍封鎖音樂播放；請確認音量不是 0，或重新上傳 MP3／AAC。");
+          });
         }
         const durationReads = new Set();
         function hydrateMusicDurations(shop) {
@@ -7955,7 +7977,11 @@
               audio.play().catch(() => {
                 if ($("#musicTrackName"))
                   $("#musicTrackName").textContent =
-                    "點一下展廳以啟用聲音 · " + (track.name || "音樂");
+                    "按「播放音樂」啟用 · " + (track.name || "音樂");
+                if (musicAutoplayNoticeKey !== key) {
+                  musicAutoplayNoticeKey = key;
+                  toast("瀏覽器阻擋了自動播放。請按店內的「播放音樂」按鈕啟用聲音。");
+                }
               });
             else audio.pause();
           };
@@ -7969,6 +7995,11 @@
             sync();
           };
           audio.onended = () => loadShopMusic(getShop(shop.id), true);
+          audio.onerror = () => {
+            if (ticket !== musicTicket || musicKey !== key) return;
+            if ($("#musicTrackName"))
+              $("#musicTrackName").textContent = "音檔無法播放，請重新上傳 MP3／AAC";
+          };
           if (!same) audio.src = url;
           sync();
         }
@@ -10040,7 +10071,7 @@
               `<label>${label}<select name="${name}">${values.map((v) => `<option ${v === value ? "selected" : ""}>${v}</option>`).join("")}</select></label>`;
           showModal(
             "登記商品／作品／徵才",
-            `<form id="jobForm" class="listing-form" autocomplete="off"><label>項目類型<select id="jobCategory"><option value="job">徵才</option><option value="general">商品／作品</option></select></label><p>建議填寫得越完整越好，讓求職者清楚了解職缺。照片為選填，最多 3 張。上傳圖片可能會壓縮，但會盡量保持品質。</p><div class="job-grid">${input("title", "職位名稱", job.title || old?.title || "")}${`<label>最低薪資（選填）<input name="salaryMin" type="number" min="0" step="1" autocomplete="off" value="${esc(job.salaryMin || "")}" placeholder="例如 35000"></label><label>最高薪資（選填）<input name="salaryMax" type="number" min="0" step="1" autocomplete="off" value="${esc(job.salaryMax || "")}" placeholder="例如 40000"></label>`}${select("nature", "工作性質", ["全職", "兼職", "約聘", "臨時", "實習"], job.nature || "全職")}${area("content", "工作內容", job.content || old?.desc || "")}${input("location", "上班實際地點", job.location || "")}${select("management", "管理責任", ["無", "有"], job.management || "無")}<label id="teamSizeRow">管理人數<input name="teamSize" type="number" min="1" step="1" value="${esc(job.teamSize || "")}"></label>${select("travel", "出差", ["無", "有"], job.travel || "無")}<label id="travelTimeRow">預計出差時間<input name="travelTime" maxlength="250" placeholder="例如每月 3 天、每季 1 週" value="${esc(job.travelTime || "")}"></label>${select("shift", "上班時段", ["日班", "中班", "晚班", "三班制", "兩班制"], job.shift || "日班")}<label class="wide">上班時間（選填，可自行輸入）<input id="workTimeText" name="workTime" maxlength="120" autocomplete="off" placeholder="例如：09:00～18:00，或依排班表安排" value="${esc(job.workTime || (job.startTime ? job.startTime + "～" + (job.endTime || "") : ""))}"></label><div class="wide"><small>也可選擇起迄時間；按「確認時間」後才會填入上方欄位。</small><div class="job-list-row"><input id="workTimeStart" type="time" aria-label="選擇上班開始時間"><span>～</span><input id="workTimeEnd" type="time" aria-label="選擇上班結束時間"><button type="button" id="confirmWorkTime">確認時間</button></div></div>${area("overtime", "加班情況", job.overtime || "")}${select("leaveChoice", "休假制度", leaveOptions, leaveIsPreset ? job.leave : "其他")}<label id="leaveOtherRow">其他休假制度<input name="leaveOther" maxlength="250" value="${esc(job.leaveOther || (!leaveIsPreset ? job.leave || "" : ""))}"></label>${select("availableChoice", "可上班日", availableOptions, availableIsPreset ? job.available : "其他")}<label id="availableOtherRow">其他可上班日<input name="availableOther" maxlength="250" value="${esc(job.availableOther || (!availableIsPreset ? job.available || "" : ""))}"></label><div class="wide"><label for="requirementInput">條件要求（選填，輸入一項後按新增）</label><div class="job-list-row"><input id="requirementInput" maxlength="300" placeholder="例如：具備相關工作經驗"><button type="button" id="addRequirement">新增條件</button></div><ol id="requirementList"></ol></div><div class="wide"><label>福利制度（填寫一項後會自動新增下一格）</label><div id="benefitRows"></div></div></div><fieldset><legend>工作相關照片（選填，最多 3 張）</legend><input id="jobPhotos" type="file" accept="image/*" multiple><div id="jobPhotoPreviews" class="media-previews"></div></fieldset><p class="listing-error" id="jobError" role="alert"></p><button type="submit" class="primary-btn">儲存並上架徵才</button></form>`,
+            `<form id="jobForm" class="listing-form" autocomplete="off"><label>項目類型<select id="jobCategory"><option value="job">徵才</option><option value="general">商品／作品</option></select></label><p>建議填寫得越完整越好，讓求職者清楚了解職缺。照片為選填，最多 3 張。上傳圖片可能會壓縮，但會盡量保持品質。</p><div class="job-grid">${input("title", "職位名稱", job.title || old?.title || "")}${`<label>最低薪資（選填）<input name="salaryMin" type="number" min="0" step="1" autocomplete="off" value="${esc(job.salaryMin || "")}" placeholder="例如 35000"></label><label>最高薪資（選填）<input name="salaryMax" type="number" min="0" step="1" autocomplete="off" value="${esc(job.salaryMax || "")}" placeholder="例如 40000"></label>`}${select("nature", "工作性質", ["全職", "兼職", "約聘", "臨時", "實習"], job.nature || "全職")}${area("content", "工作內容", job.content || old?.desc || "")}${input("location", "上班實際地點", job.location || "")}${select("management", "管理責任", ["無", "有"], job.management || "無")}<label id="teamSizeRow">管理人數<input name="teamSize" type="number" min="1" step="1" value="${esc(job.teamSize || "")}"></label>${select("travel", "出差", ["無", "有"], job.travel || "無")}<label id="travelTimeRow">預計出差時間<input name="travelTime" maxlength="250" placeholder="例如每月 3 天、每季 1 週" value="${esc(job.travelTime || "")}"></label>${select("shift", "上班時段", ["日班", "中班", "晚班", "三班制", "兩班制"], job.shift || "日班")}<label class="wide">上班時間（選填，可自行輸入）<input id="workTimeText" name="workTime" maxlength="120" autocomplete="off" placeholder="例如：09:00～18:00，或依排班表安排" value="${esc(job.workTime || (job.startTime ? job.startTime + "～" + (job.endTime || "") : ""))}"></label><div class="wide"><small>也可選擇起迄時間；按「確認時間」後才會填入上方欄位。</small><div class="job-list-row"><input id="workTimeStart" type="time" aria-label="選擇上班開始時間"><span>～</span><input id="workTimeEnd" type="time" aria-label="選擇上班結束時間"><button type="button" id="confirmWorkTime">確認時間</button></div></div>${area("overtime", "加班情況", job.overtime || "")}${select("leaveChoice", "休假制度", leaveOptions, leaveIsPreset ? job.leave : "其他")}<label id="leaveOtherRow">其他休假制度<input name="leaveOther" maxlength="250" value="${esc(job.leaveOther || (!leaveIsPreset ? job.leave || "" : ""))}"></label>${select("availableChoice", "可上班日", availableOptions, availableIsPreset ? job.available : "其他")}<label id="availableOtherRow">其他可上班日<input name="availableOther" maxlength="250" value="${esc(job.availableOther || (!availableIsPreset ? job.available || "" : ""))}"></label><div class="wide"><label for="requirementInput">條件要求（選填，輸入一項後按新增）</label><div class="job-list-row"><input id="requirementInput" maxlength="300" placeholder="例如：具備相關工作經驗"><button type="button" id="addRequirement">新增條件</button></div><ol id="requirementList"></ol></div><div class="wide"><label>福利制度（填寫一項後會自動新增下一格）</label><div id="benefitRows"></div></div></div><fieldset><legend>工作相關照片（選填，最多 3 張）</legend><input id="jobPhotos" type="file" accept="image/*" multiple><div id="jobPhotoPreviews" class="media-previews"></div></fieldset><fieldset><legend>履歷投遞／聯絡外部連結（選填）</legend><p>求職者可點選前往履歷投遞、公司網站或其他聯絡平台。每個職缺最多 10 個網址。</p><div id="listingTrafficUrlList">${listingTrafficUrlsFor(old).map(listingTrafficUrlRowHTML).join("")}</div><button type="button" class="outline-btn" id="addListingTrafficUrl">＋ 新增外部連結</button></fieldset><p class="listing-error" id="jobError" role="alert"></p><button type="submit" class="primary-btn">儲存並上架徵才</button></form>`,
           );
           const form = $("#jobForm"),
             error = (text) => {
@@ -10060,6 +10091,7 @@
               $("#availableOtherRow").classList.toggle("hidden", !otherAvailable);
               form.elements.availableOther.required = otherAvailable;
             };
+          bindListingTrafficUrlFields(form, error);
           form.elements.management.onchange = toggle;
           form.elements.travel.onchange = toggle;
           form.elements.leaveChoice.onchange = toggle;
@@ -10176,7 +10208,8 @@
               targetShop = await refreshShopForEdit(shop.id);
               if (!canEditShop(targetShop)) throw Error("目前帳號沒有這間店的編輯權限。");
               const fd = new FormData(form),
-                data = {};
+                data = {},
+                trafficUrls = listingTrafficUrlsFromForm(form);
               for (const key of [
                 "title",
                 "salaryMin",
@@ -10227,6 +10260,7 @@
                 desc: data.content,
                 category: "job",
                 job: data,
+                trafficUrls,
                 media,
                 mediaKey: media[0]?.mediaKey || "",
                 mediaType: "image",
