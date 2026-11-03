@@ -1456,6 +1456,16 @@
         grid-template-columns: 1fr 1fr;
         gap: 10px;
       }
+      .avatar-outfit-options {
+        grid-column: 1/-1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid #e0e8df;
+        border-radius: 12px;
+        background: #f8faf5;
+      }
       .avatar-option {
         display: grid;
         gap: 5px;
@@ -2740,11 +2750,12 @@
         const clone = (x) => JSON.parse(JSON.stringify(x));
         const AVATAR_CHOICES = {
           hairStyle: [
-            "男・側分短髮",
-            "男・刺刺短髮",
-            "女・及肩長髮",
-            "女・雙馬尾",
-            "中性・蓬鬆短鮑伯",
+            "俐落短髮",
+            "柔順側分",
+            "蓬鬆鮑伯",
+            "及肩直髮",
+            "高馬尾",
+            "雙丸子頭",
           ],
           hairColor: [
             ["栗子棕", "#70462f"],
@@ -2761,6 +2772,8 @@
             ["橄欖膚色", "#b98c67"],
           ],
           top: [
+            ["經典黑", "#30343b"],
+            ["純白", "#f5f2e9"],
             ["草莓牛奶", "#e8899a"],
             ["天空藍", "#75a9d0"],
             ["奶油黃", "#e5bf68"],
@@ -2768,6 +2781,8 @@
             ["葡萄紫", "#9275b5"],
           ],
           bottom: [
+            ["經典黑", "#30343b"],
+            ["純白", "#f5f2e9"],
             ["丹寧藍", "#536f9d"],
             ["可可棕", "#806451"],
             ["石墨灰", "#596164"],
@@ -2775,11 +2790,11 @@
             ["莓果紅", "#a85f70"],
           ],
           dress: [
-            ["櫻花裙", "#e889a5"],
-            ["海鹽洋裝", "#76a8c0"],
-            ["向日葵裙", "#e2b951"],
-            ["薰衣草裙", "#9a80bc"],
-            ["森林連身裙", "#5d9274"],
+            ["黑色", "#30343b"],
+            ["白色", "#f5f2e9"],
+            ["紅色", "#c94f58"],
+            ["藍色", "#4d83ba"],
+            ["黃色", "#e5bf45"],
           ],
           shoes: [
             ["白球鞋", "#f3efe4"],
@@ -2792,8 +2807,8 @@
         const AVATAR_DEFAULT = {
           topStyle: "短袖",
           bottomStyle: "長褲",
-          dressStyle: "A字裙",
-          hairStyle: "男・側分短髮",
+          dressStyle: "中版（及膝）",
+          hairStyle: "柔順側分",
           hairColor: "#70462f",
           skin: "#f1c7a3",
           top: "#e8899a",
@@ -2846,10 +2861,20 @@
         ];
         function loadAvatar() {
           try {
-            return {
+            const avatar = {
               ...AVATAR_DEFAULT,
               ...JSON.parse(localStorage.getItem(AVATAR_KEY) || "{}"),
             };
+            avatar.hairStyle = ({
+              "男・側分短髮": "柔順側分",
+              "男・刺刺短髮": "俐落短髮",
+              "女・及肩長髮": "及肩直髮",
+              "女・雙馬尾": "高馬尾",
+              "中性・蓬鬆短鮑伯": "蓬鬆鮑伯",
+            })[avatar.hairStyle] || avatar.hairStyle;
+            avatar.dressStyle = ({ A字裙: "中版", 細肩帶: "中版", 蓬蓬裙: "短版" })[avatar.dressStyle] || avatar.dressStyle;
+            avatar.dress = ({ "#e889a5": "#c94f58", "#76a8c0": "#4d83ba", "#e2b951": "#e5bf45" })[avatar.dress] || avatar.dress;
+            return avatar;
           } catch (e) {
             return { ...AVATAR_DEFAULT };
           }
@@ -3639,14 +3664,7 @@
               })
               .join("")}</select></div>`;
           $("#modalContent").innerHTML =
-            `<div class="modal-head"><h2>設計我的 Q 版人物</h2><button class="close-modal" type="button">×</button></div><div class="avatar-preview"><canvas id="avatarPreview" width="260" height="200" style="width:260px;height:200px"></canvas><small style="display:block;font-size:9px;color:#708177">更換上衣／下裝會退出洋裝；選洋裝會取代上下裝</small></div><form id="avatarForm"><div class="avatar-form">${select("hairStyle", "髮型", AVATAR_CHOICES.hairStyle)}${select("hairColor", "髮色", AVATAR_CHOICES.hairColor)}${select("skin", "膚色", AVATAR_CHOICES.skin)}${select("topStyle", "上衣款式", ["長袖", "短袖", "無袖"])}${select("top", "上衣顏色", AVATAR_CHOICES.top)}${select("bottomStyle", "下裝款式", ["長褲", "短褲", "長裙", "短裙"])}${select("bottom", "下裝顏色", AVATAR_CHOICES.bottom)}${select("dressStyle", "洋裝款式", ["A字裙", "細肩帶", "蓬蓬裙"])}${select("dress", "洋裝顏色", AVATAR_CHOICES.dress.slice(0, 3))}${select("shoes", "鞋子", AVATAR_CHOICES.shoes)}${select(
-              "outfit",
-              "穿搭模式",
-              [
-                ["上衣＋下裝", "separates"],
-                ["洋裝", "dress"],
-              ],
-            )}</div><div class="modal-actions"><button type="button" class="outline-btn cancel-modal">取消</button><button type="submit" class="primary-btn">儲存造型</button></div></form>`;
+            `<div class="modal-head"><h2>設計我的 Q 版人物</h2><button class="close-modal" type="button">×</button></div><div class="avatar-preview"><canvas id="avatarPreview" width="260" height="200" style="width:260px;height:200px"></canvas><small style="display:block;font-size:9px;color:#708177">更換穿搭選項時，右側預覽會即時更新</small></div><form id="avatarForm"><div class="avatar-form">${select("hairStyle", "髮型", AVATAR_CHOICES.hairStyle)}${select("hairColor", "髮色", AVATAR_CHOICES.hairColor)}${select("skin", "膚色", AVATAR_CHOICES.skin)}${select("shoes", "鞋子", AVATAR_CHOICES.shoes)}${select("outfit", "穿搭樣式", [["上衣＋下裝", "separates"], ["洋裝", "dress"]])}<div id="separatesOptions" class="avatar-outfit-options">${select("topStyle", "上衣款式", ["長袖", "短袖", "無袖"])}${select("top", "上衣顏色", AVATAR_CHOICES.top)}${select("bottomStyle", "下裝款式", ["長褲", "短褲", "長裙", "短裙"])}${select("bottom", "下裝顏色", AVATAR_CHOICES.bottom)}</div><div id="dressOptions" class="avatar-outfit-options">${select("dressStyle", "洋裝長度", [["長版（長裙）", "長版"], ["中版（及膝）", "中版"], ["短版（及大腿）", "短版"]])}${select("dress", "洋裝顏色", AVATAR_CHOICES.dress)}</div></div><div class="modal-actions"><button type="button" class="outline-btn cancel-modal">取消</button><button type="submit" class="primary-btn">儲存造型</button></div></form>`;
           $("#modalBackdrop").classList.remove("hidden");
           $("#modalContent").querySelector(".close-modal").onclick = closeModal;
           $("#modalContent").querySelector(".cancel-modal").onclick = closeModal;
@@ -3664,14 +3682,18 @@
               false,
             );
           };
+          const updateOutfitFields = () => {
+            const dressMode = $("#avatarForm").elements.outfit.value === "dress";
+            $("#separatesOptions").classList.toggle("hidden", dressMode);
+            $("#dressOptions").classList.toggle("hidden", !dressMode);
+          };
           $("#avatarForm").addEventListener("change", (e) => {
             const name = e.target.name;
-            $("#avatarForm").elements.outfit.value = outfitAfterChange(
-              $("#avatarForm").elements.outfit.value,
-              name,
-            );
+            if (name === "outfit") updateOutfitFields();
+            else $("#avatarForm").elements.outfit.value = outfitAfterChange($("#avatarForm").elements.outfit.value, name);
             repaint();
           });
+          updateOutfitFields();
           repaint();
           $("#avatarForm").addEventListener("submit", (e) => {
             e.preventDefault();
@@ -5437,13 +5459,13 @@
         function help() {
           showModal(
             "操作說明",
-            `<p>電腦使用 WASD／方向鍵移動；進入店內後可拖曳滑鼠轉動視角。走近相框並用畫面中央準心對準，按 E 或點選相框查看作品；走到出口按 E 離開。</p><p>手機／平板使用畫面下方半透明圓形控制區：左側移動，室內右側拖曳轉動視角；互動／查看按鈕在畫面右邊，進入店內時位於右側轉向圓圈上方。畫面會跟隨裝置目前的直向或橫向方向調整。</p><p>搜尋或點選店名只會標示位置，按「前往這間店」才自動行走。移動鍵可取消導航。</p><p>走到店門按 E 租店或進入。自行車架：E 借還（每架 15／20）。騎乘速度 ×2.5；Q 隨時下車，靠近路邊單車按 E 騎回。請歸還車架。</p><p>長椅：E 坐下或起身。手機／平板點「選單」可開啟店內資訊、聯絡與店舖管理功能。</p>`,
+            `<p>電腦使用 WASD／方向鍵移動；進入店內後可拖曳滑鼠轉動視角。走近相框並用畫面中央準心對準，按 E 或點選相框查看作品；走到出口按 E 離開。</p><p>手機／平板使用畫面下方半透明圓形控制區：左側移動，室內右側拖曳轉動視角；互動／查看按鈕在畫面右邊，進入店內時位於右側轉向圓圈上方。畫面會跟隨裝置目前的直向或橫向方向調整。</p><p>搜尋或點選店名只會標示位置，按「前往這間店」才自動行走。移動鍵可取消導航。</p><p>走到店門按 E 租店或進入。靠近自行車架按 E 借車或還車，騎乘速度 ×2.5；騎車時按 E 下車。提示會在畫面右側顯示。</p><p>長椅：E 坐下或起身。手機／平板點「選單」可開啟店內資訊、聯絡與店舖管理功能。</p>`,
           );
         }
         function showAnnouncement() {
           showModal(
             "平台公告",
-            `<div class="announcement-copy"><p>我們製作這個平台，希望用不同於傳統履歷網站與線上市集的方式，幫助大家展示作品、分享職缺、尋找合作夥伴，讓更多人看見你和你的店家。</p><p>目前平台提供資訊展示與外部導流，暫不提供站內金流或代收付款服務。若有交易或合作需求，請直接聯絡對方並自行確認相關細節。</p><p>平台仍在成長與維護中。若未來使用人數增加、營運成本提高，我們可能推出自願贊助方式；屆時若你覺得平台對你有幫助，歡迎依意願支持。</p><p>謝謝每一位來島上逛逛、分享資訊與支持平台的人。</p></div>`,
+            `<div class="announcement-copy"><p><strong>目前為測試版本，部分功能與內容仍在調整中，感謝你的體驗與回饋。</strong></p><p>我們製作這個平台，希望用不同於傳統履歷網站與線上市集的方式，幫助大家展示作品、分享職缺、尋找合作夥伴，讓更多人看見你和你的店家。</p><p>目前平台提供資訊展示與外部導流，暫不提供站內金流或代收付款服務。若有交易或合作需求，請直接聯絡對方並自行確認相關細節。</p><p>平台仍在成長與維護中。若未來使用人數增加、營運成本提高，我們可能推出自願贊助方式；屆時若你覺得平台對你有幫助，歡迎依意願支持。</p><p>謝謝每一位來島上逛逛、分享資訊與支持平台的人。</p></div>`,
           );
         }
         function showModal(title, body) {
@@ -6053,8 +6075,6 @@
             ctx.font = "17px sans-serif";
             ctx.textAlign = "center";
             ctx.fillText("🚲 🚲 🚲", p.x, p.y + 2);
-            ctx.font = "bold 11px sans-serif";
-            ctx.fillText("E 借／還 " + (counts[a.id] ?? 15) + "/20", p.x, p.y + 29);
           }
           for (const a of benches) {
             const p = project(a.x, a.y);
@@ -6080,7 +6100,7 @@
             ctx.font = "bold 13px sans-serif";
             ctx.fillText("坐著休息 · E 起身", p.x - 50, p.y + 40);
           }
-          if (a) {
+          if (a && a.type !== "rack") {
             ctx.fillStyle = "#224b40";
             ctx.fillRect(20, H - 92, 420, 30);
             ctx.fillStyle = "white";
@@ -7126,20 +7146,38 @@
           if (parkedBike) {
             const p = project(parkedBike.x, parkedBike.y);
             drawCycle(ctx, p.x, p.y, parkedBike.dir, 0);
-            if (Math.hypot(player.x - parkedBike.x, player.y - parkedBike.y) < 80) {
-              ctx.fillStyle = "#264b40";
-              ctx.fillRect(20, H - 80, 260, 34);
-              ctx.fillStyle = "white";
-              ctx.font = "16px sans-serif";
-              ctx.fillText("按 E 騎回單車", 30, H - 57);
-            }
           }
+          const nearby = nearbyStreetObject();
+          const nearParkedBike = parkedBike && Math.hypot(player.x - parkedBike.x, player.y - parkedBike.y) < 80;
+          let bikeHint = "";
           if (streetState.bike) {
-            ctx.fillStyle = "#264b40";
-            ctx.fillRect(20, H - 44, 300, 28);
-            ctx.fillStyle = "white";
-            ctx.font = "14px sans-serif";
-            ctx.fillText("Q 隨時下車 · 車架附近 E 還車", 30, H - 24);
+            bikeHint = nearby?.type === "rack"
+              ? `按 E 還車 · 車架 ${rackCounts()[nearby.id] ?? 15}/20`
+              : "按 E 下車 · 到車架可還車";
+          } else if (nearParkedBike) {
+            bikeHint = "按 E 騎回停放的單車";
+          } else if (nearby?.type === "rack") {
+            bikeHint = `按 E 借車 · 車架 ${rackCounts()[nearby.id] ?? 15}/20`;
+          }
+          if (bikeHint) {
+            const x = W - 246,
+              y = portraitTouchQuery.matches ? 250 : 126,
+              w = 232,
+              h = 46;
+            ctx.fillStyle = "#fffdf4f2";
+            roundRect(ctx, x, y, w, h, 11);
+            ctx.fill();
+            ctx.strokeStyle = "#476a5540";
+            ctx.lineWidth = 1;
+            roundRect(ctx, x, y, w, h, 11);
+            ctx.stroke();
+            ctx.textAlign = "left";
+            ctx.fillStyle = "#385b49";
+            ctx.font = "700 10px sans-serif";
+            ctx.fillText("🚲 自行車", x + 11, y + 15);
+            ctx.fillStyle = "#526b5d";
+            ctx.font = "10px sans-serif";
+            ctx.fillText(bikeHint, x + 11, y + 33, w - 22);
           }
           if (Date.now() < bikeWarningUntil) {
             ctx.globalAlpha = 0.55 + 0.45 * Math.sin(Date.now() / 130) ** 2;
@@ -7235,28 +7273,34 @@
           oval(0, 19, 18, 5, "#233c3826");
           const leg = m.moving ? Math.sin(phase) * 5 : 0;
           const dress = a.outfit === "dress",
-            skirt = ["長裙", "短裙"].includes(a.bottomStyle);
+            skirt = ["長裙", "短裙"].includes(a.bottomStyle),
+            shorts = !dress && a.bottomStyle === "短褲",
+            skin = a.skin || "#f1c7a3";
           for (const sign of [-1, 1]) {
             c.save();
             c.translate(side ? 0 : sign * 7, 4);
             c.rotate(seated ? sign * 0.65 : m.moving ? sign * Math.sin(phase) * 0.48 : 0);
-            rect(-4, 0, 8, a.bottomStyle === "短褲" ? 7 : 14, a.bottom || "#536f9d");
+            if (dress || skirt || shorts) rect(-4, 0, 8, 15, skin);
+            else rect(-4, 0, 8, 15, a.bottom || "#536f9d");
             oval(side ? 3 : 0, bike ? 10 : 14, 6, 4, a.shoes || "#eee");
             c.restore();
           }
+          if (shorts) {
+            rect(-11, 0, 22, 6, a.bottom || "#536f9d");
+            rect(-10, 5, 9, 4, a.bottom || "#536f9d");
+            rect(1, 5, 9, 4, a.bottom || "#536f9d");
+          }
           if (dress || skirt) {
-            const long = dress ? a.dressStyle !== "蓬蓬裙" : a.bottomStyle === "長裙";
+            const length = dress
+              ? ({ 長版: 20, 中版: 12, 短版: 8 }[a.dressStyle] || (a.dressStyle === "蓬蓬裙" ? 12 : 12))
+              : a.bottomStyle === "長裙" ? 20 : 10;
+            const topY = dress ? -10 : 2;
             c.fillStyle = dress ? a.dress : a.bottom;
             c.beginPath();
-            c.moveTo(-9, dress ? -10 : 3);
-            c.lineTo(9, dress ? -10 : 3);
-            c.lineTo(dress && a.dressStyle === "蓬蓬裙" ? 22 : 17, long ? 19 : 11);
-            c.quadraticCurveTo(
-              0,
-              long ? 23 : 16,
-              -(dress && a.dressStyle === "蓬蓬裙" ? 22 : 17),
-              long ? 19 : 11,
-            );
+            c.moveTo(-10, topY);
+            c.lineTo(10, topY);
+            c.lineTo(17, length);
+            c.quadraticCurveTo(0, length + 4, -17, length);
             c.closePath();
             c.fill();
           }
@@ -7282,36 +7326,48 @@
               );
           }
           const hair = a.hairColor || "#70462f",
-            style = a.hairStyle || "男・側分短髮";
-          if (style.includes("長髮")) rect(-21, -36, 42, 40, hair);
-          if (style.includes("雙馬尾")) {
-            oval(-23, -16, 9, 18, hair);
-            oval(23, -16, 9, 18, hair);
+            styleAliases = {
+              "男・側分短髮": "柔順側分",
+              "男・刺刺短髮": "俐落短髮",
+              "女・及肩長髮": "及肩直髮",
+              "女・雙馬尾": "高馬尾",
+              "中性・蓬鬆短鮑伯": "蓬鬆鮑伯",
+            },
+            style = styleAliases[a.hairStyle] || a.hairStyle || "柔順側分";
+          if (style === "及肩直髮" || style === "蓬鬆鮑伯") {
+            rect(-22, -29, 8, style === "及肩直髮" ? 34 : 23, hair);
+            rect(14, -29, 8, style === "及肩直髮" ? 34 : 23, hair);
           }
-          oval(0, -22, 22, 22, hair);
+          if (style === "高馬尾") {
+            oval(19, -38, 6, 12, hair);
+            oval(16, -29, 3, 3, "#d9a76c");
+          }
+          if (style === "雙丸子頭") {
+            oval(-14, -39, 7, 7, hair);
+            oval(14, -39, 7, 7, hair);
+          }
+          oval(0, -22, 21, 19, hair);
           if (!back) {
             oval(side ? 4 : 0, -18, 18, 16, a.skin);
             c.fillStyle = hair;
             c.beginPath();
-            c.moveTo(-21, -25);
-            c.quadraticCurveTo(-12, -50, 20, -30);
-            c.lineTo(style.includes("側分") ? 0 : 16, -25);
-            c.lineTo(-5, -30);
-            c.lineTo(-13, -24);
+            c.moveTo(-19, -24);
+            c.quadraticCurveTo(-18, -44, -2, -42);
+            c.quadraticCurveTo(13, -44, 19, -31);
+            c.lineTo(17, -23);
+            if (style === "柔順側分") {
+              c.quadraticCurveTo(8, -31, 1, -24);
+              c.lineTo(-3, -22);
+            } else {
+              c.lineTo(8, -26);
+              c.lineTo(0, -23);
+              c.lineTo(-8, -26);
+            }
             c.closePath();
             c.fill();
-            if (style.includes("刺刺")) {
-              for (let i = 0; i < 5; i++) {
-                c.beginPath();
-                c.moveTo(-18 + i * 8, -34);
-                c.lineTo(-12 + i * 8, -49 + (i % 2) * 5);
-                c.lineTo(-5 + i * 8, -34);
-                c.fill();
-              }
-            }
-            if (style.includes("鮑伯")) {
-              oval(-17, -22, 7, 16, hair);
-              oval(17, -22, 7, 16, hair);
+            if (style === "蓬鬆鮑伯") {
+              oval(-17, -18, 6, 12, hair);
+              oval(17, -18, 6, 12, hair);
             }
             const eyes = side ? [10] : [-7, 7];
             for (const ex of eyes) {
@@ -9866,43 +9922,74 @@
           ctx.restore();
         }
         function drawIslandOverview() {
-          const x = W - 242,
-            y = H - 82,
-            w = 225,
-            h = 50;
+          const x = W - 246,
+            y = portraitTouchQuery.matches ? 138 : 14,
+            w = 232,
+            h = 104,
+            mapX = x + 10,
+            mapY = y + 28,
+            mapW = w - 20,
+            mapH = 64,
+            worldW = 10333.333333,
+            worldH = 3400,
+            mapPoint = (wx, wy) => ({
+              x: mapX + ((wx + 2500) / worldW) * mapW,
+              y: mapY + (wy / worldH) * mapH,
+            });
           ctx.save();
-          ctx.fillStyle = "#f7f5e9e8";
-          roundRect(ctx, x - 7, y - 18, w + 14, h + 28, 10);
+          ctx.fillStyle = "#fffdf4f2";
+          roundRect(ctx, x, y, w, h, 12);
           ctx.fill();
-          ctx.fillStyle = "#bec8bb";
-          ctx.fillRect(x, y, w, h);
+          ctx.strokeStyle = "#476a5540";
+          ctx.lineWidth = 1;
+          roundRect(ctx, x, y, w, h, 12);
+          ctx.stroke();
+          ctx.fillStyle = "#dce9d8";
+          roundRect(ctx, mapX, mapY, mapW, mapH, 7);
+          ctx.fill();
+          ctx.save();
+          ctx.beginPath();
+          roundRect(ctx, mapX, mapY, mapW, mapH, 7);
+          ctx.clip();
+          // Island road and parks provide recognizable landmarks at a glance.
+          ctx.fillStyle = "#82948a";
+          ctx.fillRect(mapX, mapY + mapH * 0.47, mapW, mapH * 0.18);
           for (const park of PARKS) {
             ctx.fillStyle = "#5e9569";
-            ctx.fillRect(
-              x + ((park.x + 2500) / 10333.333333) * w,
-              y + (park.y / 3400) * h,
-              (park.w / 10333.333333) * w,
-              (park.h / 3400) * h,
-            );
+            const p = mapPoint(park.x, park.y);
+            ctx.fillRect(p.x, p.y, (park.w / worldW) * mapW, (park.h / worldH) * mapH);
           }
           for (const a of shopSpots) {
+            const p = mapPoint(a.x + (a.w || 0) / 2, a.y + (a.h || 0) / 2);
             ctx.fillStyle = "#a88061";
-            ctx.fillRect(x + ((a.x + 2500) / 10333.333333) * w, y + (a.y / 3400) * h, 3, 3);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 1.7, 0, Math.PI * 2);
+            ctx.fill();
           }
+          const viewW = Math.max(4, (W / VIEW_K / worldW) * mapW),
+            viewH = Math.max(5, (H / VIEW_K / worldH) * mapH),
+            viewCenter = mapPoint(camera.x, camera.y);
+          ctx.strokeStyle = "#fffdf0";
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(viewCenter.x - viewW / 2, viewCenter.y - viewH / 2, viewW, viewH);
+          ctx.restore();
+          ctx.fillStyle = "#385b49";
+          ctx.font = "700 10px sans-serif";
+          ctx.textAlign = "left";
+          ctx.fillText("我的位置", x + 10, y + 17);
+          const area = player.x < -100 ? "森光公園" : player.x > 5300 ? "海風公園" : "島嶼商圈";
+          ctx.textAlign = "right";
+          ctx.fillStyle = "#718278";
+          ctx.font = "600 9px sans-serif";
+          ctx.fillText(area, x + w - 10, y + 17);
+          const marker = mapPoint(player.x, player.y);
           ctx.fillStyle = "#e56c50";
           ctx.beginPath();
-          ctx.arc(
-            x + ((player.x + 2500) / 10333.333333) * w,
-            y + (player.y / 3400) * h,
-            4,
-            0,
-            Math.PI * 2,
-          );
+          ctx.arc(marker.x, marker.y, 4, 0, Math.PI * 2);
           ctx.fill();
-          ctx.fillStyle = "#375747";
-          ctx.font = "10px sans-serif";
-          ctx.textAlign = "left";
-          ctx.fillText("西公園　　橫向無人島商圈　　東公園", x, y - 6);
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
           ctx.restore();
         }
         for (const park of PARKS) {
