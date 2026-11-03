@@ -299,6 +299,7 @@
       }
       .enter-hint {
         position: absolute;
+        z-index: 12;
         top: 12px;
         left: 50%;
         transform: translateX(-50%);
@@ -356,6 +357,23 @@
         text-align: left;
         transition: 0.15s;
       }
+      .shop-row-wrap {
+        display: grid;
+        min-width: 0;
+        gap: 5px;
+      }
+      .shop-enter-btn {
+        width: 100%;
+        padding: 7px 9px;
+        border: 1px solid #cfe0d2;
+        border-radius: 9px;
+        background: #edf6ee;
+        color: #356d54;
+        font-size: 10px;
+        font-weight: 800;
+        text-align: center;
+      }
+      .shop-enter-btn:hover { background: #dcefe0; }
       .shop-row:hover,
       .shop-row.selected {
         border-color: #8db89b;
@@ -1260,7 +1278,7 @@
       @media (min-width:761px) and (pointer:fine) { .touch-action { display:none; } }
       @media (min-width:761px) and (pointer:fine) { .park-shortcut { display:none !important; } }
       @media (pointer:coarse) and (orientation:portrait) { .first-person-layout { grid-template-columns:minmax(0,1fr); } .first-person-card canvas { max-height:58svh; } .room-sidebar { grid-template-columns:1fr; } }
-      #mobileShopListToggle,#mobileShopListClose,#mobileRoomInfoToggle,#mobileRoomInfoClose,#mobileAnnouncementBtn { display:none; }
+      #mobileShopListToggle,#mobileShopListClose,#mobileRoomInfoToggle,#mobileRoomInfoClose,#mobileAnnouncementBtn,#mobileAvatarBtn { display:none; }
       @media (pointer:coarse), (max-width:760px) {
         .touch-joystick-base { opacity:.42; }
         .touch-joystick-zone.active .touch-joystick-base { opacity:.9; }
@@ -1280,11 +1298,15 @@
         #streetView .map-toolbar { position:absolute; z-index:8; top:calc(54px + env(safe-area-inset-top)); left:0; right:0; height:42px; padding:0 12px; border:0; background:#f5f6efdc; backdrop-filter:blur(8px); }
         #streetView .map-toolbar strong { font-size:11px; }
         #streetView .map-toolbar span { display:none; }
+        #streetView .map-toolbar { justify-content:flex-start; gap:6px; }
+        #streetView .map-toolbar strong { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         #mobileShopListToggle { display:inline-flex; align-items:center; justify-content:center; min-height:32px; padding:5px 10px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#386c57; font-size:12px; font-weight:700; white-space:nowrap; }
         #mobileAnnouncementBtn { display:inline-flex; align-items:center; justify-content:center; min-height:32px; padding:5px 10px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#386c57; font-size:12px; font-weight:700; white-space:nowrap; }
+        #mobileAvatarBtn { display:inline-flex; align-items:center; justify-content:center; min-height:32px; padding:5px 8px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#386c57; font-size:12px; font-weight:700; white-space:nowrap; }
         #streetView .map-wrap { position:absolute; inset:0; width:100%; height:100dvh; overflow:hidden; }
         #streetView #town { width:100%; height:100%; aspect-ratio:auto; object-fit:cover; object-position:center; }
         #streetView .map-compass { top:calc(106px + env(safe-area-inset-top)); left:12px; }
+        #streetView .enter-hint { position:fixed; top:calc(150px + env(safe-area-inset-top)); left:50%; max-width:calc(100vw - 24px); white-space:normal; text-align:center; }
         #streetView .map-instructions,#streetView .map-footer { display:none !important; }
         #streetView .side-card { display:none; }
         #streetView.mobile-shop-list-open .side-card { display:block; position:fixed; z-index:90; top:calc(54px + env(safe-area-inset-top)); right:0; bottom:0; width:min(90vw,420px); max-height:none; height:calc(100dvh - 54px - env(safe-area-inset-top)); overflow:auto; border-radius:18px 0 0 18px; box-shadow:-10px 0 35px #152c2340; padding-bottom:env(safe-area-inset-bottom); }
@@ -2056,6 +2078,7 @@
     </style>
     <style>
       .shop-drop {
+        grid-column: 1 / -1;
         padding: 12px;
         margin: 0 0 9px;
         border-radius: 0 0 12px 12px;
@@ -2307,7 +2330,7 @@
           <section class="map-card">
             <div class="map-toolbar">
               <strong>☀　無人島商圈　·　俯視街景</strong
-              ><span>海島商圈 · 公園與海岸　·　接近正面入口按 E</span><button id="mobileAnnouncementBtn" type="button">平台公告</button><button id="mobileShopListToggle" type="button">店鋪列表</button>
+              ><span>海島商圈 · 公園與海岸　·　接近正面入口按 E</span><button id="mobileAvatarBtn" type="button" aria-label="角色造型">🧑‍🎨</button><button id="mobileAnnouncementBtn" type="button">公告</button><button id="mobileShopListToggle" type="button">店鋪</button>
             </div>
             <div class="map-wrap">
               <div class="map-compass">無人島 · V12</div>
@@ -2923,6 +2946,7 @@
         const MAP_EXPAND = 2,
           VIEW_SCALE = 0.72,
           VIEW_K = VIEW_SCALE;
+        const portraitTouchQuery = window.matchMedia("(pointer:coarse) and (orientation:portrait)");
         try {
           channel = new BroadcastChannel(CHANNEL_KEY);
         } catch (e) {
@@ -3387,12 +3411,15 @@
             )
             .map((s) => {
               const status = availableShop(s) ? "可租用" : isMyShop(s) ? "我的店" : "已出租";
-              return `<button class="shop-row ${s.id === guideShopId ? "selected" : ""}" data-shop="${esc(s.id)}" aria-expanded="${s.id === guideShopId}"><span class="shop-icon" style="background:${esc(s.color)}55">${esc(s.emoji)}</span><span><b>${esc(s.name)}</b><small>${esc(s.owner || "等待新店主")} · ${typeLabel(shopType(s))}</small></span><span class="shop-status-label">${status}</span></button>${guideShopId === s.id ? `<div class="shop-drop"><p>已標示「${esc(s.name)}」的位置</p><button class="primary-btn" data-go="${esc(s.id)}">前往這間店 →</button><button class="outline-btn" data-clear-guide>收起並清除指引</button>${isMyShop(s) ? `<button class="outline-btn" data-end-lease="${esc(s.id)}">退租並恢復空店</button>` : ""}</div>` : ""}`;
+              return `<div class="shop-row-wrap"><button class="shop-row ${s.id === guideShopId ? "selected" : ""}" data-shop="${esc(s.id)}" aria-expanded="${s.id === guideShopId}"><span class="shop-icon" style="background:${esc(s.color)}55">${esc(s.emoji)}</span><span><b>${esc(s.name)}</b><small>${esc(s.owner || "等待新店主")} · ${typeLabel(shopType(s))}</small></span><span class="shop-status-label">${status}</span></button>${availableShop(s) ? "" : `<button class="shop-enter-btn" type="button" data-enter-shop="${esc(s.id)}">↗　快速入店</button>`}</div>${guideShopId === s.id ? `<div class="shop-drop"><p>已標示「${esc(s.name)}」的位置</p><button class="primary-btn" data-go="${esc(s.id)}">前往這間店 →</button><button class="outline-btn" data-clear-guide>收起並清除指引</button>${isMyShop(s) ? `<button class="outline-btn" data-end-lease="${esc(s.id)}">退租並恢復空店</button>` : ""}</div>` : ""}`;
             })
             .join("");
           list
             .querySelectorAll("[data-shop]")
             .forEach((b) => (b.onclick = () => setTargetShop(b.dataset.shop)));
+          list.querySelectorAll("[data-enter-shop]").forEach(
+            (b) => (b.onclick = () => quickEnterShop(b.dataset.enterShop)),
+          );
           list.querySelectorAll("[data-go]").forEach(
             (b) =>
               (b.onclick = () => {
@@ -3415,6 +3442,19 @@
           );
           $("#shopTotal").textContent =
             `我租 ${leaseCount()}/2 · 可租 ${shops.filter(availableShop).length}`;
+        }
+
+        function quickEnterShop(id) {
+          expireLeases();
+          const shop = getShop(id);
+          if (!shop || shop.destroyed) return;
+          if (availableShop(shop)) {
+            toast("這間店目前是空店，請先租用才能進入展廳。");
+            setTargetShop(id);
+            return;
+          }
+          $("#streetView").classList.remove("mobile-shop-list-open");
+          openShop(id);
         }
 
         function renderSelectedBox() {
@@ -4186,11 +4226,11 @@
           drawRoomFurniture(shop);
           drawRoomGuests();
           rctx.fillStyle = "#ffffffdf";
-          rctx.fillRect(16, 90, 550, 32);
+          rctx.fillRect(16, 145, 550, 32);
           rctx.fillStyle = "#304d43";
           rctx.font = "14px sans-serif";
           rctx.textAlign = "left";
-          rctx.fillText("WASD 移動 · 滑鼠拖曳環視 · 靠近作品，以準心對準後按 E", 28, 111);
+          rctx.fillText("WASD 移動 · 滑鼠拖曳環視 · 靠近作品，以準心對準後按 E", 28, 166);
           roomCanvas.dataset.renderMs = String(Date.now() - renderStart);
         }
 
@@ -4351,7 +4391,8 @@
           player.x = Math.max(-2420, Math.min(7753.333333, player.x));
           player.y = Math.max(160, Math.min(3310, player.y));
           camera.x += (player.x - camera.x) * Math.min(1, dt * 5);
-          camera.y += (player.y - camera.y) * Math.min(1, dt * 5);
+          const cameraTargetY = player.y - (portraitTouchQuery.matches ? 120 : 0);
+          camera.y += (cameraTargetY - camera.y) * Math.min(1, dt * 5);
           npcs.forEach((n) => {
             // Recover NPCs that spawned inside a building or were blocked by a moved shop.
             if (blockedByBuilding(n.x, n.y)) {
@@ -5320,6 +5361,7 @@
         $("#viewOrdersBtn").addEventListener("click", openOrders);
         $("#viewDmInboxBtn").addEventListener("click", openDmInbox);
         $("#avatarBtn").addEventListener("click", renderAvatarModal);
+        $("#mobileAvatarBtn").addEventListener("click", renderAvatarModal);
         $("#accountButton").addEventListener("click", openAccountModal);
         $("#logoutButton").addEventListener("click", logoutAccount);
         $("#roomAccountButton").addEventListener("click", openAccountModal);
@@ -6114,6 +6156,55 @@
               "#e1c8a4",
             );
           }
+          // A small three-dimensional radio sits on the right side of the counter.
+          const radio = { x: 548, y: 638, z: (85 * 2) / 3, w: 62, d: 30, h: 38 };
+          add(
+            [
+              [radio.x, radio.y, radio.z + radio.h],
+              [radio.x + radio.w, radio.y, radio.z + radio.h],
+              [radio.x + radio.w, radio.y + radio.d, radio.z + radio.h],
+              [radio.x, radio.y + radio.d, radio.z + radio.h],
+            ],
+            "#77877a",
+          );
+          add(
+            [
+              [radio.x, radio.y, radio.z],
+              [radio.x, radio.y + radio.d, radio.z],
+              [radio.x, radio.y + radio.d, radio.z + radio.h],
+              [radio.x, radio.y, radio.z + radio.h],
+            ],
+            "#273b35",
+          );
+          add(
+            [
+              [radio.x + radio.w, radio.y + radio.d, radio.z],
+              [radio.x + radio.w, radio.y, radio.z],
+              [radio.x + radio.w, radio.y, radio.z + radio.h],
+              [radio.x + radio.w, radio.y + radio.d, radio.z + radio.h],
+            ],
+            "#42584c",
+          );
+          add(
+            [
+              [radio.x, radio.y + radio.d, radio.z],
+              [radio.x + radio.w, radio.y + radio.d, radio.z],
+              [radio.x + radio.w, radio.y + radio.d, radio.z + radio.h],
+              [radio.x, radio.y + radio.d, radio.z + radio.h],
+            ],
+            null,
+            radioFaceTexture(),
+          );
+          // Short aerial on the top rear edge gives the radio a clear tabletop silhouette.
+          add(
+            [
+              [radio.x + 10, radio.y + 5, radio.z + radio.h],
+              [radio.x + 14, radio.y + 5, radio.z + radio.h],
+              [radio.x + 14, radio.y + 5, radio.z + radio.h + 26],
+              [radio.x + 10, radio.y + 5, radio.z + radio.h + 26],
+            ],
+            "#d1c49a",
+          );
           const board = designedBoardTexture(shop);
           add(
             [
@@ -6261,6 +6352,61 @@
             { x: 595, y: 675, w: 45, h: 175 },
             { x: 415, y: 805, w: 180, h: 45 },
           ];
+        }
+        function radioFaceTexture() {
+          if (radioFaceTexture.canvas) return radioFaceTexture.canvas;
+          const canvas = document.createElement("canvas");
+          canvas.width = 512;
+          canvas.height = 300;
+          const c = canvas.getContext("2d");
+          const shell = c.createLinearGradient(0, 0, 0, 300);
+          shell.addColorStop(0, "#60766a");
+          shell.addColorStop(1, "#263c35");
+          c.fillStyle = shell;
+          c.fillRect(0, 0, 512, 300);
+          c.fillStyle = "#d8c49a";
+          c.fillRect(18, 18, 476, 264);
+          c.fillStyle = "#40584e";
+          c.fillRect(30, 30, 452, 240);
+          c.fillStyle = "#192e2a";
+          c.beginPath();
+          c.roundRect(48, 48, 214, 204, 18);
+          c.fill();
+          c.strokeStyle = "#a7b5a2";
+          c.lineWidth = 3;
+          for (let x = 64; x < 248; x += 14) {
+            c.beginPath();
+            c.moveTo(x, 61);
+            c.lineTo(x, 238);
+            c.stroke();
+          }
+          c.fillStyle = "#e8d7a8";
+          c.fillRect(288, 55, 169, 48);
+          c.fillStyle = "#6a5540";
+          c.font = "bold 27px sans-serif";
+          c.textAlign = "center";
+          c.fillText("RADIO", 372, 87);
+          c.strokeStyle = "#d2bd8e";
+          c.lineWidth = 5;
+          c.beginPath();
+          c.moveTo(310, 133);
+          c.lineTo(439, 133);
+          c.stroke();
+          c.fillStyle = "#e8d7a8";
+          c.font = "16px sans-serif";
+          c.fillText("FM  ·  88     96     104", 375, 160);
+          for (const x of [326, 378, 430]) {
+            c.fillStyle = "#d5c39d";
+            c.beginPath();
+            c.arc(x, 216, 19, 0, Math.PI * 2);
+            c.fill();
+            c.fillStyle = "#6a7469";
+            c.beginPath();
+            c.arc(x, 216, 7, 0, Math.PI * 2);
+            c.fill();
+          }
+          radioFaceTexture.canvas = canvas;
+          return canvas;
         }
         function panelTexture(text, color) {
           const key = text + "|" + color;
