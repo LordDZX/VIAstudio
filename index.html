@@ -7997,6 +7997,17 @@
           );
         }
         let musicAutoplayNoticeKey = "";
+        function updateShopMusicControls(shop = getShop(activeShopId)) {
+          const hasTrack = !!(shop && playlistTracks(shop).length);
+          const playing = !!(musicPlayer && !musicPlayer.paused && musicPlayer.src);
+          const label = playing ? "⏸ 暫停音樂" : "▶ 播放音樂";
+          for (const button of [$("#musicPlayBtn"), $("#roomMusicPlayTop")]) {
+            if (!button) continue;
+            button.textContent = label;
+            button.classList.toggle("hidden", !hasTrack);
+          }
+          if (!hasTrack && $("#musicTrackName")) $("#musicTrackName").textContent = "這間店沒有音樂";
+        }
         async function toggleShopMusicFromGesture() {
           const shop = getShop(activeShopId);
           if (!shop) {
@@ -8015,20 +8026,31 @@
               shop.music = data.payload.music;
               track = playlistTracks(shop)[0];
               renderShowroom();
-              toast("已更新店內音樂資料，請再按一次「播放音樂」。");
-              return;
+              if (!track) {
+                if ($("#musicTrackName")) $("#musicTrackName").textContent = "這間店沒有音樂";
+                toast("這間店沒有音樂。");
+                return;
+              }
             }
           }
           if (!track) {
-            toast("雲端也沒有這間店的音樂設定。請店主重新上傳，並等候上傳成功提示。");
+            updateShopMusicControls(shop);
+            toast("這間店沒有音樂。");
             return;
           }
           const key = track.mediaKey || track.mediaURL || "";
+          if (musicPlayer && musicKey === key && musicPlayer.src && !musicPlayer.paused) {
+            musicPlayer.pause();
+            updateShopMusicControls(shop);
+            return;
+          }
           musicVideoPaused = false;
           if (musicPlayer && musicKey === key && musicPlayer.src && musicPlayer.paused) {
             musicPlayer.play().then(() => {
               musicAutoplayNoticeKey = "";
+              updateShopMusicControls(shop);
             }).catch(() => {
+              updateShopMusicControls(shop);
               toast("無法播放這個音檔，請確認音量，或重新上傳 MP3／AAC。");
             });
             return;
@@ -8037,7 +8059,9 @@
           if (!musicPlayer) return;
           musicPlayer.play().then(() => {
             musicAutoplayNoticeKey = "";
+            updateShopMusicControls(shop);
           }).catch(() => {
+            updateShopMusicControls(shop);
             toast("瀏覽器仍封鎖音樂播放；請確認音量不是 0，或重新上傳 MP3／AAC。");
           });
         }
@@ -8127,6 +8151,7 @@
           hydrateMusicDurations(shop);
           if (!tracks.length) {
             stopShopMusic();
+            updateShopMusicControls(shop);
             return;
           }
           if (!shop.music.startedAt) {
@@ -8196,6 +8221,8 @@
             else audio.pause();
           };
           audio.loop = true;
+          audio.onplay = () => updateShopMusicControls(shop);
+          audio.onpause = () => updateShopMusicControls(shop);
           applyMusicGain();
           audio.onloadedmetadata = () => {
             if (Number.isFinite(audio.duration) && audio.duration > 0 && !track.duration) {
