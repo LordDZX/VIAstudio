@@ -2458,6 +2458,7 @@
     </section>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js"></script>
     <script>
       (() => {
         const W = 1100,
@@ -4640,6 +4641,45 @@
             cacheControl: "86400",
           });
           if(error) throw error;
+          return supabase.storage.from("market-media").getPublicUrl(path).data.publicUrl;
+        }
+        function audioContentType(file) {
+          if (file?.type?.startsWith("audio/")) return file.type;
+          const ext = String(file?.name || "").split(".").pop().toLowerCase();
+          return { mp3: "audio/mpeg", m4a: "audio/mp4", mp4: "audio/mp4", aac: "audio/aac", ogg: "audio/ogg", wav: "audio/wav", webm: "audio/webm" }[ext] || "";
+        }
+        async function uploadCloudMusicResumable(file, path, onProgress = () => {}) {
+          if (!window.tus?.Upload) throw Error("分段上傳元件載入失敗，請確認網路後重新整理頁面。");
+          const { data, error } = await supabase.auth.getSession();
+          const accessToken = data?.session?.access_token;
+          if (error || !accessToken) throw Error("登入狀態已失效，請重新登入後再上傳音樂。");
+          const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0];
+          const endpoint = `https://${projectRef}.storage.supabase.co/storage/v1/upload/resumable`;
+          const contentType = audioContentType(file);
+          if (!contentType) throw Error("無法辨識音樂格式，請選擇 MP3、M4A、AAC、OGG、WAV 或 WebM 音檔。");
+          await new Promise((resolve, reject) => {
+            const upload = new window.tus.Upload(file, {
+              endpoint,
+              retryDelays: [0, 1500, 3000, 5000, 10000, 20000],
+              headers: {
+                authorization: `Bearer ${accessToken}`,
+                apikey: SUPABASE_ANON_KEY,
+              },
+              uploadDataDuringCreation: true,
+              removeFingerprintOnSuccess: true,
+              chunkSize: 6 * 1024 * 1024,
+              metadata: {
+                bucketName: "market-media",
+                objectName: path,
+                contentType,
+                cacheControl: "86400",
+              },
+              onError: reject,
+              onProgress: (uploaded, total) => onProgress(total ? Math.min(100, Math.floor((uploaded / total) * 100)) : 0),
+              onSuccess: resolve,
+            });
+            upload.start();
+          });
           return supabase.storage.from("market-media").getPublicUrl(path).data.publicUrl;
         }
         async function deleteCloudMediaKeys(keys, ownerId) {
@@ -7893,9 +7933,28 @@
         let musicAutoplayNoticeKey = "";
         async function toggleShopMusicFromGesture() {
           const shop = getShop(activeShopId);
-          const track = playlistTracks(shop)[0];
-          if (!shop || !track) {
-            toast("這間店尚未設定音樂。");
+          if (!shop) {
+            toast("找不到目前的店面資料，請離開後重新進店。");
+            return;
+          }
+          let track = playlistTracks(shop)[0];
+          if (!track && supabase) {
+            const { data, error } = await supabase.from("market_shops").select("payload").eq("id", shop.id).maybeSingle();
+            if (error) {
+              console.error("店內音樂雲端讀取失敗", error);
+              toast("目前無法讀取雲端音樂設定，請確認網路後再試。");
+              return;
+            }
+            if (data?.payload?.music) {
+              shop.music = data.payload.music;
+              track = playlistTracks(shop)[0];
+              renderShowroom();
+              toast("已更新店內音樂資料，請再按一次「播放音樂」。");
+              return;
+            }
+          }
+          if (!track) {
+            toast("雲端也沒有這間店的音樂設定。請店主重新上傳，並等候上傳成功提示。");
             return;
           }
           const key = track.mediaKey || track.mediaURL || "";
@@ -8122,14 +8181,21 @@
           const shop = getShop(activeShopId), file = e.target.files?.[0];
           if (!file || !canEditShop(shop)) return;
           let uploadedKey = "", previousMusic = null, changedMusic = false;
+          const uploadButton = $("#musicUploadBtn"), originalUploadLabel = uploadButton?.textContent || "設定／更換單曲";
           try {
             if (!supabase || !accountId) throw Error("請先登入並連線 Supabase，才能讓其他訪客聽到店內音樂。");
-            if (!file.type.startsWith("audio/")) throw Error("只接受音樂檔案。");
+            const mediaType = audioContentType(file);
+            if (!mediaType) throw Error("只接受 MP3、M4A、AAC、OGG、WAV 或 WebM 音樂檔案。");
             if (file.size > 10 * 1024 * 1024) throw Error("單曲最多 10 MB，請先轉成較精簡的 MP3 或 AAC。");
             if (!window.confirm("上傳後，這首音樂會在店內提供訪客播放。請確認你有權公開播放這個音檔。")) return;
-            const duration = await inspectAudioDuration(file);
+            if (uploadButton) { uploadButton.disabled = true; uploadButton.textContent = "準備上傳…"; }
+            if ($("#musicTrackName")) $("#musicTrackName").textContent = "正在檢查音樂檔…";
+            const duration = await inspectAudioDuration(file).catch(() => 0);
             const key = shop.id + "-music-" + randomId();
-            const publicURL = await uploadCloudMedia(file, `${accountId}/${key}`);
+            const publicURL = await uploadCloudMusicResumable(file, `${accountId}/${key}`, (percent) => {
+              if (uploadButton) uploadButton.textContent = `上傳中 ${percent}%`;
+              if ($("#musicTrackName")) $("#musicTrackName").textContent = `音樂上傳中 ${percent}% · 請保持此頁開啟`;
+            });
             uploadedKey = key;
             if (!canEditShop(shop)) throw Error("店主權限已失效。");
             const previous = allShopMusicTracks(shop);
@@ -8140,7 +8206,7 @@
             shop.music = {
               mediaKey: key,
               publicURL,
-              mediaType: file.type,
+              mediaType,
               name: file.name,
               duration,
               mode: "single",
@@ -8158,6 +8224,14 @@
               expire_at: shop.lease?.expires ? new Date(shop.lease.expires).toISOString() : null,
             }, { onConflict: "id" });
             if (musicSaveError) throw Error(`音樂檔已上傳，但店面音樂設定未能同步到雲端：${musicSaveError.message}`);
+            const { data: savedMusicRow, error: musicVerifyError } = await supabase
+              .from("market_shops")
+              .select("payload")
+              .eq("id", shop.id)
+              .maybeSingle();
+            if (musicVerifyError) throw Error(`音樂已上傳，但無法確認店面設定：${musicVerifyError.message}`);
+            if (savedMusicRow?.payload?.music?.mediaKey !== key || !savedMusicRow?.payload?.music?.publicURL)
+              throw Error("音樂檔已上傳，但雲端店面資料沒有保存音樂設定。請重新上傳；若持續發生，請檢查 Supabase 店面資料表權限。");
             stopShopMusic();
             musicAutoplayNoticeKey = key;
             if ($("#musicTrackName")) $("#musicTrackName").textContent = "已上傳 · 若未自動播放，請按「播放音樂」";
@@ -8172,8 +8246,9 @@
               save();
             }
             if (uploadedKey) await deleteCloudMediaKeys([uploadedKey], accountId);
-            toast(err.message || "音樂上傳失敗。");
+            toast(`音樂上傳失敗：${err.message || "未知錯誤"}。請保持頁面開啟、改用穩定 Wi-Fi 後重試。`);
           } finally {
+            if (uploadButton) { uploadButton.disabled = false; uploadButton.textContent = originalUploadLabel; }
             e.target.value = "";
           }
         }
