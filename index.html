@@ -1257,6 +1257,53 @@
       @media (pointer:coarse), (max-width:760px) { .touch-joystick-zone { display:block; } .touch-action { display:block; } .touch-view { display:flex; } }
       @media (min-width:761px) and (pointer:fine) { .touch-action,.touch-view { display:none; } }
       @media (pointer:coarse) and (orientation:portrait) { .first-person-layout { grid-template-columns:minmax(0,1fr); } .first-person-card canvas { max-height:58svh; } .room-sidebar { grid-template-columns:1fr; } }
+      #mobileShopListToggle,#mobileShopListClose,#mobileRoomInfoToggle,#mobileRoomInfoClose { display:none; }
+      @media (pointer:coarse), (max-width:760px) {
+        #buildVersion { display:none !important; }
+        #streetView .shell { max-width:none; width:100%; height:100dvh; min-height:100dvh; padding:0; margin:0; }
+        #streetView .topbar { position:fixed; z-index:82; top:0; left:0; right:0; height:calc(54px + env(safe-area-inset-top)); min-height:0; padding:env(safe-area-inset-top) 12px 0; border:0; background:#f5f6eff2; backdrop-filter:blur(10px); }
+        #streetView .brand { min-width:0; gap:8px; }
+        #streetView .brandmark { width:34px; height:34px; border-radius:12px; font-size:17px; }
+        #streetView .brand strong { font-size:13px; }
+        #streetView .brand small,#streetView .nav,#streetView .name-field,#streetView #avatarBtn { display:none !important; }
+        #streetView .topright { gap:6px; }
+        #streetView .auth-actions { display:flex; }
+        #streetView .auth-button { padding:7px 10px; font-size:12px; }
+        #streetView .heading { display:none !important; }
+        #streetView .map-layout { position:fixed; z-index:20; inset:0; display:block; width:100%; height:100dvh; margin:0; padding:0; }
+        #streetView .map-card { position:fixed; inset:0; width:100%; height:100dvh; min-height:100dvh; border:0; border-radius:0; box-shadow:none; }
+        #streetView .map-toolbar { position:absolute; z-index:8; top:calc(54px + env(safe-area-inset-top)); left:0; right:0; height:42px; padding:0 12px; border:0; background:#f5f6efdc; backdrop-filter:blur(8px); }
+        #streetView .map-toolbar strong { font-size:11px; }
+        #streetView .map-toolbar span { display:none; }
+        #mobileShopListToggle { display:inline-flex; align-items:center; justify-content:center; min-height:32px; padding:5px 10px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#386c57; font-size:12px; font-weight:700; white-space:nowrap; }
+        #streetView .map-wrap { position:absolute; inset:0; width:100%; height:100dvh; overflow:hidden; }
+        #streetView #town { width:100%; height:100%; aspect-ratio:auto; object-fit:cover; object-position:center; }
+        #streetView .map-compass { top:calc(106px + env(safe-area-inset-top)); left:12px; }
+        #streetView .map-instructions,#streetView .map-footer { display:none !important; }
+        #streetView .side-card { display:none; }
+        #streetView.mobile-shop-list-open .side-card { display:block; position:fixed; z-index:90; top:calc(54px + env(safe-area-inset-top)); right:0; bottom:0; width:min(90vw,420px); max-height:none; height:calc(100dvh - 54px - env(safe-area-inset-top)); overflow:auto; border-radius:18px 0 0 18px; box-shadow:-10px 0 35px #152c2340; padding-bottom:env(safe-area-inset-bottom); }
+        #mobileShopListClose { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border:1px solid #d8e2d7; border-radius:50%; background:#fff; color:#466d58; font-size:20px; }
+        #streetView .chat-dock { z-index:84; right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); }
+        #streetView ~ #toast { z-index:112; }
+        #streetView ~ .modal-backdrop { z-index:110; }
+        #showroomView { position:fixed; z-index:60; inset:0; width:100%; max-width:none; height:100dvh; margin:0; padding:0; overflow:hidden; background:#e7eee8; }
+        #showroomView .showroom-top { position:absolute; z-index:72; top:0; left:0; right:0; height:calc(58px + env(safe-area-inset-top)); margin:0; padding:env(safe-area-inset-top) 10px 0; gap:6px; background:#f5f6eff2; backdrop-filter:blur(10px); }
+        #showroomView .showroom-title { min-width:0; margin:0; }
+        #showroomView .showroom-title small { display:none; }
+        #showroomView .showroom-title h1 { margin:0; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .showroom-top .back-btn,.showroom-top .owner-btn { padding:7px 9px; font-size:11px; white-space:nowrap; }
+        .showroom-auth { display:flex !important; gap:4px; }
+        .showroom-auth .auth-status { display:none !important; }
+        .showroom-auth .auth-button { padding:7px 8px; font-size:10px; }
+        #mobileRoomInfoToggle { display:inline-flex; align-items:center; justify-content:center; padding:7px 9px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#466d58; font-size:11px; font-weight:700; white-space:nowrap; }
+        #showroomView .first-person-layout { position:absolute; inset:0; display:block; margin:0; padding:0; }
+        #showroomView .first-person-card { position:absolute; inset:0; min-height:0; border:0; border-radius:0; }
+        #showroomView #interiorScene { width:100%; height:100%; min-height:0 !important; max-height:none !important; aspect-ratio:auto; object-fit:cover; object-position:center; }
+        .room-sidebar { display:none !important; }
+        .mobile-room-sidebar-open .room-sidebar { display:flex !important; position:fixed; z-index:80; top:calc(58px + env(safe-area-inset-top)); right:0; bottom:0; width:min(90vw,420px); max-height:none; overflow:auto; padding:14px; border-radius:18px 0 0 0; background:#fff; box-shadow:-10px 0 35px #152c2340; }
+        #mobileRoomInfoClose { display:block; align-self:flex-end; width:100%; padding:8px; border:1px solid #d8e2d7; border-radius:10px; background:#fff; color:#466d58; }
+        .music-control { position:relative; z-index:76; margin:0; }
+      }
       .first-person-card canvas {
         display: block;
         width: 100%;
@@ -2248,7 +2295,7 @@
           <section class="map-card">
             <div class="map-toolbar">
               <strong>☀　無人島商圈　·　俯視街景</strong
-              ><span>海島商圈 · 公園與海岸　·　接近正面入口按 E</span>
+              ><span>海島商圈 · 公園與海岸　·　接近正面入口按 E</span><button id="mobileShopListToggle" type="button">店鋪列表</button>
             </div>
             <div class="map-wrap">
               <div class="map-compass">無人島 · V12</div>
@@ -2276,7 +2323,7 @@
           </section>
           <aside class="side-card">
             <div class="side-head">
-              <strong>島嶼店鋪</strong><span id="shopTotal">6 間小店</span>
+              <strong>島嶼店鋪</strong><span id="shopTotal">6 間小店</span><button id="mobileShopListClose" type="button" aria-label="關閉店鋪列表">×</button>
             </div>
             <div class="shop-list" id="shopList"></div>
             <div class="map-selected" id="selectedBox">
@@ -2309,7 +2356,7 @@
           <h1 id="showroomName">店內展廳</h1>
         </div>
         <div class="auth-actions showroom-auth"><span id="roomAuthStatus" class="auth-status">訪客模式</span><button class="auth-button" id="roomAccountButton" type="button">登入</button><button class="auth-button logout hidden" id="roomLogoutButton" type="button">登出</button></div>
-        <button id="ownerModeBtn" class="owner-btn">✦　店舖設定</button>
+        <button id="mobileRoomInfoToggle" type="button">店內資訊</button><button id="ownerModeBtn" class="owner-btn">✦　店舖設定</button>
       </div>
       <section class="first-person-layout">
         <div class="first-person-card">
@@ -2328,6 +2375,7 @@
           <button id="exitRoomBtn" class="exit-room">離開店舖</button>
         </div>
         <aside class="room-sidebar">
+          <button id="mobileRoomInfoClose" type="button">關閉店內資訊　×</button>
           <div class="owner-profile">
             <div id="ownerEmoji" class="owner-avatar">🌿</div>
             <div>
@@ -3335,6 +3383,7 @@
           list.querySelectorAll("[data-go]").forEach(
             (b) =>
               (b.onclick = () => {
+                $("#streetView").classList.remove("mobile-shop-list-open");
                 selectedShopId = b.dataset.go;
                 goSelected();
               }),
@@ -5244,6 +5293,12 @@
         };
         $("#backToStreet").addEventListener("click", leaveInterior);
         $("#exitRoomBtn").addEventListener("click", leaveInterior);
+        $("#mobileRoomInfoToggle").addEventListener("click", () =>
+          $("#showroomView").classList.add("mobile-room-sidebar-open"),
+        );
+        $("#mobileRoomInfoClose").addEventListener("click", () =>
+          $("#showroomView").classList.remove("mobile-room-sidebar-open"),
+        );
         $("#contactOwnerBtn").addEventListener("click", () => {
           const s = getShop(activeShopId);
           openInquiry(s, { title: "一般聯絡 / 合作詢問" });
@@ -5270,22 +5325,31 @@
         $("#navHelp").addEventListener("click", help);
         $("#announcementBtn").addEventListener("click", showAnnouncement);
         $("#navAnnouncement").addEventListener("click", showAnnouncement);
-        $("#navShops").addEventListener("click", () =>
-          $("#shopList").scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          }),
-        );
+        const toggleMobileShopList = (open) =>
+          $("#streetView").classList.toggle("mobile-shop-list-open", open);
+        $("#mobileShopListToggle").addEventListener("click", () => toggleMobileShopList(true));
+        $("#mobileShopListClose").addEventListener("click", () => toggleMobileShopList(false));
+        $("#navShops").addEventListener("click", () => {
+          if (matchMedia("(pointer:coarse), (max-width:760px)").matches) toggleMobileShopList(true);
+          else $("#shopList").scrollIntoView({ behavior: "smooth", block: "center" });
+        });
         $("#modalBackdrop").addEventListener("click", (e) => {
           if (e.target.id === "modalBackdrop") closeModal();
         });
         $("#modalBackdrop").addEventListener("click", (e) => {
           if (e.target.closest(".close-modal")) closeModal();
         });
+        function canvasLogicalPoint(e, target) {
+          const r = target.getBoundingClientRect();
+          const scale = Math.max(r.width / W, r.height / H);
+          const drawnWidth = W * scale, drawnHeight = H * scale;
+          return {
+            x: (e.clientX - r.left - (r.width - drawnWidth) / 2) / scale,
+            y: (e.clientY - r.top - (r.height - drawnHeight) / 2) / scale,
+          };
+        }
         function streetPointFromEvent(e) {
-          const r = canvas.getBoundingClientRect();
-          const sx = ((e.clientX - r.left) / r.width) * W;
-          const sy = ((e.clientY - r.top) / r.height) * H;
+          const { x: sx, y: sy } = canvasLogicalPoint(e, canvas);
           return {
             x: Math.max(-2420, Math.min(7753.333333, camera.x + (sx - W * 0.5) / VIEW_K)),
             y: Math.max(160, Math.min(3310, camera.y + (sy - H * 0.5) / VIEW_K)),
@@ -5348,9 +5412,7 @@
         canvas.addEventListener("lostpointercapture", stopStreetPointer);
         roomCanvas.addEventListener("pointerdown", (e) => {
           document.activeElement?.blur?.();
-          const r = roomCanvas.getBoundingClientRect(),
-            x = ((e.clientX - r.left) / r.width) * W,
-            y = ((e.clientY - r.top) / r.height) * H;
+          const { x, y } = canvasLogicalPoint(e, roomCanvas);
           const f = [...roomFrames]
             .reverse()
             .find(
@@ -8766,14 +8828,14 @@
         }
         function updatePlacementPointer(e) {
           if (!placement) return;
-          const r = canvas.getBoundingClientRect();
+          const { x, y } = canvasLogicalPoint(e, canvas);
           placement.x =
             Math.round(
-              (camera.x + (((e.clientX - r.left) / r.width) * W - W / 2) / VIEW_K - 110) / 10,
+              (camera.x + (x - W / 2) / VIEW_K - 110) / 10,
             ) * 10;
           placement.y =
             Math.round(
-              (camera.y + (((e.clientY - r.top) / r.height) * H - H / 2) / VIEW_K - 85) / 10,
+              (camera.y + (y - H / 2) / VIEW_K - 85) / 10,
             ) * 10;
         }
         function cancelPlacement() {
