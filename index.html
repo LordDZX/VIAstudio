@@ -3034,6 +3034,21 @@
             } catch {}
           }
         }
+        async function persistCloudShopRow(row) {
+          const { data: existing, error: lookupError } = await supabase
+            .from("market_shops")
+            .select("id")
+            .eq("id", row.id)
+            .maybeSingle();
+          if (lookupError) return { error: lookupError };
+          const query = existing
+            ? supabase.from("market_shops").update(row).eq("id", row.id)
+            : supabase.from("market_shops").insert(row);
+          const { data, error } = await query.select("id").maybeSingle();
+          if (error) return { error };
+          if (!data) return { error: Error(`店面 ${row.id} 沒有寫入資料庫，請確認店主權限與 SQL 設定。`) };
+          return { data, error: null };
+        }
         function save() {
           try {
             localStorage.setItem(STORE_KEY, JSON.stringify(shops));
@@ -3060,13 +3075,15 @@
                 };
               });
               if (!rows.length) return;
-              const { error } = await supabase.from("market_shops").upsert(rows, { onConflict: "id" });
-              if (error) {
+              for (const row of rows) {
+                const { error } = await persistCloudShopRow(row);
+                if (!error) continue;
                 console.error("Supabase 店面儲存失敗", error);
                 if (error.code === "23514" && /MARKET_SHOP_OVERLAP/.test(error.message || "")) {
-                  toast("這個位置剛被其他玩家選走，正在更新地圖位置。請重新確認店面位置。");
+                  toast("店面位置重疊，雲端拒絕儲存；正在更新地圖位置。");
                   await refreshCloudShops();
                 } else toast(`店面雲端儲存失敗：${error.message}`);
+                break;
               }
             }, 350);
           }
@@ -3433,12 +3450,12 @@
           supabase.channel("park-occupancy").on("postgres_changes", {event:"*",schema:"public",table:"park_sessions"}, refreshParkSessions).subscribe();
         }
         const getShop = (id) => shops.find((s) => s.id === id);
-        function toast(msg) {
+        function toast(msg, duration = 2600) {
           const el = $("#toast");
           el.textContent = msg;
           el.classList.remove("hidden");
           clearTimeout(toastTimer);
-          toastTimer = setTimeout(() => el.classList.add("hidden"), 2600);
+          toastTimer = setTimeout(() => el.classList.add("hidden"), duration);
         }
         function distanceToDoor(s) {
           if (!s || s.destroyed) return Infinity;
@@ -4667,7 +4684,6 @@
           return { mp3: "audio/mpeg", m4a: "audio/mp4", mp4: "audio/mp4", aac: "audio/aac", ogg: "audio/ogg", wav: "audio/wav", webm: "audio/webm" }[ext] || "";
         }
         async function uploadCloudMusicResumable(file, path, onProgress = () => {}) {
-          if (!window.tus?.Upload) throw Error("分段上傳元件載入失敗，請確認網路後重新整理頁面。");
           const { data, error } = await supabase.auth.getSession();
           const accessToken = data?.session?.access_token;
           if (error || !accessToken) throw Error("登入狀態已失效，請重新登入後再上傳音樂。");
@@ -4675,30 +4691,61 @@
           const endpoint = `https://${projectRef}.storage.supabase.co/storage/v1/upload/resumable`;
           const contentType = audioContentType(file);
           if (!contentType) throw Error("無法辨識音樂格式，請選擇 MP3、M4A、AAC、OGG、WAV 或 WebM 音檔。");
-          await new Promise((resolve, reject) => {
-            const upload = new window.tus.Upload(file, {
-              endpoint,
-              retryDelays: [0, 1500, 3000, 5000, 10000, 20000],
-              headers: {
-                authorization: `Bearer ${accessToken}`,
-                apikey: SUPABASE_ANON_KEY,
-              },
-              uploadDataDuringCreation: true,
-              removeFingerprintOnSuccess: true,
-              chunkSize: 6 * 1024 * 1024,
-              metadata: {
-                bucketName: "market-media",
-                objectName: path,
-                contentType,
-                cacheControl: "86400",
-              },
-              onError: reject,
-              onProgress: (uploaded, total) => onProgress(total ? Math.min(100, Math.floor((uploaded / total) * 100)) : 0),
-              onSuccess: resolve,
+          let tusError = null;
+          if (window.tus?.Upload) {
+            try {
+              await new Promise((resolve, reject) => {
+                const upload = new window.tus.Upload(file, {
+                  endpoint,
+                  retryDelays: [0, 1500, 3000, 5000, 10000, 20000],
+                  headers: {
+                    authorization: `Bearer ${accessToken}`,
+                    apikey: SUPABASE_ANON_KEY,
+                  },
+                  uploadDataDuringCreation: true,
+                  removeFingerprintOnSuccess: true,
+                  chunkSize: 6 * 1024 * 1024,
+                  metadata: {
+                    bucketName: "market-media",
+                    objectName: path,
+                    contentType,
+                    cacheControl: "86400",
+                  },
+                  onError: reject,
+                  onProgress: (uploaded, total) => onProgress(total ? Math.min(100, Math.floor((uploaded / total) * 100)) : 0),
+                  onSuccess: resolve,
+                });
+                upload.start();
+              });
+              return supabase.storage.from("market-media").getPublicUrl(path).data.publicUrl;
+            } catch (err) {
+              tusError = err;
+              onProgress(-1);
+            }
+          } else {
+            tusError = Error("分段上傳元件未載入");
+            onProgress(-1);
+          }
+          const bucket = supabase.storage.from("market-media");
+          let standardError = null;
+          for (let attempt = 0; attempt < 2; attempt++) {
+            const { error: uploadError } = await bucket.upload(path, file, {
+              upsert: false,
+              contentType,
+              cacheControl: "86400",
             });
-            upload.start();
-          });
-          return supabase.storage.from("market-media").getPublicUrl(path).data.publicUrl;
+            if (!uploadError) return bucket.getPublicUrl(path).data.publicUrl;
+            standardError = uploadError;
+            if (/already exists|duplicate/i.test(uploadError.message || "")) {
+              const publicURL = bucket.getPublicUrl(path).data.publicUrl;
+              try {
+                const exists = await fetch(publicURL, { method: "HEAD", cache: "no-store" });
+                if (exists.ok) return publicURL;
+              } catch {}
+            }
+            if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+          throw Error(`分段上傳失敗：${tusError?.message || "無法啟動"}；一般上傳重試後仍失敗：${standardError?.message || "未知錯誤"}`);
         }
         async function deleteCloudMediaKeys(keys, ownerId) {
           const paths = [...new Set(keys.filter((key) => typeof key === "string" && /^[A-Za-z0-9_-]{1,240}$/.test(key)).map((key) => ownerId + "/" + key))];
@@ -8212,8 +8259,13 @@
             const duration = await inspectAudioDuration(file).catch(() => 0);
             const key = shop.id + "-music-" + randomId();
             const publicURL = await uploadCloudMusicResumable(file, `${accountId}/${key}`, (percent) => {
-              if (uploadButton) uploadButton.textContent = `上傳中 ${percent}%`;
-              if ($("#musicTrackName")) $("#musicTrackName").textContent = `音樂上傳中 ${percent}% · 請保持此頁開啟`;
+              if (percent < 0) {
+                if (uploadButton) uploadButton.textContent = "切換備援上傳…";
+                if ($("#musicTrackName")) $("#musicTrackName").textContent = "分段上傳中斷，改用備援方式上傳…";
+              } else {
+                if (uploadButton) uploadButton.textContent = `上傳中 ${percent}%`;
+                if ($("#musicTrackName")) $("#musicTrackName").textContent = `音樂上傳中 ${percent}% · 請保持此頁開啟`;
+              }
             });
             uploadedKey = key;
             if (!canEditShop(shop)) throw Error("店主權限已失效。");
@@ -8236,12 +8288,14 @@
             changedMusic = true;
             shop.cloudOwnerId = accountId;
             save();
-            const { error: musicSaveError } = await supabase.from("market_shops").upsert({
+            clearTimeout(cloudSaveTimer);
+            cloudSaveTimer = 0;
+            const { error: musicSaveError } = await persistCloudShopRow({
               id: shop.id,
               owner_id: accountId,
               payload: shop,
               expire_at: shop.lease?.expires ? new Date(shop.lease.expires).toISOString() : null,
-            }, { onConflict: "id" });
+            });
             if (musicSaveError) throw Error(`音樂檔已上傳，但店面音樂設定未能同步到雲端：${musicSaveError.message}`);
             const { data: savedMusicRow, error: musicVerifyError } = await supabase
               .from("market_shops")
@@ -8265,7 +8319,12 @@
               save();
             }
             if (uploadedKey) await deleteCloudMediaKeys([uploadedKey], accountId);
-            toast(`音樂上傳失敗：${err.message || "未知錯誤"}。請保持頁面開啟、改用穩定 Wi-Fi 後重試。`);
+            const message = `音樂上傳失敗：${err.message || "未知錯誤"}。請保持頁面開啟、改用穩定 Wi-Fi 後重試。`;
+            if ($("#musicTrackName")) {
+              $("#musicTrackName").textContent = message;
+              $("#musicTrackName").title = message;
+            }
+            toast(message, 9000);
           } finally {
             if (uploadButton) { uploadButton.disabled = false; uploadButton.textContent = originalUploadLabel; }
             e.target.value = "";

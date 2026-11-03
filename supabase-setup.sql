@@ -111,8 +111,13 @@ begin
   return new;
 end; $$;
 drop trigger if exists market_shops_no_overlap on public.market_shops;
-create trigger market_shops_no_overlap before insert or update of payload on public.market_shops
+drop trigger if exists market_shops_no_overlap_insert on public.market_shops;
+drop trigger if exists market_shops_no_overlap_position_update on public.market_shops;
+create trigger market_shops_no_overlap_insert before insert on public.market_shops
 for each row execute function public.enforce_market_shop_non_overlap();
+create trigger market_shops_no_overlap_position_update before update of payload on public.market_shops
+for each row when ((old.payload -> 'position') is distinct from (new.payload -> 'position'))
+execute function public.enforce_market_shop_non_overlap();
 alter table public.market_shops enable row level security;
 drop policy if exists "prototype public shop read" on public.market_shops;
 drop policy if exists "prototype public shop write" on public.market_shops;

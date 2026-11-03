@@ -92,7 +92,7 @@ Prettier 僅用於開發時排版，網頁執行不需要它。
 
 ## 店面重疊與登入錯誤修復（2026-11）
 
-index.html 載入雲端店面時會為缺少座標或互相重疊的資料重新安排位置，並在本機存檔。店面放置檢查會拒絕與其他建築或店面重疊；為防止多人同時選到同一位置，請在 Supabase SQL Editor 執行 shop-layout-guard.sql。此 migration 保留店面內容、店主與租約，只補缺漏座標並新增資料庫觸發器。之後初始化新環境也可執行已含相同觸發器的 supabase-setup.sql。
+index.html 載入雲端店面時會為缺少座標或互相重疊的資料重新安排位置，並在本機存檔。店面放置檢查會拒絕與其他建築或店面重疊；為防止多人同時選到同一位置，請在 Supabase SQL Editor 執行 shop-layout-guard.sql。現有正式專案若已套用舊版重疊觸發器，還需執行 shop-overlap-trigger-fix.sql：它只在新增店面或真的變更座標時檢查重疊，允許音樂、商品、聯絡方式等其他欄位正常保存，不會更改店面資料或座標。之後初始化新環境也可執行已含修正版觸發器的 supabase-setup.sql。
 
 若登入回呼顯示 identity_already_exists，代表該 Google/Facebook 身分已屬於既有 Supabase 使用者；請使用同一供應商登入。訪客資料不會自動合併到既有帳號。登入回呼讀取失敗時，遊戲會顯示實際錯誤，不會靜默假裝登入成功。
 
