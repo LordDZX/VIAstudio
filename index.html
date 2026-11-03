@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
     <meta name="theme-color" content="#f5f6ef" />
     <title>線上無人島商圈｜線上市集</title>
     <style>
@@ -27,6 +27,7 @@
         margin: 0;
         background: var(--paper);
         min-height: 100vh;
+        min-height: 100dvh;
       }
       button,
       input,
@@ -1246,17 +1247,16 @@
         transform: translateY(-50%);
         box-shadow: 0 3px 12px #0003;
       }
-      .touch-controls { display:none; position:absolute; z-index:6; bottom:56px; left:14px; grid-template-columns:repeat(3,48px); grid-template-rows:repeat(2,48px); gap:5px; touch-action:none; }
-      .touch-controls button { border:1px solid #ffffffaa; border-radius:14px; background:#173c32cc; color:white; font-size:20px; font-weight:800; box-shadow:0 3px 10px #0003; touch-action:none; }
-      .touch-controls [data-key="w"] { grid-column:2; grid-row:1; }
-      .touch-controls [data-key="a"] { grid-column:1; grid-row:2; }
-      .touch-controls [data-key="s"] { grid-column:2; grid-row:2; }
-      .touch-controls [data-key="d"] { grid-column:3; grid-row:2; }
-      .touch-action { position:absolute; z-index:6; bottom:72px; right:18px; width:60px; height:60px; border:1px solid #fff; border-radius:50%; background:#c6754d; color:white; font-weight:800; touch-action:none; }
-      .touch-view { position:absolute; z-index:6; right:18px; bottom:142px; display:flex; gap:6px; }
+      .touch-joystick-zone { display:none; position:absolute; z-index:6; left:0; bottom:0; width:min(48vw,220px); height:min(42vw,200px); padding-left:env(safe-area-inset-left); padding-bottom:env(safe-area-inset-bottom); touch-action:none; user-select:none; -webkit-user-select:none; }
+      .touch-joystick-base { position:absolute; width:112px; height:112px; margin:-56px 0 0 -56px; border:2px solid #ffffffaa; border-radius:50%; background:#173c3270; box-shadow:0 3px 14px #0004; opacity:0; transition:opacity .12s ease; pointer-events:none; }
+      .touch-joystick-zone.active .touch-joystick-base { opacity:1; }
+      .touch-joystick-knob { position:absolute; left:50%; top:50%; width:52px; height:52px; margin:-26px 0 0 -26px; border:2px solid #fff; border-radius:50%; background:#39705dcc; box-shadow:0 3px 10px #0004; }
+      .touch-action { position:absolute; z-index:6; bottom:calc(72px + env(safe-area-inset-bottom)); right:calc(18px + env(safe-area-inset-right)); width:60px; height:60px; border:1px solid #fff; border-radius:50%; background:#c6754d; color:white; font-weight:800; touch-action:none; }
+      .touch-view { position:absolute; z-index:6; right:calc(18px + env(safe-area-inset-right)); bottom:calc(142px + env(safe-area-inset-bottom)); display:flex; gap:6px; }
       .touch-view button { width:44px; height:40px; border:1px solid #fff; border-radius:12px; background:#173c32cc; color:#fff; font-size:18px; touch-action:none; }
-      @media (pointer:coarse), (max-width:760px) { .touch-controls { display:grid; } .touch-action { display:block; } .touch-view { display:flex; } }
+      @media (pointer:coarse), (max-width:760px) { .touch-joystick-zone { display:block; } .touch-action { display:block; } .touch-view { display:flex; } }
       @media (min-width:761px) and (pointer:fine) { .touch-action,.touch-view { display:none; } }
+      @media (pointer:coarse) and (orientation:portrait) { .first-person-layout { grid-template-columns:minmax(0,1fr); } .first-person-card canvas { max-height:58svh; } .room-sidebar { grid-template-columns:1fr; } }
       .first-person-card canvas {
         display: block;
         width: 100%;
@@ -2252,9 +2252,7 @@
             </div>
             <div class="map-wrap">
               <div class="map-compass">無人島 · V12</div>
-              <div class="touch-controls" aria-label="觸控移動">
-                <button type="button" data-key="w" aria-label="向前">↑</button><button type="button" data-key="a" aria-label="向左">←</button><button type="button" data-key="s" aria-label="向後">↓</button><button type="button" data-key="d" aria-label="向右">→</button>
-              </div><button class="touch-action" type="button" data-touch-action="street" aria-label="互動">E<br>互動</button>
+              <div class="touch-joystick-zone" data-joystick="street" aria-label="拖曳移動"><div class="touch-joystick-base"><div class="touch-joystick-knob"></div></div></div><button class="touch-action" type="button" data-touch-action="street" aria-label="互動">E<br>互動</button>
               <canvas
                 id="town"
                 width="1100"
@@ -2321,9 +2319,7 @@
             height="700"
             aria-label="第一人稱室內展廳，可用鍵盤走動、滑鼠拖曳轉向並點選牆上作品"
           ></canvas>
-          <div class="touch-controls" aria-label="室內觸控移動">
-            <button type="button" data-key="w" aria-label="向前">↑</button><button type="button" data-key="a" aria-label="向左移動">←</button><button type="button" data-key="s" aria-label="向後">↓</button><button type="button" data-key="d" aria-label="向右移動">→</button>
-          </div><div class="touch-view"><button type="button" data-turn="-1" aria-label="向左轉視角">↶</button><button type="button" data-turn="1" aria-label="向右轉視角">↷</button></div><button class="touch-action" type="button" data-touch-action="room" aria-label="查看作品">E<br>查看</button>
+          <div class="touch-joystick-zone" data-joystick="room" aria-label="拖曳移動"><div class="touch-joystick-base"><div class="touch-joystick-knob"></div></div></div><div class="touch-view"><button type="button" data-turn="-1" aria-label="向左轉視角">↶</button><button type="button" data-turn="1" aria-label="向右轉視角">↷</button></div><button class="touch-action" type="button" data-touch-action="room" aria-label="查看作品">E<br>查看</button>
           <div class="interior-hud">
             <span
               ><i>W</i><i>A</i><i>S</i><i>D</i> 走動　　拖曳 / ← → 看向　　按 E 或點相框觀看</span
@@ -4745,6 +4741,7 @@
         function openShop(id, previewOnly = false) {
           const s = getShop(id);
           if (!s || s.destroyed || (!previewOnly && availableShop(s))) return;
+          stopShopMusic();
           repairFramePlacements(s);
           streetState.seated = null;
           activeShopId = id;
@@ -5184,7 +5181,7 @@
         function help() {
           showModal(
             "操作說明",
-            `<p>WASD／方向鍵移動；室內拖曳滑鼠環視四周。</p><p>搜尋或點選店名只會標示位置，按「前往這間店」才自動行走。移動鍵可取消導航。</p><p>走到店門按 E 租店或進入。室內站上作品方格按 E 觀看，站上出口方格按 E 離開。</p><p>自行車架：E 借還（每架 15／20）。騎乘速度 ×2.5；Q 隨時下車，靠近路邊單車按 E 騎回。請歸還車架。</p><p>長椅：E 坐下或起身。店主的店舖設定可修改外觀、裝潢與位置，旁邊有即時預覽。</p><p>本機原型：帳號綁定、連線與權限尚未接正式後端；跨裝置多人和交易尚未提供。</p>`,
+            `<p>電腦使用 WASD／方向鍵移動；室內可拖曳滑鼠環視。</p><p>手機／平板在左下方按住並拖曳，圓形搖桿會在操作時出現、放開後隱藏；右下方按鈕可互動，室內右側按鈕可轉動視角。畫面會跟隨裝置目前的直向或橫向方向調整。</p><p>搜尋或點選店名只會標示位置，按「前往這間店」才自動行走。移動鍵可取消導航。</p><p>走到店門按 E 租店或進入。室內站上作品方格按 E 觀看，站上出口方格按 E 離開。</p><p>自行車架：E 借還（每架 15／20）。騎乘速度 ×2.5；Q 隨時下車，靠近路邊單車按 E 騎回。請歸還車架。</p><p>長椅：E 坐下或起身。店主的店舖設定可修改外觀、裝潢與位置，旁邊有即時預覽。</p>`,
           );
         }
         function showAnnouncement() {
@@ -5404,13 +5401,53 @@
         };
         roomCanvas.addEventListener("pointerup", stopRoomLook);
         roomCanvas.addEventListener("pointercancel", stopRoomLook);
-        document.querySelectorAll?.(".touch-controls [data-key]")?.forEach((button) => {
-          const press = (e) => { e.preventDefault(); downKeys.add(button.dataset.key); button.setPointerCapture?.(e.pointerId); };
-          const release = (e) => { e.preventDefault(); downKeys.delete(button.dataset.key); };
-          button.addEventListener("pointerdown", press);
-          button.addEventListener("pointerup", release);
-          button.addEventListener("pointercancel", release);
-          button.addEventListener("lostpointercapture", release);
+        document.querySelectorAll?.("[data-joystick]")?.forEach((zone) => {
+          const base = zone.querySelector(".touch-joystick-base");
+          const knob = zone.querySelector(".touch-joystick-knob");
+          const pressed = new Set();
+          let pointerId = null, centerX = 0, centerY = 0;
+          const release = (event) => {
+            if (pointerId === null || (event?.pointerId != null && event.pointerId !== pointerId)) return;
+            pressed.forEach((key) => downKeys.delete(key));
+            pressed.clear();
+            pointerId = null;
+            zone.classList.remove("active");
+            knob.style.transform = "translate(0, 0)";
+          };
+          zone._cancelJoystick = () => release();
+          zone.addEventListener("pointerdown", (event) => {
+            if (pointerId !== null) return;
+            event.preventDefault();
+            event.stopPropagation();
+            pointerId = event.pointerId;
+            const rect = zone.getBoundingClientRect();
+            centerX = Math.max(58, Math.min(rect.width - 58, event.clientX - rect.left));
+            centerY = Math.max(58, Math.min(rect.height - 58, event.clientY - rect.top));
+            base.style.left = centerX + "px";
+            base.style.top = centerY + "px";
+            zone.classList.add("active");
+            zone.setPointerCapture?.(event.pointerId);
+          });
+          zone.addEventListener("pointermove", (event) => {
+            if (event.pointerId !== pointerId) return;
+            event.preventDefault();
+            const rect = zone.getBoundingClientRect();
+            let dx = event.clientX - rect.left - centerX;
+            let dy = event.clientY - rect.top - centerY;
+            const length = Math.hypot(dx, dy), radius = 42;
+            if (length > radius) { dx = dx / length * radius; dy = dy / length * radius; }
+            knob.style.transform = `translate(${dx}px, ${dy}px)`;
+            pressed.forEach((key) => downKeys.delete(key));
+            pressed.clear();
+            const threshold = 12;
+            if (Math.abs(dx) > threshold) pressed.add(zone.dataset.joystick === "street" ? (dx < 0 ? "arrowleft" : "arrowright") : (dx < 0 ? "a" : "d"));
+            if (Math.abs(dy) > threshold) pressed.add(zone.dataset.joystick === "street" ? (dy < 0 ? "arrowup" : "arrowdown") : (dy < 0 ? "w" : "s"));
+            pressed.forEach((key) => downKeys.add(key));
+          });
+          zone.addEventListener("pointerup", release);
+          zone.addEventListener("pointercancel", release);
+          zone.addEventListener("lostpointercapture", release);
+          zone.addEventListener("contextmenu", (event) => event.preventDefault());
         });
         document.querySelectorAll?.("[data-touch-action]")?.forEach((button) => button.addEventListener("click", () => {
           if (button.dataset.touchAction === "street") streetInteract();
@@ -5445,7 +5482,16 @@
           if (k === "enter" && placement) commitPlacement();
         });
         document.addEventListener("keyup", (e) => downKeys.delete(e.key.toLowerCase()));
-        window.addEventListener("blur", () => downKeys.clear());
+        window.addEventListener("blur", () => {
+          downKeys.clear();
+          document.querySelectorAll?.("[data-joystick]")?.forEach((zone) => zone._cancelJoystick?.());
+        });
+        window.addEventListener("orientationchange", () => {
+          downKeys.clear();
+          document.querySelectorAll?.("[data-joystick]")?.forEach((zone) => zone._cancelJoystick?.());
+          drawInterior.key = null;
+          requestAnimationFrame(() => renderShowroom());
+        });
         if (channel) {
           channel.onmessage = (e) => {
             const m = e.data;
@@ -7522,9 +7568,13 @@
         function stopShopMusic() {
           musicTicket++;
           if (musicPlayer) {
+            musicPlayer.onended = null;
+            musicPlayer.onloadedmetadata = null;
+            musicPlayer.onerror = null;
             musicPlayer.pause();
             musicPlayer.removeAttribute("src");
             musicPlayer.load();
+            try { musicPlayer.currentTime = 0; } catch {}
           }
           musicKey = "";
         }
@@ -7534,6 +7584,7 @@
             activeShopId === shop.id &&
             !roomPreviewOnly &&
             !musicVideoPaused &&
+            document.visibilityState === "visible" &&
             !$("#showroomView").classList.contains("hidden")
           );
         }
@@ -7615,7 +7666,7 @@
           }
         }
         async function loadShopMusic(shop, force = false) {
-          if ($("#showroomView").classList.contains("hidden") || activeShopId !== shop.id) {
+          if (document.visibilityState !== "visible" || $("#showroomView").classList.contains("hidden") || activeShopId !== shop.id) {
             stopShopMusic();
             return;
           }
@@ -7711,6 +7762,20 @@
             musicPlayer?.paused &&
             !$("#showroomView").classList.contains("hidden")
           )
+            loadShopMusic(shop, true);
+        });
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "hidden") {
+            stopShopMusic();
+            return;
+          }
+          const shop = getShop(activeShopId);
+          if (shop && !$("#showroomView").classList.contains("hidden")) loadShopMusic(shop, true);
+        });
+        window.addEventListener("pagehide", stopShopMusic);
+        window.addEventListener("pageshow", () => {
+          const shop = getShop(activeShopId);
+          if (document.visibilityState === "visible" && shop && !$("#showroomView").classList.contains("hidden"))
             loadShopMusic(shop, true);
         });
 
