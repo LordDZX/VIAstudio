@@ -8057,7 +8057,9 @@
               audio.currentTime = pos.offset;
             } catch {}
             if (shouldAutoPlayShopMusic(shop))
-              audio.play().catch(() => {
+              audio.play().then(() => {
+                musicAutoplayNoticeKey = "";
+              }).catch(() => {
                 if ($("#musicTrackName"))
                   $("#musicTrackName").textContent =
                     "按「播放音樂」啟用 · " + (track.name || "音樂");
@@ -8119,7 +8121,7 @@
         async function uploadShopMusic(e) {
           const shop = getShop(activeShopId), file = e.target.files?.[0];
           if (!file || !canEditShop(shop)) return;
-          let uploadedKey = "";
+          let uploadedKey = "", previousMusic = null, changedMusic = false;
           try {
             if (!supabase || !accountId) throw Error("請先登入並連線 Supabase，才能讓其他訪客聽到店內音樂。");
             if (!file.type.startsWith("audio/")) throw Error("只接受音樂檔案。");
@@ -8131,6 +8133,7 @@
             uploadedKey = key;
             if (!canEditShop(shop)) throw Error("店主權限已失效。");
             const previous = allShopMusicTracks(shop);
+            previousMusic = shop.music ? JSON.parse(JSON.stringify(shop.music)) : null;
             const storageOwnerId = accountId;
             const oldCloudKeys = previous.filter((track) => track.publicURL && track.mediaKey).map((track) => track.mediaKey);
             const oldLocalKeys = previous.filter((track) => track.mediaKey).map((track) => track.mediaKey);
@@ -8145,13 +8148,29 @@
               startedAt: Date.now(),
               pausedAt: null,
             };
+            changedMusic = true;
+            shop.cloudOwnerId = accountId;
             save();
+            const { error: musicSaveError } = await supabase.from("market_shops").upsert({
+              id: shop.id,
+              owner_id: accountId,
+              payload: shop,
+              expire_at: shop.lease?.expires ? new Date(shop.lease.expires).toISOString() : null,
+            }, { onConflict: "id" });
+            if (musicSaveError) throw Error(`音樂檔已上傳，但店面音樂設定未能同步到雲端：${musicSaveError.message}`);
             stopShopMusic();
+            musicAutoplayNoticeKey = key;
+            if ($("#musicTrackName")) $("#musicTrackName").textContent = "已上傳 · 若未自動播放，請按「播放音樂」";
             loadShopMusic(shop, true);
             oldLocalKeys.forEach(deleteMediaBlob);
             deleteCloudMusicAfterSave(shop.id, storageOwnerId, oldCloudKeys);
-            toast("單曲已上傳雲端，訪客進入店面時會自動循環播放。");
+            toast("單曲已上傳雲端。若手機沒有自動播放，請按「播放音樂」啟用聲音。");
           } catch (err) {
+            if (changedMusic && shop && canEditShop(shop)) {
+              if (previousMusic) shop.music = previousMusic;
+              else delete shop.music;
+              save();
+            }
             if (uploadedKey) await deleteCloudMediaKeys([uploadedKey], accountId);
             toast(err.message || "音樂上傳失敗。");
           } finally {
