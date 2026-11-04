@@ -3342,11 +3342,22 @@
         function openAccountModal() {
           const bound = hasBoundAccount();
           showModal(bound ? "帳號已登入" : "登入或建立帳號",
-            `<p class="about-text">${bound ? `目前登入：${esc(authUser.email || authUser.user_metadata?.full_name || "已驗證帳號")}。` : "登入後即可租店及管理自己的店面。第一次使用 Google、Facebook 或電子郵件會建立帳號；之後使用相同方式登入。訪客資料不會自動併入帳號。"}</p>${bound ? `<div class="modal-actions"><button type="button" class="outline-btn cancel-modal">關閉</button></div>` : `<div class="provider-options"><button type="button" class="outline-btn" data-auth-provider="google">使用 Google 登入／註冊</button><button type="button" class="outline-btn" data-auth-provider="facebook">使用 Facebook 登入／註冊</button></div><p id="authError" class="listing-error" role="status" aria-live="polite"></p><form id="emailAuthForm" class="listing-form"><label>電子郵件登入（選用）<input name="email" type="email" autocomplete="email" required placeholder="輸入電子郵件以接收登入連結"></label><button class="primary-btn" type="submit">寄送登入連結</button></form><p class="about-text">登入狀態會保存在這個瀏覽器。關閉頁面後再開啟通常仍會保持登入；登出、清除網站資料或改用其他裝置時，才需要重新登入。</p>`}`);
+            `<p class="about-text">${bound ? `目前登入：${esc(authUser.email || authUser.user_metadata?.full_name || "已驗證帳號")}。` : "登入後即可租店及管理自己的店面。第一次使用 Google、Facebook 或電子郵件會建立帳號；之後使用相同方式登入。訪客資料不會自動併入帳號。"}</p>${bound ? `<div class="modal-actions"><button type="button" class="outline-btn cancel-modal">關閉</button><button type="button" class="primary-btn" id="switchAccountBtn">登出並切換帳號</button></div>` : `<div class="provider-options"><button type="button" class="outline-btn" data-auth-provider="google">使用 Google 登入／註冊</button><button type="button" class="outline-btn" data-auth-provider="facebook">使用 Facebook 登入／註冊</button></div><p id="authError" class="listing-error" role="status" aria-live="polite"></p><form id="emailAuthForm" class="listing-form"><label>電子郵件登入（選用）<input name="email" type="email" autocomplete="email" required placeholder="輸入電子郵件以接收登入連結"></label><button class="primary-btn" type="submit">寄送登入連結</button></form><p class="about-text">登入狀態會保存在這個瀏覽器。關閉頁面後再開啟通常仍會保持登入；登出、清除網站資料或改用其他裝置時，才需要重新登入。</p>`}`);
           $("#modalContent").querySelector(".close-modal").onclick = closeModal;
           if (!bound && authStatusError) $("#authError").textContent = authStatusError;
           const cancelButton = $("#modalContent").querySelector(".cancel-modal");
           if (cancelButton) cancelButton.onclick = closeModal;
+          $("#switchAccountBtn")?.addEventListener("click", async (event) => {
+            const button = event.currentTarget;
+            button.disabled = true;
+            button.textContent = "正在登出…";
+            const switched = await logoutAccount();
+            if (switched && !hasBoundAccount()) openAccountModal();
+            else {
+              button.disabled = false;
+              button.textContent = "登出並切換帳號";
+            }
+          });
           $("#modalContent").querySelectorAll("[data-auth-provider]").forEach((b) => b.onclick = async () => {
             const provider = b.dataset.authProvider;
             if (!supabase) { $("#authError").textContent = "Supabase 尚未連線，請確認網路與初始化狀態。"; return; }
@@ -3354,7 +3365,13 @@
             b.disabled = true;
             $("#authError").textContent = `正在前往 ${provider === "google" ? "Google" : "Facebook"} 驗證…`;
             try {
-              const result = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: authRedirectURL() } });
+              const result = await supabase.auth.signInWithOAuth({
+                provider,
+                options: {
+                  redirectTo: authRedirectURL(),
+                  ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {}),
+                },
+              });
               if (result?.error) throw result.error;
               if (!result?.data?.url) $("#authError").textContent = "驗證要求已送出，請依服務商畫面完成確認。";
             } catch (err) { authStatusError = `登入失敗：${err.message}`; $("#authError").textContent = authStatusError; b.disabled = false; renderAccountState(); }
@@ -3396,6 +3413,7 @@
           if (guestError) console.error("訪客工作階段重建失敗", guestError);
           else handleAuthUser(data.user, "SIGNED_IN");
           toast("已登出；目前為訪客，不能管理原帳號的店面。");
+          return true;
         }
         async function refreshCloudShops() {
           if (!supabase) return;
@@ -5461,23 +5479,6 @@
             return { file: compressed, width, height, originalBytes: file.size, compressedBytes: compressed.size };
           } finally { bitmap.close?.(); }
         }
-        function isCloudStoredImage(media) {
-          return !!(media?.mediaKey && String(media.publicURL || "").startsWith(SUPABASE_URL + "/storage/v1/object/public/market-media/"));
-        }
-        function shopCloudImageCount(shop, excludedProductIndex = -1) {
-          return (shop?.products || []).reduce((total, product, index) => {
-            if (index === excludedProductIndex) return total;
-            const list = Array.isArray(product.media) && product.media.length ? product.media : [product];
-            return total + list.filter((item) => item?.mediaType !== "video" && isCloudStoredImage(item)).length;
-          }, 0);
-        }
-        function validateShopCloudImageQuota(shop, draftMedia, excludedProductIndex = -1) {
-          const draftCount = (draftMedia || []).filter((item) => item?.mediaType !== "video" && (item?.file || isCloudStoredImage(item))).length;
-          const currentCount = shopCloudImageCount(shop);
-          const nextCount = shopCloudImageCount(shop, excludedProductIndex) + draftCount;
-          if (nextCount > 5 && nextCount > currentCount)
-            throw Error("每間店的商品、作品與徵才合計最多上傳 5 張雲端圖片；請先刪除其他圖片。");
-        }
         function drawFirstPersonFrame(frame, p) {
           const x = frame.x,
             y = frame.y,
@@ -7103,7 +7104,6 @@
                 (m) => ({ ...m }),
               );
               validateListing(data, media);
-              validateShopCloudImageQuota(targetShop, media, index ?? -1);
               for (const m of media) {
                 if (m.file) {
                   m.mediaKey = targetShop.id + "-" + randomId();
@@ -10749,7 +10749,6 @@
                 .map((el) => el.value.trim())
                 .filter(Boolean);
               validateJob(data, photos);
-              validateShopCloudImageQuota(targetShop, photos, index ?? -1);
               const media = [];
               for (const p of photos) {
                 const copy = { ...p };
