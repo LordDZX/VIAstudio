@@ -2026,9 +2026,13 @@
         display: flex;
         gap: 6px;
         margin: 6px 0;
+        align-items: stretch;
       }
       .contact-row input {
         flex: 1;
+        min-width: 0;
+        min-height: 42px;
+        box-sizing: border-box;
       }
       .product-gallery img {
         width: 100%;
@@ -2293,7 +2297,28 @@
         margin-top: 24px;
       }
       .contact-row select {
-        max-width: 110px;
+        flex: 0 0 96px;
+        min-height: 42px;
+      }
+      @media (max-width: 600px) {
+        #shopContacts .contact-row {
+          display: grid;
+          grid-template-columns: 78px minmax(0, 1fr);
+          gap: 8px;
+          margin: 10px 0 14px;
+        }
+        #shopContacts .contact-row select,
+        #shopContacts .contact-row input {
+          width: 100%;
+          min-width: 0;
+          min-height: 46px;
+          font-size: 16px;
+        }
+        #shopContacts .contact-row button {
+          grid-column: 2;
+          justify-self: start;
+          min-height: 40px;
+        }
       }
       .preview-caption {
         font-size: 12px;
@@ -3166,6 +3191,20 @@
             }, 350);
           }
         }
+        async function saveCloudShopNow(shop) {
+          if (!supabase || !accountId || !shop || shop.cloudOwnerId !== accountId)
+            throw Error("無法確認雲端店主帳號，請重新登入後再儲存。");
+          clearTimeout(cloudSaveTimer);
+          const spot = shopSpots[shops.indexOf(shop)];
+          if (!shop.position && spot) shop.position = { x: spot.x, y: spot.y };
+          const { error } = await persistCloudShopRow({
+            id: shop.id,
+            owner_id: shop.lease && leaseActive(shop) ? accountId : null,
+            payload: shop,
+            expire_at: shop.lease?.expires ? new Date(shop.lease.expires).toISOString() : null,
+          });
+          if (error) throw error;
+        }
         const GAME_DATA_RESET_KEY = "market-reset-all-game-data-v2";
         function clearLocalGameDataForReset() {
           if (localStorage.getItem(GAME_DATA_RESET_KEY)) return false;
@@ -3671,7 +3710,7 @@
           $("#modalBackdrop").classList.remove("hidden");
           $("#modalContent").querySelector(".close-modal").onclick = closeModal;
           $("#modalContent").querySelector(".cancel-modal").onclick = closeModal;
-          $("#rentalForm").addEventListener("submit", (e) => {
+          $("#rentalForm").addEventListener("submit", async (e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget),
               days = Number(fd.get("days")),
@@ -3686,6 +3725,9 @@
               toast("每個示範帳號最多租兩間店。");
               return;
             }
+            const rentButton = e.currentTarget.querySelector('[type="submit"]');
+            rentButton.disabled = true;
+            rentButton.textContent = "正在確認租用…";
             s.shopType = normalizeShopType(fd.get("shopType"));
             s.owner = String(fd.get("owner")).trim() || playerName;
             s.cloudOwnerId = accountId;
@@ -3697,7 +3739,17 @@
               expires: Date.now() + days * 86400000,
             };
             s.room = s.room || defaultRoom();
-            save();
+            try {
+              await saveCloudShopNow(s);
+              save();
+            } catch (error) {
+              s.lease = null;
+              s.cloudOwnerId = null;
+              rentButton.disabled = false;
+              rentButton.textContent = "確認租用";
+              toast(`租用資料儲存失敗：${error.message || "請檢查網路後重試"}`);
+              return;
+            }
             closeModal();
             renderShopList();
             renderSelectedBox();
@@ -5152,7 +5204,6 @@
           $("#roomInfoContactOwner").onclick = () => openInquiry(shop, { title: "一般聯絡 / 合作詢問" });
         }
         function renderEditor(s) {
-          ownerMode = false;
           if (!canEditShop(s)) {
             toast("只有這間店的店主能修改內容。");
             return;
@@ -5292,13 +5343,24 @@
               floorType: fd.get("floorType"),
               decor: [...e.querySelectorAll("[data-decor]:checked")].map((c) => c.dataset.decor),
             };
-            save();
-            closeModal();
-            ownerMode = false;
-            renderShopList();
-            renderSelectedBox();
-            renderShowroom();
-            toast("店舖外觀、室內佈置與相框作品已更新。");
+            const saveButton = ev.currentTarget.querySelector('[type="submit"]');
+            saveButton.disabled = true;
+            saveButton.textContent = "正在儲存…";
+            try {
+              await saveCloudShopNow(s);
+              save();
+              closeModal();
+              ownerMode = false;
+              renderShopList();
+              renderSelectedBox();
+              renderShowroom();
+              toast("店舖設定已儲存至雲端。");
+            } catch (error) {
+              console.error("店舖設定雲端儲存失敗", error);
+              toast(`店舖設定儲存失敗：${error.message || "請檢查網路後重試"}`);
+              saveButton.disabled = false;
+              saveButton.textContent = "重試儲存";
+            }
           });
         }
         function editProductHTML(p, i) {
@@ -5563,8 +5625,8 @@
             toast("只有租用這間店的店主可以調整設定。");
             return;
           }
-          ownerMode = false;
-          renderEditor(getShop(activeShopId));
+          ownerMode = !ownerMode;
+          renderShowroom();
         });
         const leaveInterior = () => {
           document.exitPointerLock?.();
