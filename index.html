@@ -2301,9 +2301,15 @@
         min-height: 42px;
       }
       @media (max-width: 600px) {
+        #settingsBody .edit-grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        #settingsBody .field.wide {
+          grid-column: 1 / -1;
+        }
         #shopContacts .contact-row {
           display: grid;
-          grid-template-columns: 78px minmax(0, 1fr);
+          grid-template-columns: 88px minmax(0, 1fr);
           gap: 8px;
           margin: 10px 0 14px;
         }
@@ -3204,6 +3210,19 @@
             expire_at: shop.lease?.expires ? new Date(shop.lease.expires).toISOString() : null,
           });
           if (error) throw error;
+        }
+        async function withTimeout(promise, ms, message) {
+          let timer;
+          try {
+            return await Promise.race([
+              promise,
+              new Promise((_, reject) => {
+                timer = setTimeout(() => reject(Error(message)), ms);
+              }),
+            ]);
+          } finally {
+            clearTimeout(timer);
+          }
         }
         const GAME_DATA_RESET_KEY = "market-reset-all-game-data-v2";
         function clearLocalGameDataForReset() {
@@ -5167,7 +5186,7 @@
           $("#shopAbout").textContent = s.about || "店主還沒有填寫介紹。";
           $("#shopContact").textContent = s.contact || "店主還沒有填寫聯絡資訊。";
           $("#ownerModeBtn").classList.toggle("hidden", roomPreviewOnly || !isMyShop(s));
-          $("#ownerModeBtn").textContent = ownerMode ? "✓　完成設定" : "✦　店舖設定";
+          $("#ownerModeBtn").textContent = "✦　店舖設定";
           $("#ownerModeBtn").classList.toggle("editing", ownerMode);
           $("#ownerOrdersLink").classList.toggle("hidden", !isMyShop(s));
           ($("#productCount") || {}).textContent =
@@ -5290,20 +5309,32 @@
           );
           $("#ownerForm").addEventListener("submit", async (ev) => {
             ev.preventDefault();
+            const form = ev.currentTarget;
+            const saveButton = form.querySelector('[type="submit"]');
+            saveButton.disabled = true;
+            saveButton.textContent = "確認店主權限…";
             let currentShop;
             try {
-              currentShop = await refreshShopForEdit(s.id);
+              currentShop = await withTimeout(
+                refreshShopForEdit(s.id),
+                20000,
+                "確認店主權限逾時，請檢查網路後重試。",
+              );
             } catch (error) {
               toast(error.message || "無法確認店主權限，請稍後重試。");
+              saveButton.disabled = false;
+              saveButton.textContent = "重試儲存";
               return;
             }
             if (!canEditShop(currentShop)) {
               toast("店主權限已失效，請重新整理後確認登入狀態與租期。");
+              saveButton.disabled = false;
+              saveButton.textContent = "重試儲存";
               return;
             }
             // Cloud refreshes replace shop objects; keep the form attached to the current shop instance.
             s = currentShop;
-            const fd = new FormData(ev.currentTarget),
+            const fd = new FormData(form),
               oldKeys = s.products.map((p) => p.mediaKey).filter(Boolean);
             const legacyTrafficUrls = listingTrafficUrlsFor(s);
             s.shopType = normalizeShopType(fd.get("shopType"));
@@ -5343,11 +5374,13 @@
               floorType: fd.get("floorType"),
               decor: [...e.querySelectorAll("[data-decor]:checked")].map((c) => c.dataset.decor),
             };
-            const saveButton = ev.currentTarget.querySelector('[type="submit"]');
-            saveButton.disabled = true;
             saveButton.textContent = "正在儲存…";
             try {
-              await saveCloudShopNow(s);
+              await withTimeout(
+                saveCloudShopNow(s),
+                20000,
+                "雲端儲存逾時，請檢查網路後重試。",
+              );
               save();
               closeModal();
               ownerMode = false;
@@ -5561,6 +5594,7 @@
           $("#modalContent").querySelector(".cancel-modal").onclick = closeModal;
         }
         function closeModal() {
+          if ($("#settingsBody")) ownerMode = false;
           resumeMusicAfterVideo();
           disposeMediaDraft();
           $("#modalBackdrop").classList.add("hidden");
@@ -5625,8 +5659,8 @@
             toast("只有租用這間店的店主可以調整設定。");
             return;
           }
-          ownerMode = !ownerMode;
-          renderShowroom();
+          ownerMode = true;
+          renderEditor(getShop(activeShopId));
         });
         const leaveInterior = () => {
           document.exitPointerLock?.();
@@ -5925,7 +5959,8 @@
           downKeys.clear();
           document.querySelectorAll?.("[data-joystick]")?.forEach((zone) => zone._cancelJoystick?.());
           drawInterior.key = null;
-          requestAnimationFrame(() => renderShowroom());
+          // Rebuilding the owner editor on rotation replaces its inputs and drops unsaved text.
+          if (!ownerMode) requestAnimationFrame(() => renderShowroom());
         });
         if (channel) {
           channel.onmessage = (e) => {
