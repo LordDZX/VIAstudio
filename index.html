@@ -8072,7 +8072,8 @@
           musicPlayer = null,
           musicTicket = 0,
           musicKey = "",
-          musicMuted = false;
+          musicMuted = false,
+          musicManuallyPaused = false;
         function disposeMediaDraft() {
           if (modalCleanup) {
             const cleanup = modalCleanup;
@@ -8192,6 +8193,7 @@
         }
         function stopShopMusic() {
           musicTicket++;
+          musicManuallyPaused = false;
           if (musicPlayer) {
             musicPlayer.onended = null;
             musicPlayer.onloadedmetadata = null;
@@ -8209,6 +8211,7 @@
             activeShopId === shop.id &&
             !roomPreviewOnly &&
             !musicVideoPaused &&
+            !musicManuallyPaused &&
             document.visibilityState === "visible" &&
             !$("#showroomView").classList.contains("hidden")
           );
@@ -8257,10 +8260,12 @@
           }
           const key = track.mediaKey || track.mediaURL || "";
           if (musicPlayer && musicKey === key && musicPlayer.src && !musicPlayer.paused) {
+            musicManuallyPaused = true;
             musicPlayer.pause();
             updateShopMusicControls(shop);
             return;
           }
+          musicManuallyPaused = false;
           musicVideoPaused = false;
           if (musicPlayer && musicKey === key && musicPlayer.src && musicPlayer.paused) {
             musicPlayer.play().then(() => {
