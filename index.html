@@ -1302,6 +1302,8 @@
       }
       .first-person-card {
         position: relative;
+        /* Keep the viewport and its overlays together when the sidebar is taller. */
+        align-self: start;
         border: 1px solid #d8ded6;
         border-radius: 20px;
         overflow: hidden;
@@ -1985,7 +1987,7 @@
       }
       #interiorScene {
         width: 100%;
-        min-height: 420px;
+        min-height: 0;
         touch-action: none;
       }
       #town {
