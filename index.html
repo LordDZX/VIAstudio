@@ -249,13 +249,15 @@
         right: 74px;
         transform: translateY(-50%);
         box-sizing: border-box;
-        width: min(232px, calc(100% - 88px));
+        width: min(360px, calc(100% - 88px));
+        max-height: calc(100dvh - 140px);
+        overflow-y: auto;
         padding: 8px 9px 9px;
         border: 1px solid #d5e1d5;
         border-radius: 13px;
         background: #fffdf4f2;
         box-shadow: 0 4px 14px #26382e26;
-        pointer-events: none;
+        pointer-events: auto;
       }
       .street-map-toggle {
         position: absolute;
@@ -281,6 +283,10 @@
       .street-map-toggle small { font-size: 10px; font-weight: 800; }
       .street-mini-map header { display:flex; justify-content:space-between; gap:8px; margin-bottom:5px; color:#385b49; font-size:10px; font-weight:700; }
       .street-mini-map header span { color:#718278; font-weight:600; }
+      .island-destinations { display:grid; gap:6px; margin-top:10px; }
+      .island-destinations button { min-height:42px; border:1px solid #c8d8ca; border-radius:9px; background:#fffef8; color:#385b49; font:inherit; cursor:pointer; }
+      .island-destinations button[aria-current="true"] { background:#315f4c; color:white; border-color:#315f4c; font-weight:700; }
+      .island-destinations button:focus-visible { outline:3px solid #d69b41; outline-offset:2px; }
       #streetMiniMapCanvas { display:block; width:100%; height:auto; aspect-ratio:220/72; border-radius:7px; }
       .street-bike-hint {
         position: absolute;
@@ -1322,8 +1328,9 @@
       .touch-action { position:absolute; z-index:6; bottom:calc(72px + env(safe-area-inset-bottom)); right:calc(18px + env(safe-area-inset-right)); width:60px; height:60px; border:1px solid #fff; border-radius:50%; background:#c6754d; color:white; font-weight:800; touch-action:none; }
       .touch-action { bottom:calc(22px + env(safe-area-inset-bottom)); left:auto; right:calc(18px + env(safe-area-inset-right)); transform:none; width:54px; height:54px; }
       .touch-action[data-touch-action="room"] { right:calc(41px + env(safe-area-inset-right)); bottom:calc(134px + env(safe-area-inset-bottom)); }
-      @media (pointer:coarse), (max-width:760px) { .touch-joystick-zone { display:block; } .touch-action { display:block; } }
-      @media (min-width:761px) and (pointer:fine) { .touch-action { display:none; } }
+      .touch-action { display:none; }
+      @media (pointer:coarse) { .touch-joystick-zone { display:block; } .touch-action { display:block; } }
+      @media (pointer:fine) { .touch-joystick-zone, .touch-action { display:none !important; } }
       @media (min-width:761px) and (pointer:fine) { .park-shortcut { display:none !important; } }
       @media (pointer:coarse) and (orientation:portrait) { .first-person-layout { grid-template-columns:minmax(0,1fr); } .first-person-card canvas { max-height:58svh; } .room-sidebar { grid-template-columns:1fr; } }
       #mobileShopListToggle,#mobileShopListClose,#mobileRoomInfoToggle,#mobileRoomInfoClose,#mobileAnnouncementBtn,#mobileAvatarBtn,#roomShopInfoTop { display:none; }
@@ -1353,7 +1360,7 @@
         #streetView .map-wrap { position:absolute; inset:0; width:100%; height:100dvh; overflow:hidden; }
         #streetView #town { width:100%; height:100%; aspect-ratio:auto; object-fit:cover; object-position:center; }
         #streetView .street-map-toggle { right:calc(12px + env(safe-area-inset-right)); }
-        #streetView .street-mini-map { right:calc(74px + env(safe-area-inset-right)); width:min(220px,calc(100% - 88px - env(safe-area-inset-right))); }
+        #streetView .street-mini-map { right:calc(74px + env(safe-area-inset-right)); width:min(360px,calc(100% - 88px - env(safe-area-inset-right))); }
         #streetView .street-bike-hint { top:calc(106px + env(safe-area-inset-top)); right:calc(12px + env(safe-area-inset-right)); width:min(220px,calc(100% - 24px)); }
         #streetView .enter-hint { position:fixed; top:calc(150px + env(safe-area-inset-top)); left:50%; max-width:calc(100vw - 24px); white-space:normal; text-align:center; }
         #streetView .map-instructions,#streetView .map-footer { display:none !important; }
@@ -2409,12 +2416,12 @@
         <main class="map-layout">
           <section class="map-card">
             <div class="map-toolbar">
-              <strong>☀　無人島商圈　·　俯視街景</strong
+              <strong id="marketMapTitle">拾光商島（販賣）</strong
               ><span>海島商圈 · 公園與海岸　·　接近正面入口按 E</span><button id="mobileAvatarBtn" type="button" aria-label="角色造型">🧑‍🎨</button><button id="mobileAnnouncementBtn" type="button">公告</button><button id="mobileShopListToggle" type="button">店鋪</button>
             </div>
             <div class="map-wrap">
               <button class="street-map-toggle" id="streetMapToggle" type="button" aria-label="開啟地圖" aria-controls="streetMiniMap" aria-expanded="false"><span aria-hidden="true">🗺️</span><small>地圖</small></button>
-              <div class="street-mini-map hidden" id="streetMiniMap"><header><strong>🗺️ 我的位置</strong><span id="streetMapArea">島嶼商圈</span></header><canvas id="streetMiniMapCanvas" width="220" height="72" aria-label="島嶼小地圖與目前位置"></canvas></div>
+              <div class="street-mini-map hidden" id="streetMiniMap"><header><strong id="islandMapName">拾光商島（販賣）</strong><span id="streetMapArea">販賣</span></header><canvas id="streetMiniMapCanvas" width="660" height="216" aria-label="當前島嶼全圖與目前位置"></canvas><nav class="island-destinations" aria-label="切換島嶼"><button type="button" data-island="sale">拾光商島（販賣）</button><button type="button" data-island="collaboration">映藝之島（作品分享）</button><button type="button" data-island="hiring">啟程之島（徵才）</button></nav></div>
               <div class="street-bike-hint hidden" id="streetBikeHint" role="status" aria-live="polite"><strong id="streetBikeHintTitle">🚲 自行車</strong><span id="streetBikeHintText"></span></div>
               <div class="touch-joystick-zone" data-joystick="street" aria-label="拖曳移動"><div class="touch-joystick-base"><div class="touch-joystick-knob"></div></div></div><button class="touch-action" type="button" data-touch-action="street" aria-label="互動">E<br>互動</button>
               <canvas
@@ -3012,6 +3019,10 @@
           activeDmRecipient = null, activeDmShopId = null,
           cloudRealtimeStatus = "INITIALIZING", cloudPresenceTimer = 0, cloudLastBroadcast = 0,
           cloudLastX = null, cloudLastY = null;
+        const MAP_TYPES = [["sale", "販賣"], ["collaboration", "作品分享"], ["hiring", "徵才"]];
+        let currentMap = "sale";
+        try { currentMap = normalizeShopType(localStorage.getItem("island-purpose-map")); } catch {}
+        function onCurrentMap(shop) { return !!shop && shopType(shop) === currentMap; }
         let shops = loadShops(),
           orders = loadOrders(),
           activeShopId = null,
@@ -3066,6 +3077,7 @@
           const icons = ["🧵", "🌿", "🎨", "🍰", "🪴", "✉️"];
           return {
             id: s.id,
+            shopType: s.shopType ? normalizeShopType(s.shopType) : s.lease ? shopType(s) : MAP_TYPES[i % 3][0],
             position: s.position,
             destroyed: false,
             name: ["轉角空舖", "日光小店", "巷弄店面", "微風空間", "街角選物", "小巷工作室"][i % 6],
@@ -3330,8 +3342,8 @@
           publishPlayerName();
         }
         function publishPlayerName() {
-          const position = { id: playerId, name: playerName, x: player.x, y: player.y, at: Date.now() };
-          if (channel) channel.postMessage({ type: "presence", ...position, color: "#7b95c7", avatar: playerAvatar, accountId, shop: null });
+          const position = { id: playerId, mapId: currentMap, name: playerName, x: player.x, y: player.y, at: Date.now() };
+          if (channel) channel.postMessage({ type: "presence", mapId: currentMap, ...position, color: "#7b95c7", avatar: playerAvatar, accountId, shop: null });
           if (cloudChannel?.state === "joined") {
             cloudChannel.track(position);
             cloudChannel.send({ type: "broadcast", event: "position", payload: position });
@@ -3471,7 +3483,7 @@
           const now = Date.now();
           for (const [id, p] of remotePlayers) if (now - (p.at || 0) > 12000) remotePlayers.delete(id);
           const nearby = [...remotePlayers.values()]
-            .filter((p) => p.id !== playerId && Number.isFinite(p.x) && Number.isFinite(p.y) && Math.hypot(p.x-player.x,p.y-player.y) <= 600)
+            .filter((p) => p.mapId === currentMap && p.id !== playerId && Number.isFinite(p.x) && Number.isFinite(p.y) && Math.hypot(p.x-player.x,p.y-player.y) <= 600)
             .sort((a,b) => Math.hypot(a.x-player.x,a.y-player.y)-Math.hypot(b.x-player.x,b.y-player.y));
           const visible = new Map(nearby.slice(0, 20).map((p) => [p.id, p]));
           remotePlayers = visible;
@@ -3492,28 +3504,33 @@
           for (const cell of wanted) {
             if (cloudChannels.has(cell)) continue;
             const [x,y] = cell.split(",").map(Number);
-            const ch = supabase.channel(`island-aoi-${x}-${y}`, { config: { presence: { key: playerId }, broadcast: { self: false } } });
+            const mapAtSubscribe = currentMap;
+            const ch = supabase.channel(`island-map-${mapAtSubscribe}-aoi-${x}-${y}`, { config: { presence: { key: playerId }, broadcast: { self: false } } });
             ch.on("presence", { event: "sync" }, () => {
+              if (mapAtSubscribe !== currentMap) return;
               Object.values(ch.presenceState()).flat().forEach((p) => {
                 if (p.id !== playerId && (!remotePlayers.has(p.id) || (remotePlayers.get(p.id).at || 0) < (p.at || 0)))
                   remotePlayers.set(p.id, { ...p });
               });
               renderRemotePlayers();
             }).on("presence", { event: "join" }, ({ newPresences }) => {
+              if (mapAtSubscribe !== currentMap) return;
               newPresences.forEach((p) => { if (p.id !== playerId) remotePlayers.set(p.id, { ...p }); });
               renderRemotePlayers();
             }).on("presence", { event: "leave" }, ({ key }) => {
+              if (mapAtSubscribe !== currentMap) return;
               if (![...cloudChannels.values()].some((other) => Object.values(other.presenceState()).flat().some((p) => p.id === key))) remotePlayers.delete(key);
               renderRemotePlayers();
             }).on("broadcast", { event: "position" }, ({ payload }) => {
-              if (!payload || payload.id === playerId) return;
+              if (mapAtSubscribe !== currentMap || !payload || payload.mapId !== currentMap || payload.id === playerId) return;
               if (Math.hypot(payload.x-player.x,payload.y-player.y) <= 600) remotePlayers.set(payload.id, { ...payload, at: Date.now() });
               else remotePlayers.delete(payload.id);
               renderRemotePlayers();
             }).subscribe(async (status) => {
+              if (mapAtSubscribe !== currentMap) return;
               if (cell === cloudCellKey) cloudRealtimeStatus = status;
               if (status === "SUBSCRIBED" && cell === cloudCellKey) {
-                await ch.track({ id: playerId, name: playerName, x: player.x, y: player.y, at: Date.now() });
+                await ch.track({ id: playerId, mapId: currentMap, name: playerName, x: player.x, y: player.y, at: Date.now() });
                 renderWalkers();
               }
               if (["CHANNEL_ERROR", "TIMED_OUT"].includes(status)) {
@@ -3527,7 +3544,7 @@
           cloudChannel = cloudChannels.get(nextCell) || null;
           if (cloudChannel?.state === "joined") {
             cloudRealtimeStatus = "SUBSCRIBED";
-            await cloudChannel.track({ id: playerId, name: playerName, x: player.x, y: player.y, at: Date.now() });
+            await cloudChannel.track({ id: playerId, mapId: currentMap, name: playerName, x: player.x, y: player.y, at: Date.now() });
           } else cloudRealtimeStatus = "CONNECTING";
           renderRemotePlayers();
         }
@@ -3574,7 +3591,7 @@
           toast("多人連線中；位置只傳送給周圍 600 像素內的玩家。");
           window.addEventListener("pagehide", () => {
             clearInterval(cloudPresenceTimer); cloudChannels.forEach((ch) => { ch.untrack(); supabase.removeChannel(ch); }); cloudChannels.clear(); clearInterval(parkRenewTimer);
-            if (parkRide && authUser) supabase.rpc("release_park_facility", { p_facility_id: parkRide.facility.id, p_session_id: parkRide.sessionKey });
+            if (parkRide && authUser) supabase.rpc("release_park_facility", { p_facility_id: parkRide.facilityKey, p_session_id: parkRide.sessionKey });
           });
           supabase.channel("market-shops-changes").on("postgres_changes", {event:"*",schema:"public",table:"market_shops"}, ({ eventType, new: row, old }) => {
             const changed = row?.payload?.id ? row : null;
@@ -3612,7 +3629,7 @@
           toastTimer = setTimeout(() => el.classList.add("hidden"), duration);
         }
         function distanceToDoor(s) {
-          if (!s || s.destroyed) return Infinity;
+          if (!s || s.destroyed || !onCurrentMap(s)) return Infinity;
           const p = shopSpots[shops.indexOf(s)];
           return Math.hypot(player.x - p.doorX, player.y - p.doorY);
         }
@@ -3621,6 +3638,7 @@
         }
         function setTargetShop(id, showGuide = true) {
           if (!getShop(id) || getShop(id).destroyed) return;
+          if (!onCurrentMap(getShop(id)) && !switchMap(shopType(getShop(id)))) return;
           selectedShopId = id;
           guideShopId = showGuide ? id : null;
           player.targetX = player.targetY = null;
@@ -3632,12 +3650,15 @@
           return shops.filter((s) => isMyShop(s)).length;
         }
         function renderShopList() {
+          if (selectedShopId && !onCurrentMap(getShop(selectedShopId))) selectedShopId = null;
+          if (guideShopId && !onCurrentMap(getShop(guideShopId))) { guideShopId = null; autoRoute = []; player.targetX = player.targetY = null; }
+          if (mapPickedShop && !onCurrentMap(getShop(mapPickedShop))) mapPickedShop = null;
           const list = $("#shopList"),
             query = ($("#shopSearch")?.value || "").trim().toLocaleLowerCase();
           list.innerHTML = shops
             .filter(
               (s) =>
-                !s.destroyed &&
+                !s.destroyed && onCurrentMap(s) &&
                 s.name.toLocaleLowerCase().includes(query) &&
                 (!$("#shopCategory")?.value || shopType(s) === $("#shopCategory").value),
             )
@@ -3673,7 +3694,7 @@
               }),
           );
           $("#shopTotal").textContent =
-            `我租 ${leaseCount()}/2 · 可租 ${shops.filter(availableShop).length}`;
+            `我租 ${leaseCount()}/2 · 本地圖可租 ${shops.filter(s => onCurrentMap(s) && availableShop(s)).length}`;
         }
 
         function quickEnterShop(id) {
@@ -3743,7 +3764,7 @@
             return;
           }
           $("#modalContent").innerHTML =
-            `<div class="modal-head"><h2>租下「${esc(s.name)}」</h2><button class="close-modal" type="button">×</button></div><p class="about-text">店面會綁定到目前已驗證的帳號：${esc(authUser.email || authUser.user_metadata?.full_name || "已登入帳號")}。</p><form id="rentalForm">${shopTypeField("sale")}<div class="field"><label>店主名稱</label><input name="owner" maxlength="18" value="${esc(playerName)}" required></div><div class="field"><label>租借時間</label><div class="rental-options">${[3, 7, 15, 30].map((n, i) => `<label><input type="radio" name="days" value="${n}" ${i === 1 ? "checked" : ""}> ${n} 天</label>`).join("")}</div></div><div class="field"><label>身分驗證</label><p class="about-text">已由 Supabase Auth 完成帳號驗證。</p></div><div class="modal-actions"><button type="button" class="outline-btn cancel-modal">取消</button><button type="submit" class="primary-btn">確認租用</button></div></form>`;
+            `<div class="modal-head"><h2>租下「${esc(s.name)}」</h2><button class="close-modal" type="button">×</button></div><p class="about-text">店面會綁定到目前已驗證的帳號：${esc(authUser.email || authUser.user_metadata?.full_name || "已登入帳號")}。</p><form id="rentalForm">${shopTypeField(currentMap)}<div class="field"><label>店主名稱</label><input name="owner" maxlength="18" value="${esc(playerName)}" required></div><div class="field"><label>租借時間</label><div class="rental-options">${[3, 7, 15, 30].map((n, i) => `<label><input type="radio" name="days" value="${n}" ${i === 1 ? "checked" : ""}> ${n} 天</label>`).join("")}</div></div><div class="field"><label>身分驗證</label><p class="about-text">已由 Supabase Auth 完成帳號驗證。</p></div><div class="modal-actions"><button type="button" class="outline-btn cancel-modal">取消</button><button type="submit" class="primary-btn">確認租用</button></div></form>`;
           $("#modalBackdrop").classList.remove("hidden");
           $("#modalContent").querySelector(".close-modal").onclick = closeModal;
           $("#modalContent").querySelector(".cancel-modal").onclick = closeModal;
@@ -3956,7 +3977,7 @@
           if (x < -2420 || x > 7753.333333 || y < 160 || y > 3310) return true;
           return shopSpots.some(
             (a, i) =>
-              !shops[i]?.destroyed &&
+              !shops[i]?.destroyed && onCurrentMap(shops[i]) &&
               x > a.x - r &&
               x < a.x + a.w + r &&
               y > a.y - r &&
@@ -4060,7 +4081,7 @@
           a.doorY = a.side === "top" ? a.y + a.h + 34 : a.y - 34;
         });
         function drawStore(s, i) {
-          if (s.destroyed) return;
+          if (s.destroyed || !onCurrentMap(s)) return;
           const a = shopSpots[i],
             p = project(a.x, a.y),
             w = a.w * VIEW_K,
@@ -4681,7 +4702,7 @@
           if (Date.now() - lastBroadcast > 180) {
             if (channel)
               channel.postMessage({
-                type: "presence",
+                type: "presence", mapId: currentMap,
                 id: playerId,
                 name: playerName,
                 x: player.x,
@@ -4702,7 +4723,7 @@
           ) {
             const nextCell = `${Math.floor(player.x / 600)},${Math.floor(player.y / 600)}`;
             if (nextCell !== cloudCellKey) updateAoiChannels();
-            const position = { id: playerId, name: playerName, x: player.x, y: player.y, at: Date.now() };
+            const position = { id: playerId, mapId: currentMap, name: playerName, x: player.x, y: player.y, at: Date.now() };
             if (cloudChannel.state === "joined") cloudChannel.send({ type: "broadcast", event: "position", payload: position });
             cloudLastBroadcast = Date.now();
             cloudLastX = player.x;
@@ -5167,6 +5188,7 @@
         function openShop(id, previewOnly = false) {
           const s = getShop(id);
           if (!s || s.destroyed || (!previewOnly && availableShop(s))) return;
+          if (!onCurrentMap(s) && !switchMap(shopType(s))) return;
           stopShopMusic();
           repairFramePlacements(s);
           streetState.seated = null;
@@ -5405,6 +5427,7 @@
               renderShopList();
               renderSelectedBox();
               renderShowroom();
+              if (!onCurrentMap(s)) switchMap(shopType(s));
               toast("店舖設定已儲存至雲端。");
             } catch (error) {
               console.error("店舖設定雲端儲存失敗", error);
@@ -5764,7 +5787,7 @@
           let hit = -1;
           shopSpots.forEach((a, i) => {
             if (
-              !shops[i]?.destroyed &&
+              !shops[i]?.destroyed && onCurrentMap(shops[i]) &&
               x > a.x - 10 &&
               x < a.x + a.w + 10 &&
               y > a.y - 10 &&
@@ -5968,6 +5991,7 @@
             const m = e.data;
             if (!m || m.from === playerId) return;
             if (m.type === "presence") {
+              if ((m.mapId || "sale") !== currentMap) { remotePlayers.delete(m.id); return; }
               remotePlayers.set(m.id, { ...m, at: Date.now() });
             }
             if (m.type === "shops" && Array.isArray(m.shops)) {
@@ -6363,7 +6387,7 @@
           lastOwnerPresence = Date.now();
           if (channel)
             channel.postMessage({
-              type: "presence",
+              type: "presence", mapId: currentMap,
               id: playerId,
               accountId,
               name: playerName,
@@ -8117,7 +8141,7 @@
             roomPlayer = { x: 505, y: 1080, yaw: 0, pitch: 0 };
           }
           let look = $("#freeLookBtn");
-          const touchDevice = matchMedia("(pointer:coarse), (max-width:760px)").matches;
+          const touchDevice = matchMedia("(pointer:coarse)").matches;
           if (touchDevice) {
             look?.remove();
           } else if (!look) {
@@ -8708,11 +8732,79 @@
             }
             return panelTexture("廣告圖片", "#9e8164");
           }
-          const entry = DECORS.find((d) => d[0] === object.type);
-          return panelTexture(entry?.[1] || "🌿", "#e4dec5");
+          return null;
+        }
+        // Decorations are solid geometry, not emoji printed on rectangular panels.
+        function addSculptedDecor(o, add) {
+          const x = o.x, y = o.y;
+          const box = (cx, cy, z, w, d, h, colors) => {
+            const a = [cx-w/2,cy-d/2,z], b = [cx+w/2,cy-d/2,z],
+              c = [cx+w/2,cy+d/2,z], e = [cx-w/2,cy+d/2,z];
+            const top = p => [p[0],p[1],z+h];
+            add([a,b,top(b),top(a)], colors[0]);
+            add([b,c,top(c),top(b)], colors[1]);
+            add([c,e,top(e),top(c)], colors[0]);
+            add([e,a,top(a),top(e)], colors[1]);
+            add([top(a),top(b),top(c),top(e)], colors[2]);
+          };
+          const vessel = (cx, cy, rings, colors, segments = 12) => {
+            const ring = ([z,r]) => Array.from({length:segments},(_,i) =>
+              [cx+Math.cos(i*Math.PI*2/segments)*r,cy+Math.sin(i*Math.PI*2/segments)*r,z]);
+            const levels = rings.map(ring);
+            for (let j=0;j<levels.length-1;j++) for (let i=0;i<segments;i++) {
+              const k=(i+1)%segments;
+              add([levels[j][i],levels[j][k],levels[j+1][k],levels[j+1][i]], colors[i%colors.length]);
+            }
+            const last=levels.at(-1), center=[cx,cy,rings.at(-1)[0]];
+            for(let i=0;i<segments;i++) add([center,last[i],last[(i+1)%segments]],colors[0]);
+          };
+          const brass = ['#b38a46','#876531','#d9b86a'];
+          if (o.type === '落地燈') {
+            vessel(x,y,[[0,15],[4,15]],brass);
+            vessel(x,y,[[4,2],[93,2]],brass,8);
+            vessel(x,y,[[69,24],[96,13],[98,13]],['#ebd7ac','#c8ae7d','#f9eac7']);
+          } else if (o.type === '小沙發') {
+            for(const dx of [-23,23]) for(const dy of [-14,14]) box(x+dx,y+dy,0,5,5,10,['#65503b','#493b2f','#806449']);
+            box(x,y,9,65,43,17,['#698f86','#4e716a','#8fafa2']);
+            box(x,y-18,22,65,10,29,['#698f86','#4e716a','#9bb8ac']);
+            for(const dx of [-29,29]) box(x+dx,y,20,9,43,17,['#698f86','#4e716a','#9bb8ac']);
+            for(const dx of [-13,13]) box(x+dx,y+2,26,25,29,6,['#8aa99e','#718e85','#b0c6b9']);
+          } else if (o.type === '花器展示') {
+            vessel(x,y,[[0,12],[5,14],[21,22],[35,19],[45,8],[55,9],[57,11]],['#709c9f','#527a80','#a3c2bd']);
+            for(let i=0;i<3;i++) {
+              const dx=(i-1)*10, dy=(i%2)*8;
+              box(x+dx/2,y+dy/2,55,1.5,1.5,21+i*5,['#58734b','#48643c','#76915b']);
+              vessel(x+dx/2,y+dy/2,[[73+i*5,2],[78+i*5,7],[83+i*5,2]],['#d8b28e','#eed3b0','#bc8f77'],7);
+            }
+          } else if (o.type === '霓虹招牌') {
+            vessel(x,y,[[0,18],[4,18]],brass);
+            box(x,y,4,3,3,47,brass);
+            // An open glowing diamond sculpture, with no backing board.
+            const points=[[x,y,89],[x+23,y,65],[x,y,41],[x-23,y,65]];
+            for(let i=0;i<4;i++) {
+              const a=points[i],b=points[(i+1)%4];
+              const dx=b[0]-a[0], dz=b[2]-a[2], len=Math.hypot(dx,dz), nx=-dz/len*2, nz=dx/len*2;
+              add([[a[0]+nx,y,a[2]+nz],[b[0]+nx,y,b[2]+nz],[b[0]-nx,y,b[2]-nz],[a[0]-nx,y,a[2]-nz]],'#f2b9cc');
+              add([[a[0],y-2,a[2]],[b[0],y-2,b[2]],[b[0],y+2,b[2]],[a[0],y+2,a[2]]],'#fff0c6');
+            }
+          } else {
+            vessel(x,y,[[0,12],[26,19],[29,20]],['#b77a55','#965b40','#d9a37a']);
+            vessel(x,y,[[29,17],[30,17]],['#544638']);
+            vessel(x,y,[[30,2],[75,2]],['#597446','#738c50'],6);
+            for(let i=0;i<9;i++) {
+              const angle=i*2.4, z=43+i*4, radius=22+(i%3)*5;
+              const tip=[x+Math.cos(angle)*radius,y+Math.sin(angle)*radius,z+12];
+              const middle=[x+Math.cos(angle)*radius*.55,y+Math.sin(angle)*radius*.55,z+14];
+              const left=[middle[0]-Math.sin(angle)*8,middle[1]+Math.cos(angle)*8,middle[2]];
+              const right=[middle[0]+Math.sin(angle)*8,middle[1]-Math.cos(angle)*8,middle[2]];
+              add([[x,y,z],left,tip],i%2?'#44745a':'#618f61');
+              add([[x,y,z],tip,right],i%2?'#78a674':'#8bb47e');
+            }
+          }
         }
         function addRoomObjects(shop, add) {
           for (const o of roomObjects(shop)) {
+            if (o.kind !== "ad") { addSculptedDecor(o, add); continue; }
             const w = o.kind === "ad" ? 105 : 65,
               h = o.kind === "ad" ? 165 : 80,
               t = objectTexture(o),
@@ -9312,6 +9404,7 @@
         function beginBuild(name, days, category = "sale") {
           if (!hasBoundAccount()) { toast("請先登入或綁定帳號才能建店。"); openAccountModal(); return false; }
           if (leaseCount() >= 2 || ![3, 7, 15, 30].includes(days)) return false;
+          if (normalizeShopType(category) !== currentMap && !switchMap(category)) return false;
           const s = {
             id: "custom-" + randomId(),
             name: name.trim() || "我的新店",
@@ -9363,7 +9456,7 @@
           }
           showModal(
             "自行建設店面",
-            `<form id="buildForm" class="listing-form"><p>所有店面大小一致。接著在島嶼綠色區域選位，確認後才會出現建築。仍採本機示範帳號綁定。</p><label>店名<input name="name" required maxlength="24" value="我的新店"></label>${shopTypeField("sale")}<label>租期<select name="days">${[3, 7, 15, 30].map((n) => `<option value="${n}">${n} 天</option>`).join("")}</select></label><button class="primary-btn">下一步：選擇空地</button></form>`,
+            `<form id="buildForm" class="listing-form"><p>所有店面大小一致。接著在島嶼綠色區域選位，確認後才會出現建築。仍採本機示範帳號綁定。</p><label>店名<input name="name" required maxlength="24" value="我的新店"></label>${shopTypeField(currentMap)}<label>租期<select name="days">${[3, 7, 15, 30].map((n) => `<option value="${n}">${n} 天</option>`).join("")}</select></label><button class="primary-btn">下一步：選擇空地</button></form>`,
           );
           $("#buildForm").onsubmit = (e) => {
             e.preventDefault();
@@ -9446,7 +9539,7 @@
             if (overlaps(box, { x: 20 + col * 700, y: 110, w: 85, h: 3290 }))
               return { ok: false, reason: "不能阻擋島嶼通道" };
           for (let i = 0; i < shops.length; i++) {
-            if (!shops[i].destroyed && shops[i].id !== id) {
+            if (!shops[i].destroyed && shops[i].id !== id && shopType(shops[i]) === shopType(getShop(id))) {
               const a = shopSpots[i];
               if (overlaps(box, { x: a.x - 20, y: a.y - 20, w: 260, h: 260 }))
                 return { ok: false, reason: "不能與其他建築物或店面重疊" };
@@ -9468,9 +9561,11 @@
           let changed = false;
           const occupied = [];
           const isValidPosition = (x, y) => Number.isFinite(x) && Number.isFinite(y) && x >= -2420 && x <= 7533.333333 && y >= 170 && y <= 3060;
-          const free = (x, y) => !occupied.some((p) => overlaps({ x: x - 20, y: y - 20, w: 260, h: 260 }, p));
+          let positionMap;
+          const free = (x, y) => !occupied.some((p) => p.mapId === positionMap && overlaps({ x: x - 20, y: y - 20, w: 260, h: 260 }, p));
           while (shopSpots.length < shops.length) shopSpots.push({ x: 180, y: 230, w: 220, h: 170, doorX: 290, doorY: 434, side: "top" });
           shops.forEach((s, i) => {
+            positionMap = shopType(s);
             const defaultX = i < 24 ? 180 + (i % 6) * 700 : 180 + ((i - 24) % 10) * 700;
             const defaultY = i < 24 ? 230 + Math.floor(i / 6) * 620 : 2600 + Math.floor((i - 24) / 10) * 300;
             let x = s.position?.x, y = s.position?.y;
@@ -9485,7 +9580,7 @@
               s.position = { x, y };
               changed = true;
             }
-            if (!s.destroyed) occupied.push({ x: x - 20, y: y - 20, w: 260, h: 260 });
+            if (!s.destroyed) occupied.push({ mapId: positionMap, x: x - 20, y: y - 20, w: 260, h: 260 });
             Object.assign(shopSpots[i], { x, y, w: 220, h: 170, doorX: x + 110, doorY: y + 204, side: "top" });
           });
           return changed;
@@ -9496,6 +9591,7 @@
             toast("只有該店店主能搬移店面。");
             return;
           }
+          if (!onCurrentMap(s) && !switchMap(shopType(s))) return;
           const a = shopSpots[shops.indexOf(s)];
           closeModal();
           stopShopMusic();
@@ -9782,28 +9878,29 @@
           const { data, error } = await supabase.from("park_sessions").select("facility_id,user_id,session_id,expires_at");
           if (error) { console.error("公園設備狀態同步失敗", error); return; }
           parkSessions.clear();
-          (data || []).filter((s) => Date.parse(s.expires_at) > Date.now()).forEach((s) => parkSessions.set(s.facility_id, s));
+          (data || []).filter((s) => s.facility_id.startsWith(currentMap + ":") && Date.parse(s.expires_at) > Date.now()).forEach((s) => parkSessions.set(s.facility_id.slice(currentMap.length + 1), s));
         }
         async function useParkFacility(facility) {
           if (parkRide || parkClaimInFlight.has(facility.id)) return;
           if (!authUser || !supabase) { toast("目前無法連接設備狀態，請稍後重試。"); return; }
           parkClaimInFlight.add(facility.id);
           const sessionKey = `${authUser.id}:${playerId}`;
+          const facilityKey = currentMap + ":" + facility.id;
           let claimed, error;
           try {
-            ({ data: claimed, error } = await supabase.rpc("claim_park_facility", { p_facility_id: facility.id, p_session_id: sessionKey }));
+            ({ data: claimed, error } = await supabase.rpc("claim_park_facility", { p_facility_id: facilityKey, p_session_id: sessionKey }));
           } catch (err) { error = err; }
           parkClaimInFlight.delete(facility.id);
           if (error) { console.error("公園設備鎖定失敗", error); toast("無法使用設備，請確認已套用 Supabase 更新設定。"); return; }
           if (!claimed) { await refreshParkSessions(); toast("這項設備目前由其他使用者使用，等對方離開後即可使用。"); return; }
           parkSessions.set(facility.id, { facility_id: facility.id, user_id: authUser.id, session_id: sessionKey, expires_at: new Date(Date.now()+15000).toISOString() });
-          parkRide = { facility, time: 0, x: player.x, y: player.y, sessionKey };
+          parkRide = { facility, facilityKey, time: 0, x: player.x, y: player.y, sessionKey };
           const facing = { swing: "down", slide: "down", seesaw: "right", carousel: "down", trampoline: "down", balance: "right" };
           parkRide.motion = { dir: facing[facility.kind] || "down", moving: true, phase: 0 };
           clearInterval(parkRenewTimer);
           parkRenewTimer = setInterval(async () => {
             if (!parkRide || !authUser) return;
-            const result = await supabase.rpc("renew_park_facility", { p_facility_id: parkRide.facility.id, p_session_id: parkRide.sessionKey });
+            const result = await supabase.rpc("renew_park_facility", { p_facility_id: parkRide.facilityKey, p_session_id: parkRide.sessionKey });
             if (result.error || !result.data) { console.error("設備使用權續期失敗", result.error); stopParkRide(); toast("設備使用權已結束。"); }
           }, 5000);
           player.targetX = player.targetY = null;
@@ -9818,7 +9915,8 @@
           clearInterval(parkRenewTimer);
           parkSessions.delete(f.id);
           const sessionKey = parkRide.sessionKey;
-          if (supabase && authUser) supabase.rpc("release_park_facility", { p_facility_id: f.id, p_session_id: sessionKey }).then(({error}) => { if(error) console.error("設備使用權釋放失敗", error); });
+          const facilityKey = parkRide.facilityKey;
+          if (supabase && authUser) supabase.rpc("release_park_facility", { p_facility_id: facilityKey, p_session_id: sessionKey }).then(({error}) => { if(error) console.error("設備使用權釋放失敗", error); });
           player.x = f.x;
           player.y = f.y + 90;
           parkRide = null;
@@ -10040,7 +10138,7 @@
         function drawShopBubble() {
           const id = guideShopId || mapPickedShop,
             s = getShop(id);
-          if (!s || s.destroyed) return;
+          if (!s || s.destroyed || !onCurrentMap(s)) return;
           const a = shopSpots[shops.indexOf(s)],
             p = project(a.x + a.w / 2, a.y);
           if (p.x < -100 || p.x > W + 100 || p.y < 0 || p.y > H + 180) return;
@@ -10103,15 +10201,27 @@
           mapCtx.clearRect(0, 0, mapW, mapH);
           mapCtx.fillStyle = "#dce9d8";
           mapCtx.fillRect(0, 0, mapW, mapH);
-          // Island road and parks provide recognizable landmarks at a glance.
+          // Show the whole current island, including all five roads and both parks.
+          mapCtx.strokeStyle = "#78b7c5";
+          mapCtx.lineWidth = 6;
+          mapCtx.strokeRect(0, 0, mapW, mapH);
           mapCtx.fillStyle = "#82948a";
-          mapCtx.fillRect(0, mapH * 0.47, mapW, mapH * 0.18);
+          for (let row = 0; row < 5; row++) {
+            const p = mapPoint(-2500, 455 + row * 620);
+            mapCtx.fillRect(p.x, p.y, mapW, 190 / worldH * mapH);
+          }
+          mapCtx.fillStyle = "#c4ccba";
+          for (let col = 0; col < 15; col++) {
+            const p = mapPoint(20 + col * 700, 110);
+            mapCtx.fillRect(p.x, p.y, 85 / worldW * mapW, 3290 / worldH * mapH);
+          }
           for (const park of PARKS) {
             mapCtx.fillStyle = "#5e9569";
             const p = mapPoint(park.x, park.y);
             mapCtx.fillRect(p.x, p.y, (park.w / worldW) * mapW, (park.h / worldH) * mapH);
           }
-          for (const a of shopSpots) {
+          for (const [i, a] of shopSpots.entries()) {
+            if (!onCurrentMap(shops[i]) || shops[i].destroyed) continue;
             const p = mapPoint(a.x + (a.w || 0) / 2, a.y + (a.h || 0) / 2);
             mapCtx.fillStyle = "#a88061";
             mapCtx.beginPath();
@@ -10132,7 +10242,7 @@
           mapCtx.strokeStyle = "#fff";
           mapCtx.lineWidth = 1.5;
           mapCtx.stroke();
-          const area = player.x < -100 ? "森光公園" : player.x > 5300 ? "海風公園" : "島嶼商圈";
+          const area = typeLabel(currentMap) + " · " + (player.x < -100 ? "森光公園" : player.x > 5300 ? "海風公園" : "島嶼商圈");
           if (areaLabel && areaLabel.textContent !== area) areaLabel.textContent = area;
         }
         for (const park of PARKS) {
@@ -10238,31 +10348,75 @@
           ],
         );
 
-        const SHOP_TYPES = [
-          ["hiring", "徵才"],
-          ["sale", "販售"],
-          ["collaboration", "尋找合作機會"],
-        ];
+        const ISLAND_NAMES = { sale: "拾光商島", collaboration: "映藝之島", hiring: "啟程之島" };
+        const islandName = type => ISLAND_NAMES[normalizeShopType(type)];
+        const SHOP_TYPES = MAP_TYPES;
         function normalizeShopType(value) {
-          return SHOP_TYPES.some((t) => t[0] === value) ? value : "sale";
+          return MAP_TYPES.some((t) => t[0] === value) ? value : "sale";
         }
         function shopType(shop) {
-          return normalizeShopType(shop?.shopType);
+          if (shop?.shopType) return normalizeShopType(shop.shopType);
+          // Unleased legacy plots are deterministically distributed; occupied shops retain their old type.
+          if (shop && !shop.lease && !shop.owner && !shop.products?.length) {
+            const slot = defaults.findIndex(s => s.id === shop.id);
+            if (slot >= 0) return MAP_TYPES[slot % MAP_TYPES.length][0];
+          }
+          return "sale";
         }
         function typeLabel(type) {
-          return SHOP_TYPES.find((t) => t[0] === type)?.[1] || "販售";
+          return MAP_TYPES.find((t) => t[0] === type)?.[1] || "販賣";
         }
         function shopTypeField(value) {
-          return `<label class="field">店面類型<select name="shopType">${SHOP_TYPES.map(([v, label]) => `<option value="${v}" ${value === v ? "selected" : ""}>${label}</option>`).join("")}</select><small>之後可在店舖設定更改。</small></label>`;
+          return `<label class="field">店面所屬地圖<select name="shopType">${SHOP_TYPES.map(([v, label]) => `<option value="${v}" ${value === v ? "selected" : ""}>${islandName(v)}（${label}）</option>`).join("")}</select><small>儲存後，店面會出現在選擇的用途地圖；商品與作品會保留。</small></label>`;
         }
-        const categorySearch = document.createElement("select");
-        categorySearch.id = "shopCategory";
-        categorySearch.setAttribute("aria-label", "搜尋店面類別");
-        categorySearch.innerHTML =
-          '<option value="">全部類別</option>' +
-          SHOP_TYPES.map(([v, label]) => `<option value="${v}">${label}</option>`).join("");
-        $("#shopSearch").insertAdjacentElement("afterend", categorySearch);
-        categorySearch.onchange = renderShopList;
+        document.querySelectorAll('[data-island]').forEach(button => {
+          button.onclick = () => switchMap(button.dataset.island);
+        });
+        function updateMapControls() {
+          const name = islandName(currentMap);
+          $("#marketMapTitle").textContent = name + "（" + typeLabel(currentMap) + "）";
+          $("#islandMapName").textContent = name + "（" + typeLabel(currentMap) + "）";
+          $("#streetMiniMapCanvas").setAttribute("aria-label", name + "完整地圖與目前位置");
+          $("#shopSearch").placeholder = "搜尋" + name + "的店面";
+          document.querySelectorAll('[data-island]').forEach(button => {
+            button.setAttribute("aria-current", String(button.dataset.island === currentMap));
+          });
+          if (!$("#streetMiniMap").classList.contains("hidden")) drawIslandOverview();
+        }
+        function switchMap(value) {
+          const next = normalizeShopType(value);
+          if (next === currentMap) { updateMapControls(); return true; }
+          if (placement || parkClaimInFlight.size) {
+            updateMapControls(); toast("請先完成或取消目前的操作，再切換地圖。"); return false;
+          }
+          stopParkRide();
+          stopShopMusic();
+          if (channel) channel.postMessage({ type: "leave", id: playerId });
+          for (const ch of cloudChannels.values()) supabase?.removeChannel(ch);
+          cloudChannels.clear(); cloudCellKey = ""; cloudChannel = null;
+          currentMap = next;
+          try { localStorage.setItem("island-purpose-map", currentMap); } catch {}
+          remotePlayers.clear();
+          selectedShopId = guideShopId = mapPickedShop = null;
+          autoRoute = []; downKeys.clear(); streetPointerId = null;
+          streetState.seated = null;
+          if (streetState.bike && streetState.origin) {
+            const counts = rackCounts();
+            counts[streetState.origin] = Math.min(20, (counts[streetState.origin] ?? 15) + 1);
+            localStorage.setItem("market-bike-racks-v6", JSON.stringify(counts));
+          }
+          streetState.bike = false; streetState.origin = null;
+          cloudLastX = cloudLastY = null; cloudLastBroadcast = 0;
+          player.x = camera.x = 606; player.y = camera.y = 586;
+          player.targetX = player.targetY = null;
+          npcs = clone(defaultNpc);
+          $("#shopSearch").value = "";
+          updateMapControls(); renderShopList(); renderSelectedBox(); renderWalkers();
+          updateAoiChannels(); refreshParkSessions();
+          toast("已前往" + islandName(currentMap));
+          return true;
+        }
+        updateMapControls();
         const boardDrafts = new WeakMap(),
           BOARD_FONTS = ["sans-serif", "serif", "monospace", "Microsoft JhengHei"];
         function boardDesign(value = {}) {
